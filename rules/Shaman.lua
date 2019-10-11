@@ -57,7 +57,7 @@ AdiButtonAuras:RegisterRules(function()
 	local natureResistanceTotem = {10595, 10600, 10601}
 	local poisonCleansingTotem  = {8166}
 	local searingTotem          = {3599, 6363, 6364, 6365, 10437, 10438}
-	local setryTotem            = {6495}
+	local sentryTotem           = {6495}
 	local stoneclawTotem        = {5730, 6390, 6391, 6392, 10427, 10428}
 	local stoneskinTotem        = {8071, 8154, 8155, 10406, 10407, 10408}
 	local strengthOfEarthTotem  = {8075, 8160, 8161, 10442, 25361}
@@ -189,6 +189,60 @@ AdiButtonAuras:RegisterRules(function()
 		},
 
 		Configure {
+			'SearingTotem',
+			L['Show the duration of @NAME.'],
+			searingTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(searingTotem[1])),
+		},
+
+		Configure {
+			'SentryTotem',
+			L['Show the duration of @NAME.'],
+			sentryTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(sentryTotem[1])),
+		},
+
+		Configure {
+			'StoneclawTotem',
+			L['Show the duration of @NAME.'],
+			stoneclawTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(stoneclawTotem[1])),
+		},
+
+		Configure {
+			'StoneskinTotem',
+			L['Show the duration of @NAME.'],
+			stoneskinTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(stoneskinTotem[1])),
+		},
+
+		Configure {
+			'StrengthOfEarthTotem',
+			L['Show the duration of @NAME.'],
+			strengthOfEarthTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(strengthOfEarthTotem[1])),
+		},
+
+		Configure {
+			'tranquilAirTotem',
+			L['Show the duration of @NAME.'],
+			tranquilAirTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(tranquilAirTotem[1])),
+		},
+
+		Configure {
 			'TremorTotem',
 			L['Show the duration of @NAME.'],
 			tremorTotem,
@@ -198,21 +252,22 @@ AdiButtonAuras:RegisterRules(function()
 		},
 
 		Configure {
-			'SearingTotem',
+			'WindfuryTotem',
 			L['Show the duration of @NAME.'],
-			{3599, 6363}, -- Searing Totem
+			windfuryTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler('Searing Totem'),
+			BuildTotemHandler(GetSpellInfo(windfuryTotem[1])),
 		},
 
 		Configure {
-			'DiseaseCleansingTotem',
+			'WindwallTotem',
 			L['Show the duration of @NAME.'],
-			8170, -- Searing Totem
+			windwallTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler('Searing Totem'),
+			BuildTotemHandler(GetSpellInfo(windwallTotem[1])),
 		},
+
 	}
 end)

@@ -10,6 +10,7 @@ libs\LibButtonGlow-1.0\LibButtonGlow-1.0.lua
 libs\LibSpellbook-1.0\LibSpellbook-1.0.xml
 libs\LibItemBuffs-1.0\LibItemBuffs-1.0.xml
 libs\LibClassicDurations\LibClassicDurations.xml
+libs\LibClassicCasterino\LibClassicCasterino.lua
 
 # Not in libs subfolder to shorten the path
 SMBH\lib.xml

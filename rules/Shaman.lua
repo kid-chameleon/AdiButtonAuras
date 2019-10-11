@@ -21,10 +21,10 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
+if not addon.isClass('SHAMAN') then return end
+
 local _G = _G
 local strmatch = _G.strmatch
-
-if not addon.isClass('SHAMAN') then return end
 
 local function BuildTotemHandler(totem)
 	return function(_, model)
@@ -66,9 +66,67 @@ AdiButtonAuras:RegisterRules(function()
 	local windfuryTotem         = {8512, 10613, 10614}
 	local windwallTotem         = {15107, 15111, 15112}
 
+	local flametongueWeapon = {
+		{8024, 5},
+		{8027, 4},
+		{8030, 3},
+		{16339, 523},
+		{16341, 1665},
+		{16342, 1666},
+	}
+
+	local frostbrandWeapon = {
+		{8033, 2},
+		{8038, 12},
+		{10456, 524},
+		{16355, 1667},
+		{16356, 1668},
+	}
+
+	local rockbiterWeapon = {
+		{8017, 29},
+		{8018, 6},
+		{8019, 1},
+		{10399, 503},
+		{16314, 1663},
+		{16315, 683},
+		{16316, 1664},
+	}
+
+	local windfuryWeapon = {
+		{8232, 283},
+		{8235, 284},
+		{10486, 525},
+		{16362, 1669},
+	}
+
 	return {
 		ImportPlayerSpells {
 			'SHAMAN',
+		},
+
+		ShowWeaponEnchant {
+			'FlametongueWeapon',
+			L['Show the duration of @NAME.'],
+			flametongueWeapon,
+		},
+
+		ShowWeaponEnchant {
+			'FlametongueWeapon',
+			L['Show the duration of @NAME.'],
+			flametongueWeapon,
+		},
+
+		ShowWeaponEnchant {
+			'FlametongueWeapon',
+			L['Show the duration of @NAME.'],
+			flametongueWeapon,
+		},
+
+		ShowWeaponEnchant {
+			'FlametongueWeapon',
+			L['Show the duration of @NAME.'],
+			flametongueWeapon,
 		},
 
 		Configure {

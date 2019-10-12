@@ -135,5 +135,5 @@ hooksecurefunc(proto, "SetSpellByID", function(tooltip, ...) return AddSpellInfo
 hooksecurefunc(proto, "SetSpellBookItem", AddSpellbookInfo)
 hooksecurefunc(proto, "SetAction", AddActionInfo)
 hooksecurefunc(proto, "SetPetAction", AddPetActionInfo)
-hooksecurefunc(proto, "SetTalent", AddTalentInfo)
+--hooksecurefunc(proto, "SetTalent", AddTalentInfo)
 hooksecurefunc("SetItemRef", AddItemRefInfo)

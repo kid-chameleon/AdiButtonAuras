@@ -105,28 +105,28 @@ AdiButtonAuras:RegisterRules(function()
 			'SHAMAN',
 		},
 
-		ShowWeaponEnchant {
+		ShowWeaponEnchantRanks {
 			'FlametongueWeapon',
 			L['Show the duration of @NAME.'],
 			flametongueWeapon,
 		},
 
-		ShowWeaponEnchant {
-			'FlametongueWeapon',
+		ShowWeaponEnchantRanks {
+			'FrostbrandWeapon',
 			L['Show the duration of @NAME.'],
-			flametongueWeapon,
+			frostbrandWeapon,
 		},
 
-		ShowWeaponEnchant {
-			'FlametongueWeapon',
+		ShowWeaponEnchantRanks {
+			'RockbiterWeapon',
 			L['Show the duration of @NAME.'],
-			flametongueWeapon,
+			rockbiterWeapon,
 		},
 
-		ShowWeaponEnchant {
-			'FlametongueWeapon',
+		ShowWeaponEnchantRanks {
+			'WindfuryWeapon',
 			L['Show the duration of @NAME.'],
-			flametongueWeapon,
+			windfuryWeapon,
 		},
 
 		Configure {

@@ -486,17 +486,19 @@ local function ShowHealth(spells, unit, handler, highlight, providers, desc)
 	)
 end
 
-local function ShowWeaponEnchant(key, desc, enchants)
+local function ShowWeaponEnchant(key, desc, enchant, unit, events, handler)
+	local spellId = enchant[1]
+	local handler = handler or BuildWeaponBuffHandler(enchant[2])
+	return Configure(key, desc, spellId, unit, events, handler)
+end
+
+local function ShowWeaponEnchantRanks(key, desc, ranks, unit, events, handler)
 	local builders = {}
-	local unit = "player"
-	local events = "UNIT_INVENTORY_CHANGED"
-
-	for _, enchantMap in ipairs(enchants) do
-		local spellId = enchantMap[1]
-		local handler = BuildWeaponBuffHandler(enchantMap[2])
-		tinsert(builders, Configure(key, desc, spellId, unit, events, handler))
+	local unit = unit or "player"
+	local events = events or "UNIT_INVENTORY_CHANGED"
+	for _, rank in ipairs(ranks) do
+		tinsert(builders, ShowWeaponEnchant(key, desc, rank, unit, events, handler))
 	end
-
 	return (#builders > 1) and builders or builders[1]
 end
 
@@ -651,6 +653,7 @@ local baseEnv = {
 	ShowPower = WrapTableArgFunc(ShowPower),
 	ShowStacks = WrapTableArgFunc(ShowStacks),
 	ShowWeaponEnchant = WrapTableArgFunc(ShowWeaponEnchant),
+	ShowWeaponEnchantRanks = WrapTableArgFunc(ShowWeaponEnchantRanks),
 
 	-- High-level functions
 	SimpleDebuffs = function(spells)

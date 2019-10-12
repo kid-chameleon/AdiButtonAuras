@@ -31,12 +31,12 @@ externals:
     url: https://repos.wowace.com/wow/libbuttonglow-1-0
     tag: latest
   libs/LibClassicDurations: https://repos.curseforge.com/wow/libclassicdurations
-  libs/LibClassicCasterino: https://repos.curseforge.com/wow/libclassiccasterino
+  libs/LibClassicCasterino: git@github.com:rgd87/LibClassicCasterino.git
   libs/AceGUI-3.0-SharedMediaWidgets: https://repos.wowace.com/wow/ace-gui-3-0-shared-media-widgets/trunk
-  libs/LibSpellbook-1.0: https://github.com/pctD/LibSpellbook-1.0.git
-  libs/LibItemBuffs-1.0: https://github.com/pctD/LibItemBuffs-1.0.git
-  libs/LibPlayerSpells-1.0: https://github.com/pctD/LibPlayerSpells-1.0.git
-  SMBH: https://github.com/Adirelle/SharedMedia_ButtonHighlight.git
+  libs/LibSpellbook-1.0: git@github.com:pctD/LibSpellbook-1.0.git
+  libs/LibItemBuffs-1.0: git@github.com:pctD/LibItemBuffs-1.0.git
+  libs/LibPlayerSpells-1.0: git@github.com:pctD/LibPlayerSpells-1.0.git
+  SMBH: git@github.com:pctD/SharedMedia_ButtonHighlight.git
 
 move-folders:
   AdiButtonAuras/modules/AdiButtonAuras_Config: AdiButtonAuras_Config

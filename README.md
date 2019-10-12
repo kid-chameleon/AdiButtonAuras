@@ -12,6 +12,8 @@ TODO:
   - Racials
   - Fix talent scanning everywhere
 
+I'll add current releases as I finish them, and eventually release to Curse.
+
 AdiButtonAuras
 ==============
 

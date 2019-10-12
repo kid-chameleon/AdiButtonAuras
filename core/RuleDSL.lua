@@ -29,6 +29,7 @@ local format = _G.format
 local GetItemInfo = _G.GetItemInfo
 local GetSpellInfo = _G.GetSpellInfo
 local GetSpellLink = _G.GetSpellLink
+local GetTime = _G.GetTime
 local gsub = _G.gsub
 local ipairs = _G.ipairs
 local math = _G.math
@@ -319,6 +320,20 @@ local function BuildDispelHandler(filter, highlight, token, dispellable, callLev
 	end
 end
 
+local function BuildWeaponBuffHandler(enchantId)
+	return function(_, model)
+		local mainHandEnchanted, mainHandTimeLeft, _, mainHandId, offHandEnchanted, offHandTimeLeft, _, offHandId = GetWeaponEnchantInfo()
+		if mainHandEnchanted and mainHandId == enchantId then
+			model.expiration = GetTime() + mainHandTimeLeft / 1000
+			model.highlight = 'good'
+		end
+		if offHandEnchanted and offHandId == enchantId then
+			model.expiration = GetTime() + offHandTimeLeft / 1000
+			model.highlight = 'good'
+		end
+	end
+end
+
 ------------------------------------------------------------------------------
 -- High-callLevel helpers
 ------------------------------------------------------------------------------
@@ -471,6 +486,20 @@ local function ShowHealth(spells, unit, handler, highlight, providers, desc)
 	)
 end
 
+local function ShowWeaponEnchant(key, desc, enchants)
+	local builders = {}
+	local unit = "player"
+	local events = "UNIT_INVENTORY_CHANGED"
+
+	for _, enchantMap in ipairs(enchants) do
+		local spellId = enchantMap[1]
+		local handler = BuildWeaponBuffHandler(enchantMap[2])
+		tinsert(builders, Configure(key, desc, spellId, unit, events, handler))
+	end
+
+	return (#builders > 1) and builders or builders[1]
+end
+
 local function ShowStacks(spells, aura, maxi, unit, handler, highlight, providers, desc)
 	unit = unit or "player"
 	local key = BuildKey("ShowStacks", aura, unit, highlight)
@@ -602,6 +631,7 @@ local baseEnv = {
 	BuildAuraHandler_Longest = BuildAuraHandler_Longest,
 	BuildAuraHandler_FirstOf = BuildAuraHandler_FirstOf,
 	BuildDispelHandler       = BuildDispelHandler,
+	BuildWeaponBuffHandler   = BuildWeaponBuffHandler,
 
 	-- Description helpers
 	BuildDesc         = addon.BuildDesc,
@@ -620,6 +650,7 @@ local baseEnv = {
 	ShowHealth = WrapTableArgFunc(ShowHealth),
 	ShowPower = WrapTableArgFunc(ShowPower),
 	ShowStacks = WrapTableArgFunc(ShowStacks),
+	ShowWeaponEnchant = WrapTableArgFunc(ShowWeaponEnchant),
 
 	-- High-level functions
 	SimpleDebuffs = function(spells)
@@ -682,7 +713,7 @@ local RULES_ENV = addon.BuildSafeEnv(
 		-- WoW API
 		"GetNumGroupMembers", "GetPetTimeRemaining", "GetRuneCooldown", "GetShapeshiftFormID", "GetSpellBonusHealing",
 		"GetSpellCharges", "GetSpellCount", "GetSpellInfo", "GetTime", "GetTotemInfo", "HasPetSpells", "IsPlayerSpell",
-		"UnitCanAttack", "UnitCastingInfo", "UnitChannelInfo", "UnitClass", "UnitGUID", "UnitHealth", "UnitHealthMax",
+		"UnitCanAttack", "CastingInfo", "ChannelInfo", "UnitClass", "UnitGUID", "UnitHealth", "UnitHealthMax",
 		"UnitIsDeadOrGhost", "UnitIsPlayer", "UnitName", "UnitPower", "UnitPowerMax", "UnitStagger",
 	}
 )

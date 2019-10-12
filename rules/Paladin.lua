@@ -132,42 +132,6 @@ AdiButtonAuras:RegisterRules(function()
 		},
 
 		Configure {
-			'AvengersShieldInterrupt',
-			format(L['%s when %s is casting/channelling a spell that you can interrupt.'],
-				DescribeHighlight('flash'),
-				DescribeAllTokens('enemy')
-			),
-			31935, -- Avenger's Shield (Protection)
-			'enemy',
-			{ -- Events
-				'UNIT_SPELLCAST_CHANNEL_START',
-				'UNIT_SPELLCAST_CHANNEL_STOP',
-				'UNIT_SPELLCAST_CHANNEL_UPDATE',
-				'UNIT_SPELLCAST_DELAYED',
-				'UNIT_SPELLCAST_INTERRUPTIBLE',
-				'UNIT_SPELLCAST_NOT_INTERRUPTIBLE',
-				'UNIT_SPELLCAST_START',
-				'UNIT_SPELLCAST_STOP',
-			},
-			-- Handler
-			function(units, model)
-				local unit = units.enemy
-				if unit and UnitCanAttack('player', unit) and not UnitIsPlayer(unit) then
-					local name, _, _, _, _, endTime, _, _, notInterruptible = UnitCastingInfo(unit)
-					if name and not notInterruptible then
-						model.flash, model.expiration = true, endTime / 1000
-						return
-					end
-					name, _, _, _, _, endTime, _, notInterruptible = UnitChannelInfo(unit)
-					if name and not notInterruptible then
-						model.flash, model.expiration = true, endTime / 1000
-					end
-				end
-			end,
-			231665, -- Avenger's Shield (Rank 2) (Protection)
-		},
-
-		Configure {
 			'LightsHammer',
 			L['Show the duration of @NAME.'],
 			114158, -- Light's Hammer (Holy talent)

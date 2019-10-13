@@ -10,11 +10,11 @@ globals = {
 	"ImportPlayerSpells", "IterateBuffs", "IterateDebuffs", "IteratePlayerBuffs",
 	"IteratePlayerDebuffs", "L", "LongestDebuffOf", "PassiveModifier", "PetBuffs", "PLAYER_CLASS",
 	"SelfBuffAliases", "SelfBuffs", "SharedSimpleBuffs", "SharedSimpleDebuffs", "ShowDispellable",
-	"ShowHealth", "ShowPower", "ShowStacks", "SimpleBuffs", "SimpleDebuffs",
+	"ShowHealth", "ShowPower", "ShowStacks", "ShowWeaponEnchant", "ShowWeaponEnchantRanks", "SimpleBuffs", "SimpleDebuffs",
 
 	-- WoW API
 	"GetNumGroupMembers", "GetPetTimeRemaining", "GetRuneCooldown", "GetShapeshiftFormID", "GetSpellBonusHealing",
-	"GetSpellCharges", "GetSpellCount", "GetSpellInfo", "GetTime", "GetTotemInfo", "HasPetSpells", "IsPlayerSpell",
+	"GetSpellCharges", "GetSpellCount", "GetSpellInfo", "GetTime", "GetTotemInfo", "GetWeaponEnchantInfo", "HasPetSpells", "IsPlayerSpell",
 	"UnitCanAttack", "CastingInfo", "ChannelInfo", "UnitClass", "UnitGUID", "UnitHealth", "UnitHealthMax",
 	"UnitIsDeadOrGhost", "UnitIsPlayer", "UnitName", "UnitPower", "UnitPowerMax", "UnitStagger",
 

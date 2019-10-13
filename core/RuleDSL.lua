@@ -30,6 +30,7 @@ local GetItemInfo = _G.GetItemInfo
 local GetSpellInfo = _G.GetSpellInfo
 local GetSpellLink = _G.GetSpellLink
 local GetTime = _G.GetTime
+local GetWeaponEnchantInfo = _G.GetWeaponEnchantInfo
 local gsub = _G.gsub
 local ipairs = _G.ipairs
 local math = _G.math

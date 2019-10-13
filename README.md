@@ -1,3 +1,19 @@
+CLASSIC STATUS
+==============
+
+Classes implemented:
+  - Hunter
+  - Shaman
+
+TODO:
+  - All other classes
+  - Cleanup unused classes
+  - Cleanup/add items (although most of them work out of the box)
+  - Racials
+  - Fix talent scanning everywhere
+
+I'll add current releases as I finish them, and eventually release to Curse.
+
 AdiButtonAuras
 ==============
 

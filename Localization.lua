@@ -150,8 +150,6 @@ L["of type '%s'"] = true
 L["Show the \"bad\" border if the targeted enemy is %s."] = true
 L["%s when someone used their legendary ring."] = true
 
--- rules/Deathknight.lua
-L["Shows Hint when target is below 35% health."] = true
 
 -- rules/Druid.lua
 L["Suggests to cast Rejuvenation to enable Glyph of Rejuvenation effect."] = true
@@ -159,16 +157,6 @@ L["Suggests when mastery is inactive."] = true
 L["combo points"] = true
 L["lunar energy"] = true
 L["solar energy"] = true
-
--- rules/Monk.lua
-L["Show %s count and suggest using it at 10 or more stacks."] = true
-L["Show good border and remaining time of your summoned statue."] = true
-L["Show hint when your health is below 35%."] = true
-L["Show the number of group member affected by @NAME and the shortest duration."] = true
-L["Suggest using @NAME under 92% mana."] = true
-L["Suggest when at least %s %s are running and one of them is below %s seconds."] = true
-L["Suggest when total effective healing would be at least %d times the base healing."] = true
-L["stagger level"] = true
 
 -- rules/Priest.lua
 L["Show Power Word: Shield or Weakened Soul on targeted ally."] = true

@@ -30,7 +30,7 @@ local function BuildTotemHandler(totem)
 	return function(_, model)
 		for slot = 1, 4 do
 			local found, name, start, duration = GetTotemInfo(slot)
-			if found and strmatch(name, totem) then
+			if found and name and strmatch(name, totem) then
 				model.expiration = start + duration
 				model.highlight = 'good'
 				break

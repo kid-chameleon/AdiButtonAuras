@@ -242,12 +242,9 @@ function private.GetUserRulesOptions(addon, addonName)
 						order = 25,
 						values = {
 							ALL = L['None'],
-							DEATHKNIGHT = L['DEATHKNIGHT'],
-							DEMONHUNTER = L['DEMONHUNTER'],
 							DRUID = L['DRUID'],
 							HUNTER = L['HUNTER'],
 							MAGE = L['MAGE'],
-							MONK = L['MONK'],
 							PALADIN = L['PALADIN'],
 							PRIEST = L['PRIEST'],
 							ROGUE = L['ROGUE'],

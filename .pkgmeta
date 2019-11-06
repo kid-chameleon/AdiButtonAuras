@@ -32,7 +32,7 @@ externals:
     tag: latest
   libs/LibClassicDurations:
     url: git@github.com:rgd87/LibClassicDurations.git
-    tag: 1.19
+    tag: latest
   libs/AceGUI-3.0-SharedMediaWidgets: https://repos.wowace.com/wow/ace-gui-3-0-shared-media-widgets/trunk
   libs/LibSpellbook-1.0: git@github.com:pctD/LibSpellbook-1.0.git
   libs/LibItemBuffs-1.0: git@github.com:pctD/LibItemBuffs-1.0.git

@@ -54,6 +54,7 @@ AdiButtonAuras:RegisterRules(function()
 	local healingStreamTotem    = {5394, 6375, 6377, 10462, 10463}
 	local magmaTotem            = {8190, 10585, 10586, 10587}
 	local manaSpringTotem       = {5675, 10495, 10496, 10497}
+	local manaTideTotem         = {16190, 17354, 17359}
 	local natureResistanceTotem = {10595, 10600, 10601}
 	local poisonCleansingTotem  = {8166}
 	local searingTotem          = {3599, 6363, 6364, 6365, 10437, 10438}
@@ -226,6 +227,15 @@ AdiButtonAuras:RegisterRules(function()
 			'player',
 			'PLAYER_TOTEM_UPDATE',
 			BuildTotemHandler(GetSpellInfo(manaSpringTotem[1])),
+		},
+
+		Configure {
+			'ManaTideTotem',
+			L['Show the duration of @NAME.'],
+			manaTideTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(manaTideTotem[1])),
 		},
 
 		Configure {

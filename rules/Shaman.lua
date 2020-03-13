@@ -46,7 +46,7 @@ AdiButtonAuras:RegisterRules(function()
 	local earthbindTotem        = {2484}
 	local diseaseCleansingTotem = {8170}
 	local fireNovaTotem         = {1535, 8498, 8499, 11314, 11315}
-	local fireResistanceTotem   = {8184, 10478, 10479}
+	local fireResistanceTotem   = {8184, 10537, 10538}
 	local flametongueTotem      = {8227, 8249, 10526, 16387}
 	local frostResistanceTotem  = {8181, 10478, 10479}
 	local graceOfAirTotem       = {8835, 10627, 25359}

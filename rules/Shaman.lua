@@ -39,6 +39,21 @@ local function BuildTotemHandler(totem)
 	end
 end
 
+local function BuildWeaponEnchantHandler(enchantId)
+	return function(_, model)
+		local hasMainHandEnchant, mainHandExpiration, _, mainBuffId,
+			  hasOffHandEnchant, offHandExpiration, _, offBuffId = GetWeaponEnchantInfo()
+
+		if hasMainHandEnchant and mainBuffId == enchantId then
+			model.highlight = 'good'
+			model.expiration = GetTime() + mainHandExpiration / 1000
+		elseif hasOffHandEnchant and offBuffId == enchantId then
+			model.highlight = 'good'
+			model.expiration = GetTime() + offHandExpiration / 1000
+		end
+	end
+end
+
 AdiButtonAuras:RegisterRules(function()
 	Debug('Adding shaman rules')
 

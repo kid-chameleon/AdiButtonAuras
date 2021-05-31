@@ -25,7 +25,7 @@ AdiButtonAuras uses a set of rules that apply to one or more spells. Each rule c
 
 AdiButtonAuras has several custom rules to suggest using spells at meaningful times. By default, these suggestions are displayed using a rotary, shinning star on the associated action buttons. These can be disabled.
 
-Development version build status: [![Build Status](https://travis-ci.org/AdiAddons/AdiButtonAuras.svg)](https://travis-ci.org/AdiAddons/AdiButtonAuras)
+Development version build status: ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/AdiAddons/AdiButtonAuras/CI)
 
 Getting started
 ---------------
@@ -117,14 +117,11 @@ Acknowledgment
 
 Thanks to the following people for testing and contributing to AdiButtonAuras and related libraries.
 
-Contributors (in alphabetical order):
+Contributors:
 
-* [arcadepro](https://github.com/arcadepro),
-* [ckaotik](https://github.com/ckaotik),
-* [dafzor](https://github.com/dafzor),
-* [nomoon](https://github.com/nomoon),
-* [mjmurray88](https://github.com/mjmurray88),
-* [Rainrider](https://github.com/Rainrider).
+[![Contributor avatars](https://contributors-img.web.app/image?repo=AdiAddons/AdiButtonAuras)](https://github.com/AdiAddons/AdiButtonAuras/graphs/contributors)
+
+Made with [contributors-img](https://contributors-img.web.app).
 
 License
 -------

@@ -225,6 +225,20 @@ local function UpdateHandler(event, button)
 	end
 end
 
+local function UpdateHandlerForButton(button)
+	return UpdateHandler('ActionButton_Update', button)
+end
+
+local hookedFrames = {}
+local function RegisterDominos()
+	for _, button in next, _G.Dominos.ActionButtons do
+		if not hookedFrames[button] then
+			hookedFrames[button] = true
+			hooksecurefunc(button, 'Update', UpdateHandlerForButton)
+		end
+	end
+end
+
 local labs = {}
 function api:RegisterLAB(libName)
 	assert(type(libName) == "string", format("Bad argument to 'RegisterLAB', expected string, got '%s'", type(libName)))
@@ -256,7 +270,7 @@ function addon:ADDON_LOADED(event, name)
 	self:Initialize()
 
 	if IsAddOnLoaded('Dominos') then
-		self:ScanButtons("DominosActionButton", 120)
+		_G.Dominos.RegisterCallback(addon, 'LAYOUT_LOADED', RegisterDominos)
 	end
 
 	if IsAddOnLoaded('Bartender4') then
@@ -305,9 +319,11 @@ function addon:Initialize()
 	self:ScanButtons("StanceButton", NUM_STANCE_SLOTS)
 	self:ScanButtons("PetActionButton", NUM_PET_ACTION_SLOTS)
 
-	hooksecurefunc('ActionButton_Update', function(button)
-		return UpdateHandler('ActionButton_Update', button)
-	end)
+	for _, actionBarButton in next, _G.ActionBarButtonEventsFrame.frames do
+		hookedFrames[actionBarButton] = true
+		hooksecurefunc(actionBarButton, 'Update', UpdateHandlerForButton)
+	end
+
 	hooksecurefunc('PetActionBar_Update', function()
 		for i = 1, NUM_PET_ACTION_SLOTS do
 			UpdateHandler('PetActionBar_Update', _G['PetActionButton'..i])

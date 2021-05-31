@@ -17,7 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
-## Interface: 11320
+## Interface-Retail: 90005
+## Interface-Classic: 11306
+## Interface-BCC: 20501
 
 ## Title: AdiButtonAurasClassic
 ## Notes: Display auras on action buttons.

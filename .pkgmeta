@@ -22,7 +22,7 @@ externals:
     url: https://repos.wowace.com/wow/ace3/trunk/AceConfig-3.0
     tag: latest
   libs/LibSharedMedia-3.0:
-    url: https://repos.wowace.com/wow/libsharedmedia-3-0/trunk
+    url: https://repos.curseforge.com/wow/libsharedmedia-3-0/trunk/LibSharedMedia-3.0
     tag: latest
   libs/BugGrabber:
     url: https://repos.wowace.com/wow/bug-grabber/trunk

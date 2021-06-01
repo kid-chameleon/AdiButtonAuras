@@ -37,12 +37,12 @@ local type = _G.type
 
 local LibItemBuffs, LIBVer = addon.GetLib('LibItemBuffs-1.0')
 
-local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
+--local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
 
-if LibClassicDurations then
-	LibClassicDurations:Register(addonName)
-	UnitAura = LibClassicDurations.UnitAuraWrapper
-end
+--if LibClassicDurations then
+--	LibClassicDurations:Register(addonName)
+--	UnitAura = LibClassicDurations.UnitAuraWrapper
+--end
 
 local BuildKey = addon.BuildKey
 local BuildDesc = addon.BuildDesc

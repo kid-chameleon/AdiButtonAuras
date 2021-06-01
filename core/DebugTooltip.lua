@@ -40,12 +40,12 @@ local UnitAura = _G.UnitAura
 local UnitBuff = _G.UnitBuff
 local UnitDebuff = _G.UnitDebuff
 
-local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
+--local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
 
-if LibClassicDurations then
-	LibClassicDurations:Register(addonName)
-	UnitAura = LibClassicDurations.UnitAuraWrapper
-end
+--if LibClassicDurations then
+--	LibClassicDurations:Register(addonName)
+--	UnitAura = LibClassicDurations.UnitAuraWrapper
+--end
 
 local function IsDisabled()
 	return not (addon.db and addon.db.profile.debuggingTooltip)
@@ -135,8 +135,5 @@ hooksecurefunc(proto, "SetSpellByID", function(tooltip, ...) return AddSpellInfo
 hooksecurefunc(proto, "SetSpellBookItem", AddSpellbookInfo)
 hooksecurefunc(proto, "SetAction", AddActionInfo)
 hooksecurefunc(proto, "SetPetAction", AddPetActionInfo)
-hooksecurefunc(proto, "SetArtifactPowerByID", AddArtifactInfo)
 hooksecurefunc(proto, "SetTalent", AddTalentInfo)
-hooksecurefunc(proto, 'SetPvpTalent', AddPvpTalentInfo)
-hooksecurefunc(proto, "SetAzeritePower", AddAzeriteInfo)
 hooksecurefunc("SetItemRef", AddItemRefInfo)

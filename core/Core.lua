@@ -319,10 +319,9 @@ function addon:Initialize()
 	self:ScanButtons("StanceButton", NUM_STANCE_SLOTS)
 	self:ScanButtons("PetActionButton", NUM_PET_ACTION_SLOTS)
 
-	for _, actionBarButton in next, _G.ActionBarButtonEventsFrame.frames do
-		hookedFrames[actionBarButton] = true
-		hooksecurefunc(actionBarButton, 'Update', UpdateHandlerForButton)
-	end
+	hooksecurefunc('ActionButton_Update', function(button)
+		return UpdateHandler('ActionButton_Update', button)
+	end)
 
 	hooksecurefunc('PetActionBar_Update', function()
 		for i = 1, NUM_PET_ACTION_SLOTS do

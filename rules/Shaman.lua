@@ -59,28 +59,31 @@ AdiButtonAuras:RegisterRules(function()
 
 	-- All totem ranks
 	local earthbindTotem        = {2484}
+	local earthElementalTotem   = {2062}
 	local diseaseCleansingTotem = {8170}
-	local fireNovaTotem         = {1535, 8498, 8499, 11314, 11315}
-	local fireResistanceTotem   = {8184, 10537, 10538}
-	local flametongueTotem      = {8227, 8249, 10526, 16387}
-	local frostResistanceTotem  = {8181, 10478, 10479}
+	local fireElementalTotem    = {2894}
+	local fireNovaTotem         = {1535, 8498, 8499, 11314, 11315, 25546, 25547}
+	local fireResistanceTotem   = {8184, 10537, 10538, 25563}
+	local flametongueTotem      = {8227, 8249, 10526, 16387, 25557}
+	local frostResistanceTotem  = {8181, 10478, 10479, 25560}
 	local graceOfAirTotem       = {8835, 10627, 25359}
 	local groundingTotem        = {8177}
-	local healingStreamTotem    = {5394, 6375, 6377, 10462, 10463}
-	local magmaTotem            = {8190, 10585, 10586, 10587}
-	local manaSpringTotem       = {5675, 10495, 10496, 10497}
-	local manaTideTotem         = {16190, 17354, 17359}
-	local natureResistanceTotem = {10595, 10600, 10601}
+	local healingStreamTotem    = {5394, 6375, 6377, 10462, 10463, 25567}
+	local magmaTotem            = {8190, 10585, 10586, 10587, 25552}
+	local manaSpringTotem       = {5675, 10495, 10496, 10497, 25570}
+	local manaTideTotem         = {16190}
+	local natureResistanceTotem = {10595, 10600, 10601, 25574}
 	local poisonCleansingTotem  = {8166}
-	local searingTotem          = {3599, 6363, 6364, 6365, 10437, 10438}
+	local searingTotem          = {3599, 6363, 6364, 6365, 10437, 10438, 25533}
 	local sentryTotem           = {6495}
-	local stoneclawTotem        = {5730, 6390, 6391, 6392, 10427, 10428}
-	local stoneskinTotem        = {8071, 8154, 8155, 10406, 10407, 10408}
-	local strengthOfEarthTotem  = {8075, 8160, 8161, 10442, 25361}
+	local stoneclawTotem        = {5730, 6390, 6391, 6392, 10427, 10428, 25525}
+	local stoneskinTotem        = {8071, 8154, 8155, 10406, 10407, 10408, 25508, 25509}
+	local strengthOfEarthTotem  = {8075, 8160, 8161, 10442, 25361, 25528}
 	local tranquilAirTotem      = {25908}
 	local tremorTotem           = {8143}
-	local windfuryTotem         = {8512, 10613, 10614}
-	local windwallTotem         = {15107, 15111, 15112}
+	local windfuryTotem         = {8512, 10613, 10614, 25585, 25587}
+	local windwallTotem         = {15107, 15111, 15112, 25577}
+	local wrathOfAirTotem       = {3738}
 
 	local flametongueWeapon = {
 		{8024, 5},
@@ -155,12 +158,30 @@ AdiButtonAuras:RegisterRules(function()
 		},
 
 		Configure {
+			'EarthElementalTotem',
+			L['Show the duration of @NAME.'],
+			earthElementalTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(earthElementalTotem[1])),
+		},
+
+		Configure {
 			'DiseaseCleansingTotem',
 			L['Show the duration of @NAME.'],
 			diseaseCleansingTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
 			BuildTotemHandler(GetSpellInfo(diseaseCleansingTotem[1])),
+		},
+
+		Configure {
+			'FireElementalTotem',
+			L['Show the duration of @NAME.'],
+			fireElementalTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(fireElementalTotem[1])),
 		},
 
 		Configure {
@@ -350,6 +371,15 @@ AdiButtonAuras:RegisterRules(function()
 			'player',
 			'PLAYER_TOTEM_UPDATE',
 			BuildTotemHandler(GetSpellInfo(windwallTotem[1])),
+		},
+
+		Configure {
+			'WrathOfAirTotem',
+			L['Show the duration of @NAME.'],
+			wrathOfAirTotem,
+			'player',
+			'PLAYER_TOTEM_UPDATE',
+			BuildTotemHandler(GetSpellInfo(wrathOfAirTotem[1])),
 		},
 
 	}

@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2018 Adirelle (adirelle@gmail.com)
+Copyright 2013-2021 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -40,12 +40,12 @@ local UnitAura = _G.UnitAura
 local UnitBuff = _G.UnitBuff
 local UnitDebuff = _G.UnitDebuff
 
---local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
+local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
 
---if LibClassicDurations then
---	LibClassicDurations:Register(addonName)
---	UnitAura = LibClassicDurations.UnitAuraWrapper
---end
+if LibClassicDurations then
+	LibClassicDurations:Register(addonName)
+	UnitAura = LibClassicDurations.UnitAuraWrapper
+end
 
 local function IsDisabled()
 	return not (addon.db and addon.db.profile.debuggingTooltip)
@@ -125,6 +125,12 @@ end
 local function AddItemRefInfo(link)
 	local id = link:match('spell:(%d+):')
 	return AddSpellInfo(_G.ItemRefTooltip, "spell", id, true)
+end
+
+local function AddConduitInfo(tooltip, conduitID, conduitRank)
+	local spellID = _G.C_Soulbinds.GetConduitSpellID(conduitID, conduitRank)
+	tooltip:AddLine(' ')
+	tooltip:AddDoubleLine('Conduit spell id:', spellID)
 end
 
 local proto = getmetatable(GameTooltip).__index

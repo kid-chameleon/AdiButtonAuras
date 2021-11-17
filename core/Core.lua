@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2018 Adirelle (adirelle@gmail.com)
+Copyright 2013-2021 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -319,9 +319,11 @@ function addon:Initialize()
 	self:ScanButtons("StanceButton", NUM_STANCE_SLOTS)
 	self:ScanButtons("PetActionButton", NUM_PET_ACTION_SLOTS)
 
-	hooksecurefunc('ActionButton_Update', function(button)
-		return UpdateHandler('ActionButton_Update', button)
-	end)
+
+	for _, actionBarButton in next, _G.ActionBarButtonEventsFrame.frames do
+		hookedFrames[actionBarButton] = true
+		hooksecurefunc(actionBarButton, 'Update', UpdateHandlerForButton)
+	end
 
 	hooksecurefunc('PetActionBar_Update', function()
 		for i = 1, NUM_PET_ACTION_SLOTS do

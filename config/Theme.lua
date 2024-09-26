@@ -1,10 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-<<<<<<< HEAD
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
-=======
 Copyright 2013-2023 Adirelle (adirelle@gmail.com)
->>>>>>> upstream/master
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -28,7 +24,6 @@ local _, private = ...
 local _G = _G
 
 function private.GetThemeOptions(addon, addonName)
-
 	local unpack = _G.unpack
 	local L = addon.L
 	local Masque = addon.GetLib('Masque', true)
@@ -233,5 +228,4 @@ function private.GetThemeOptions(addon, addonName)
 			},
 		},
 	}
-
 end

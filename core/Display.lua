@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -65,19 +65,19 @@ local function Timer_Update(self)
 
 	local delay
 	if timeLeft > 3600 then
-		self:SetFormattedText("%dh", floor(timeLeft/3600))
+		self:SetFormattedText("%dh", floor(timeLeft / 3600))
 		delay = ceil(timeLeft % 3600)
 	elseif timeLeft > (self.compactTimeLeft and prefs.minMinuteSecs or prefs.minMinutes) then
-		self:SetFormattedText("%dm", floor(timeLeft/60))
+		self:SetFormattedText("%dm", floor(timeLeft / 60))
 		delay = ceil(timeLeft % 60)
 	elseif timeLeft > prefs.minMinuteSecs then
-		self:SetFormattedText("%d:%02d", floor(timeLeft/60), floor(timeLeft%60))
+		self:SetFormattedText("%d:%02d", floor(timeLeft / 60), floor(timeLeft % 60))
 		delay = ceil((timeLeft % 1) * 10) / 10
 	elseif timeLeft > prefs.maxTenth then
 		self:SetFormattedText("%d", floor(timeLeft))
 		delay = ceil((timeLeft % 1) * 10) / 10
 	else
-		self:SetFormattedText("%.1f", floor(timeLeft*10)/10)
+		self:SetFormattedText("%.1f", floor(timeLeft * 10) / 10)
 		delay = 0.1
 	end
 
@@ -106,21 +106,21 @@ end
 
 function overlayPrototype:InitializeDisplay()
 	local options = addon.db.profile
-	self:SetFrameLevel(self.button.cooldown:GetFrameLevel()+1)
-	self.parentCount = _G[self.button:GetName().."Count"]
+	self:SetFrameLevel(self.button.cooldown:GetFrameLevel() + 1)
+	self.parentCount = _G[self.button:GetName() .. "Count"]
 
-	local highlight = self:CreateTexture(self:GetName().."Highlight", "BACKGROUND")
+	local highlight = self:CreateTexture(self:GetName() .. "Highlight", "BACKGROUND")
 	highlight:SetAllPoints(self)
 	highlight:Hide()
 	self.Highlight = highlight
 
-	local overlay = self:CreateTexture(self:GetName().."Overlay", "BACKGROUND")
+	local overlay = self:CreateTexture(self:GetName() .. "Overlay", "BACKGROUND")
 	overlay:SetColorTexture(0.4, 0.4, 0.4, 1)
 	overlay:SetAllPoints(self)
 	overlay:Hide()
 	self.Overlay = overlay
 
-	local timer = self:CreateFontString(self:GetName().."Timer", "OVERLAY")
+	local timer = self:CreateFontString(self:GetName() .. "Timer", "OVERLAY")
 	timer:SetFont(fontFile, fontSize, fontFlag)
 	timer:SetPoint(options.textPosition .. "LEFT", options.textXOffset, options.textYOffset)
 	timer:SetPoint(options.textPosition .. "RIGHT", -options.textXOffset, options.textYOffset)
@@ -131,7 +131,7 @@ function overlayPrototype:InitializeDisplay()
 	hooksecurefunc(timer, "Hide", Text_OnShowHide)
 	self.Timer = timer
 
-	local count = self:CreateFontString(self:GetName().."Count", "OVERLAY")
+	local count = self:CreateFontString(self:GetName() .. "Count", "OVERLAY")
 	count:SetFont(fontFile, fontSize, fontFlag)
 	count:SetPoint(options.textPosition .. "LEFT", options.textXOffset, options.textYOffset)
 	count:SetPoint(options.textPosition .. "RIGHT", -options.textXOffset, options.textYOffset)
@@ -199,7 +199,7 @@ if Masque then
 
 	-- Provide a fake background to Masque, to avoid hiding the underlying button
 	local NOOP = function() end
-	local fakeBackground = setmetatable({}, { __index = function() return NOOP end})
+	local fakeBackground = setmetatable({}, { __index = function() return NOOP end })
 
 	local DefaultInitializeDisplay = overlayPrototype.InitializeDisplay
 	overlayPrototype.InitializeDisplay = function(button)
@@ -231,6 +231,7 @@ if Masque then
 		self:UnregisterEvent(event)
 		self[event] = nil
 	end
+
 	addon:RegisterEvent('PLAYER_LOGIN')
 end
 
@@ -352,7 +353,7 @@ function overlayPrototype:ApplyHint()
 		self:ApplyFlash()
 		return self:HideHint()
 	end
-	if self:ShouldShowHint("show")  then
+	if self:ShouldShowHint("show") then
 		return self:ShowHint()
 	end
 	self:HideHint()
@@ -378,6 +379,7 @@ function overlayPrototype:PLAYER_REGEN_ENABLED(event)
 	self:ApplyHint()
 	self:ApplyFlash()
 end
+
 overlayPrototype.PLAYER_REGEN_DISABLED = overlayPrototype.PLAYER_REGEN_ENABLED
 
 -- Use LibButtonGlow-1.0 for flashing animation
@@ -443,9 +445,9 @@ end
 
 -- Another overlay, for suggestion
 overlayPrototype.ShowHint, overlayPrototype.HideHint = CreateOverlayFactory(
-	-- create
+-- create
 	function(serial)
-		local overlay = CreateFrame("Frame", addonName.."Hint"..serial)
+		local overlay = CreateFrame("Frame", addonName .. "Hint" .. serial)
 		overlay:SetAlpha(0.8)
 
 		local tex = overlay:CreateTexture("OVERLAY")
@@ -472,6 +474,6 @@ overlayPrototype.ShowHint, overlayPrototype.HideHint = CreateOverlayFactory(
 		overlay:SetParent(overlay.owner)
 		overlay:SetPoint("CENTER")
 		local w, h = overlay.owner:GetSize()
-		overlay:SetSize(w*1.5, h*1.5)
+		overlay:SetSize(w * 1.5, h * 1.5)
 	end
 )

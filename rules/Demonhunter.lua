@@ -21,22 +21,12 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('DRUID') then return end
+if not addon.isClass('DEMONHUNTER') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding druid rules')
+	Debug('Rules', 'Adding demonhunter rules')
 
 	return {
-		ImportPlayerSpells { 'DRUID' },
-
-		ShowPower {
-			{
-				1079, -- Rip
-				22568, -- Ferocious Bite
-				22570, -- Maim
-				285381, -- Primal Wrath (Feral)
-			},
-			'ComboPoints'
-		},
+		ImportPlayerSpells { 'DEMONHUNTER' },
 	}
 end)

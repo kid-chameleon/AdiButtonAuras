@@ -1,6 +1,10 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
+<<<<<<< HEAD
 Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+=======
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
+>>>>>>> upstream/master
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -27,12 +31,12 @@ function private.GetDebugOptions(addon, addonName)
 
 	local floor = _G.floor
 	local format = _G.format
-	local GetAddOnMetadata = _G.GetAddOnMetadata
+	local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 	local GetCVarBool = _G.GetCVarBool
 	local GetItemIcon = _G.GetItemIcon
 	local GetItemInfo = _G.GetItemInfo
-	local GetSpellInfo = _G.GetSpellInfo
-	local IsAddOnLoaded = _G.IsAddOnLoaded
+	local GetSpellInfo = C_Spell.GetSpellInfo
+	local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 	local pairs = _G.pairs
 	local strjoin = _G.strjoin
 	local strmatch = _G.strmatch
@@ -51,9 +55,10 @@ function private.GetDebugOptions(addon, addonName)
 		local idType, id = strmatch(idstr, "^(%w+):(%d+)$")
 		id = tonumber(id)
 		if id then
-			local _, name, icon
+			local name, icon
 			if idType == "spell" then
-				name, _, icon = GetSpellInfo(id)
+				local info = GetSpellInfo(id)
+				name, icon = info.name, info.iconID
 			elseif idType == "item" then
 				name = GetItemInfo(id)
 				icon = GetItemIcon(id)

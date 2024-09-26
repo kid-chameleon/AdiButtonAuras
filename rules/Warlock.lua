@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -23,25 +23,8 @@ local _, addon = ...
 
 if not addon.isClass('WARLOCK') then return end
 
-local darkglare = 1416161
-local felLord   = 1113433
-local infernal  = 136219
-local observer  = 538445
-
-local function BuildDemonHandler(demon)
-	return function(_, model)
-		for slot = 1, 5 do
-			local _, _, start, duration, texture = GetTotemInfo(slot)
-			if texture == demon then
-				model.expiration = start + duration
-				model.highlight = 'good'
-			end
-		end
-	end
-end
-
 AdiButtonAuras:RegisterRules(function()
-	Debug('Adding warlock rules')
+	Debug('Rules', 'Adding warlock rules')
 
 	return {
 		ImportPlayerSpells {
@@ -52,18 +35,21 @@ AdiButtonAuras:RegisterRules(function()
 			212580, -- Eye of the Observer (Demonology honor talent)
 		},
 
-		-- show Soul Shards on consumers
 		ShowPower {
 			{
-				  5740, -- Rain of Fire (Destruction)
-				 27243, -- Seed of Corruption (Affliction)
-				-- 30108, -- Unstable Affliction (Affliction)
+				5740, -- Rain of Fire (Destruction)
+				17877, -- Shadowburn (Destruction)
+				27243, -- Seed of Corruption (Affliction)
 				104316, -- Call Dreadstalkers (Demonology)
 				105174, -- Hand of Gul'dan (Demonology)
+				111898, -- Grimoire: Felguard (Demonology)
 				116858, -- Chaos Bolt (Destruction)
-				212459, -- Call Fel Lord (Demonology honor talent)
-				267211, -- Bilescourge Bombers (Demonology talent)
-				267217, -- Nether Portal (Demonology talent)
+				264119, -- Summon Vilefiend (Destruction)
+				278350, -- Vile Taint (Affliction)
+				324536, -- Malefic Rapture (Affliction)
+				342601, -- Ritual of Doom
+				385899, -- Soulburn (Destruction)
+				417537, -- Oblivion (Affliction)
 			},
 			'SoulShards',
 		},

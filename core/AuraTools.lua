@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -22,17 +22,15 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local addonName, addon = ...
 
 local _G = _G
-local CreateFrame = _G.CreateFrame
-local ipairs = _G.ipairs
+local GetAuraDataByAuraInstanceID = _G.C_UnitAuras.GetAuraDataByAuraInstanceID
+local GetAuraDataBySlot = _G.C_UnitAuras.GetAuraDataBySlot
+local IsAuraFilteredOutByInstanceID = _G.C_UnitAuras.IsAuraFilteredOutByInstanceID
 local next = _G.next
-local pairs = _G.pairs
 local rawget = _G.rawget
 local setmetatable = _G.setmetatable
-local UnitAura = _G.UnitAura
 local wipe = _G.wipe
-local math = _G.math
-local GetTime = _G.GetTime
 local type = _G.type
+local GetAuraSlots = _G.C_UnitAuras.GetAuraSlots
 local UnitExists = _G.UnitExists
 local UnitGUID = _G.UnitGUID
 
@@ -72,103 +70,97 @@ end
 -- Prototypes
 ------------------------------------------------------------------------------
 
-local function UpdateAuras(self)
-	self.__guid = UnitGUID(self.__unit)
-	if not self.__guid then
-		for k, v in pairs(self) do
-			if type(k) == "number" then
-				self[k] = del(v)
-			end
-		end
-		return
-	end
-	return self:_Update(self.__unit, self.__filter)
+local function ProcessAura(data, aura)
+	aura.count = data.applications
+	aura.dispel = data.dispelName == '' and 'Enrage' or data.dispelName
+	aura.expiration = data.expirationTime
+	aura.id = data.spellId
+
+	return aura
 end
 
-local function CheckGUID(self)
-	if self.__guid ~= UnitGUID(self.__unit) then
-		self:Update()
-	end
-	return self
-end
-
-local playerAurasMetatable = {
+local empty = {}
+local aurasMetatable = {
 	__index = {
-		Update = UpdateAuras,
-		CheckGUID = CheckGUID,
-		_Update = function(self, unit, filter)
-			local serial = GetTime()
-			for index = 1, math.huge do
-				local name, _, count, dispel, _, expiration, _, _, _, id = UnitAura(unit, index, filter)
-				if not name then
-					break
-				end
-				local aura = rawget(self, id)
-				if not aura then
-					aura = new()
-					self[id] = aura
-				end
-				aura.count = count
-				aura.dispel = dispel
-				aura.expiration = expiration
-				aura.id = id
-				aura.serial = serial
+		CheckGUID = function(self)
+			if self.__guid ~= UnitGUID(self.__unit) then
+				self:Update()
 			end
-			for id, aura in pairs(self) do
-				if type(id) == "number" and aura.serial ~= serial then
-					self[id] = del(aura)
-				end
-			end
+
 			return self
 		end,
-		GetById = function(self, id)
-			return rawget(self, id)
-		end,
-	}
-}
+		Update = function(self, info)
+			self.__guid = UnitGUID(self.__unit)
 
-local allAurasMetatable = {
-	__index = {
-		Update = UpdateAuras,
-		CheckGUID = CheckGUID,
-		_Update = function(self, unit, filter)
-			for index = 1, math.huge do
-				local name, _, count, dispel, _, expiration, _, canRemove, _, id = UnitAura(unit, index, filter)
-				if not name then
-					for i = index, #self do
-						self[i] = del(rawget(self, i))
+			if not self.__guid then
+				for k, v in next, self do
+					if type(k) == 'number' then
+						self[k] = del(v)
 					end
-					return
 				end
-				local aura = rawget(self, index)
-				if not aura then
-					aura = new()
-					self[index] = aura
-				end
-				if canRemove and dispel == "" then -- TODO: check bleeds
-					dispel = "Enrage"
-				end
-				aura.count = count
-				aura.dispel = dispel
-				aura.expiration = expiration
-				aura.id = id
+
+				return
 			end
-			return self
+
+			if not info or info.isFullUpdate then
+				self:FullUpdate(self.__unit, self.__filter)
+			else
+				if type(info) ~= 'table' then print('Unexpected info', info) end
+				self:IncrementalUpdate(self.__unit, self.__filter, info)
+			end
+		end,
+		FullUpdate = function(self, unit, filter)
+			for k, v in next, self do
+				if type(k) == 'number' then
+					self[k] = del(v)
+				end
+			end
+
+			local slots = { GetAuraSlots(unit, filter) }
+			for i = 2, #slots do
+				local data = GetAuraDataBySlot(unit, slots[i])
+
+				self[data.auraInstanceID] = ProcessAura(data, new())
+			end
+		end,
+		IncrementalUpdate = function(self, unit, filter, info)
+			for _, data in next, info.addedAuras or empty do
+				if not IsAuraFilteredOutByInstanceID(unit, data.auraInstanceID, filter) then
+					self[data.auraInstanceID] = ProcessAura(data, new())
+				end
+			end
+
+			for _, auraInstanceID in next, info.updatedAuraInstanceIDs or empty do
+				if not IsAuraFilteredOutByInstanceID(unit, auraInstanceID, filter) then
+					self[auraInstanceID] = ProcessAura(
+						GetAuraDataByAuraInstanceID(unit, auraInstanceID),
+						rawget(self, auraInstanceID) or new()
+					)
+				end
+			end
+
+			for _, auraInstaceID in next, info.removedAuraInstanceIDs or empty do
+				local aura = rawget(self, auraInstaceID)
+
+				if aura then
+					self[auraInstaceID] = del(aura)
+				end
+			end
 		end,
 		GetById = function(self, id)
-			for _, aura in ipairs(self) do
-				if aura.id == id then
-					return aura
+			for k, v in next, self do
+				if type(k) == 'number' and v.id == id then
+					return v
 				end
 			end
 		end,
 	}
 }
 
-local function UpdateUnit(self)
-	for _, auras in pairs(self) do
-		if type(auras) == "table" then
-			auras:Update()
+local function UpdateUnit(self, info)
+	for _, auras in next, self do
+		if type(auras) == 'table' then
+			auras:Update(info)
 		end
 	end
 end
@@ -176,19 +168,19 @@ end
 local mts = {
 	PlayerBuff = {
 		filter = 'HELPFUL PLAYER',
-		metatable = playerAurasMetatable
+		metatable = aurasMetatable
 	},
 	PlayerDebuff = {
 		filter = 'HARMFUL PLAYER',
-		metatable = playerAurasMetatable
+		metatable = aurasMetatable
 	},
 	Buff = {
 		filter = 'HELPFUL',
-		metatable = allAurasMetatable
+		metatable = aurasMetatable
 	},
 	Debuff = {
 		filter = 'HARMFUL',
-		metatable = allAurasMetatable
+		metatable = aurasMetatable
 	},
 }
 
@@ -219,20 +211,20 @@ local unitMetatable = {
 local cache = setmetatable({}, {
 	__index = function(self, unit)
 		Debug('Spawning cache for', unit)
-		local unitAuras = setmetatable({__unit = unit}, unitMetatable)
+		local unitAuras = setmetatable({ __unit = unit }, unitMetatable)
 		self[unit] = unitAuras
 		return unitAuras
 	end
 })
 
-local eventFrame = CreateFrame("Frame")
-eventFrame:SetScript('OnEvent', function(self, event, unit)
+local eventFrame = _G.CreateFrame('Frame')
+eventFrame:SetScript('OnEvent', function(self, event, unit, info)
 	if event == 'UNIT_AURA' then
 		if rawget(cache, unit) then
-			cache[unit]:Update()
+			cache[unit]:Update(info)
 		end
 	elseif event == 'PLAYER_REGEN_ENABLED' then
-		wipe(cache)
+		wipe(cache) -- TODO: why?
 	end
 end)
 eventFrame:RegisterEvent('UNIT_AURA')
@@ -256,7 +248,7 @@ local function NOP() end
 local getters = {}
 local iterators = {}
 
-for key in pairs(mts) do
+for key in next, mts do
 	getters[key] = function(unit, id)
 		if unit and UnitExists(unit) then
 			local aura = cache[unit][key]:CheckGUID():GetById(id)
@@ -292,11 +284,11 @@ addon.AuraTools = {
 		return iterators[parsedFilter[filter]](unit)
 	end
 }
-for suffix, getter in pairs(getters) do
-	addon.AuraTools["Get"..suffix] = getter
+for suffix, getter in next, getters do
+	addon.AuraTools["Get" .. suffix] = getter
 end
-for suffix, iterator in pairs(iterators) do
-	addon.AuraTools["Iterate"..suffix.."s"] = iterator
+for suffix, iterator in next, iterators do
+	addon.AuraTools["Iterate" .. suffix .. "s"] = iterator
 end
 
 ------------------------------------------------------------------------------

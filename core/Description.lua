@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -21,34 +21,34 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local addonName, addon = ...
 
-local _G = _G
-local format = _G.format
-local GetSpellInfo = _G.GetSpellInfo
-local gsub = _G.gsub
-local tostring = _G.tostring
-local type = _G.type
-local unpack = _G.unpack
+local _G               = _G
+local format           = _G.format
+local GetSpellName     = C_Spell.GetSpellName
+local gsub             = _G.gsub
+local tostring         = _G.tostring
+local type             = _G.type
+local unpack           = _G.unpack
 
-local L            = addon.L
-local getkeys      = addon.getkeys
-local ucfirst      = addon.ucfirst
+local L                = addon.L
+local getkeys          = addon.getkeys
+local ucfirst          = addon.ucfirst
 
-local LibPlayerSpells = addon.GetLib('LibPlayerSpells-1.0')
+local LibPlayerSpells  = addon.GetLib('LibPlayerSpells-1.0')
 
-local filterDescs = {
+local filterDescs      = {
 	["HELPFUL"] = L['the buff'],
 	["HARMFUL"] = L['the debuff'],
 	["HELPFUL PLAYER"] = L['your buff'],
 	["HARMFUL PLAYER"] = L['your debuff'],
 }
-local tokenDescs = {
+local tokenDescs       = {
 	player = L['yourself'],
 	pet    = L['your pet'],
 	ally   = L['the targeted ally'],
 	enemy  = L['the targeted enemy'],
 	group  = L['the group members'],
 }
-local highlightDescs = {
+local highlightDescs   = {
 	flash   = L['flash'],
 	good    = L['show the "good" border'],
 	bad     = L['show the "bad" border'],
@@ -75,7 +75,7 @@ end
 
 local function DescribeAllSpells(id, ...)
 	if id ~= nil then
-		local name = type(id) == "number" and GetSpellInfo(id) or tostring(id)
+		local name = type(id) == "number" and GetSpellName(id) or tostring(id)
 		return name, DescribeAllSpells(...)
 	end
 end
@@ -95,7 +95,7 @@ end
 local function DescribeLPSSource(category)
 	if category then
 		local _, interface, rev = LibPlayerSpells:GetVersionInfo(category)
-		return format("LPS-%s-%d.%d.%d-%d", category, interface/10000, (interface/100)%100, interface%100, rev)
+		return format("LPS-%s-%d.%d.%d-%d", category, interface / 10000, (interface / 100) % 100, interface % 100, rev)
 	end
 end
 

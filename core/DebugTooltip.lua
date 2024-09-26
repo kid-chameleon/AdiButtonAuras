@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -22,23 +22,19 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local addonName, addon = ...
 
 local _G = _G
-local GameTooltip = _G.GameTooltip
+local C_UnitAuras = _G.C_UnitAuras
+local Enum = _G.Enum
+local BreakUpLargeNumbers = _G.BreakUpLargeNumbers
 local GetActionInfo = _G.GetActionInfo
+local GetActionText = _G.GetActionText
 local GetItemInfo = _G.GetItemInfo
 local GetItemSpell = _G.GetItemSpell
 local GetMacroInfo = _G.GetMacroInfo
 local GetMacroItem = _G.GetMacroItem
 local GetMacroSpell = _G.GetMacroSpell
-local getmetatable = _G.getmetatable
 local GetPetActionInfo = _G.GetPetActionInfo
-local GetSpellBookItemName = _G.GetSpellBookItemName
-local GetSpellInfo = _G.GetSpellInfo
-local GetTalentInfoByID = _G.GetTalentInfoByID
-local hooksecurefunc = _G.hooksecurefunc
 local select = _G.select
-local UnitAura = _G.UnitAura
-local UnitBuff = _G.UnitBuff
-local UnitDebuff = _G.UnitDebuff
+local TooltipDataProcessor = _G.TooltipDataProcessor
 
 local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
 
@@ -52,20 +48,16 @@ local function IsDisabled()
 end
 
 local function AddSpellInfo(tooltip, source, id, addEmptyLine)
-	if not id or IsDisabled() then return end
-	local name, _, _, _, _, _, spellId = GetSpellInfo(id)
-	if not name then return end
+	if not id or IsDisabled() or tooltip:IsForbidden() then return end
+
+	local spell = C_Spell.GetSpellInfo(id)
+	if not spell then return end
 
 	if addEmptyLine then
 		tooltip:AddLine(" ")
 	end
 
-	tooltip:AddDoubleLine("Spell id ("..source.."):", spellId)
-	local resolvedName, _, _, _, _, _, resolvedId = GetSpellInfo(name)
-	if resolvedName and resolvedId ~= spellId then
-		tooltip:AddDoubleLine("Actual spell name:", resolvedName)
-		tooltip:AddDoubleLine("Actual spell id:", resolvedId)
-	end
+	tooltip:AddDoubleLine("Spell id (" .. source .. "):", BreakUpLargeNumbers(spell.spellID))
 	tooltip:Show()
 end
 
@@ -76,9 +68,9 @@ local function AddItemInfo(tooltip, id, addEmptyLine)
 	if addEmptyLine then
 		tooltip:AddLine(" ")
 	end
-	tooltip:AddDoubleLine("Item id:", link:match('item:(%d+)'))
+	tooltip:AddDoubleLine("Item id:", BreakUpLargeNumbers(link:match('item:(%d+)')))
 	tooltip:Show()
-	return AddSpellInfo(tooltip, "item", GetItemSpell(link))
+	return AddSpellInfo(tooltip, "item", GetItemSpell(link), false)
 end
 
 local function AddMacroInfo(tooltip, source, index)
@@ -95,7 +87,8 @@ local function AddActionInfo(tooltip, slot)
 	if actionType == "spell" then
 		return AddSpellInfo(tooltip, "action", id, true)
 	elseif actionType == "macro" then
-		return AddMacroInfo(tooltip, "action", id)
+		-- this might return wrong info if macro names are not unique
+		return AddMacroInfo(tooltip, "macro", GetActionText(slot))
 	elseif actionType == "item" then
 		return AddItemInfo(tooltip, id, true)
 	end
@@ -108,38 +101,61 @@ local function AddPetActionInfo(tooltip, slot)
 	return AddSpellInfo(tooltip, "spell", id, true)
 end
 
-local function AddAuraInfo(func, tooltip, ...)
-	return AddSpellInfo(tooltip, "aura", select(10, func(...)), true)
-end
+local spellIdGetters = {
+	GetUnitAura = function(...)
+		local data = C_UnitAuras.GetAuraDataByIndex(unpack(...))
+		return data and data.spellId
+	end,
+	GetUnitBuff = function(...)
+		local data = C_UnitAuras.GetBuffDataByIndex(unpack(...))
+		return data and data.spellId
+	end,
+	GetUnitDebuff = function(...)
+		local data = C_UnitAuras.GetDebuffDataByIndex(unpack(...))
+		return data and data.spellId
+	end,
+	GetUnitBuffByAuraInstanceID = function(...)
+		local data = C_UnitAuras.GetAuraDataByAuraInstanceID(unpack(...))
+		return data and data.spellId
+	end,
+	GetUnitDebuffByAuraInstanceID = function(...)
+		local data = C_UnitAuras.GetAuraDataByAuraInstanceID(unpack(...))
+		return data and data.spellId
+	end,
+}
 
-local function AddSpellbookInfo(tooltip, slot, bookType)
-	local _, _, id = GetSpellBookItemName(slot, bookType)
-	return AddSpellInfo(tooltip, "spellbook", id, true)
-end
+local sources = {
+	GetAction = 'action',
+	GetArtifactPowerByID = 'artifact',
+	GetAzeritePower = 'azerite',
+	GetConduit = 'conduit',
+	GetPvpTalent = 'pvp talent',
+	GetSpellBookItem = 'spellbook',
+	GetTraitEntry = 'talent',
+}
 
-local function AddTalentInfo(tooltip, talentId)
-	local _, _, _, _, _, spellId = GetTalentInfoByID(talentId)
-	return AddSpellInfo(tooltip, "talent", spellId, true)
-end
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
+	AddItemInfo(tooltip, data.id, true)
+end)
 
-local function AddItemRefInfo(link)
-	local id = link:match('spell:(%d+):')
-	return AddSpellInfo(_G.ItemRefTooltip, "spell", id, true)
-end
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Macro, function(tooltip, data)
+	AddActionInfo(tooltip, unpack(tooltip.processingInfo.getterArgs))
+end)
 
-local function AddConduitInfo(tooltip, conduitID, conduitRank)
-	local spellID = _G.C_Soulbinds.GetConduitSpellID(conduitID, conduitRank)
-	tooltip:AddLine(' ')
-	tooltip:AddDoubleLine('Conduit spell id:', spellID)
-end
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.PetAction, function(tooltip, data)
+	AddPetActionInfo(tooltip, unpack(tooltip.processingInfo.getterArgs))
+end)
 
-local proto = getmetatable(GameTooltip).__index
-hooksecurefunc(proto, "SetUnitAura", function(...) return AddAuraInfo(UnitAura, ...) end)
-hooksecurefunc(proto, "SetUnitBuff", function(...) return AddAuraInfo(UnitBuff, ...) end)
-hooksecurefunc(proto, "SetUnitDebuff", function(...) return AddAuraInfo(UnitDebuff, ...) end)
-hooksecurefunc(proto, "SetSpellByID", function(tooltip, ...) return AddSpellInfo(tooltip, "SpellByID", ...) end)
-hooksecurefunc(proto, "SetSpellBookItem", AddSpellbookInfo)
-hooksecurefunc(proto, "SetAction", AddActionInfo)
-hooksecurefunc(proto, "SetPetAction", AddPetActionInfo)
-hooksecurefunc(proto, "SetTalent", AddTalentInfo)
-hooksecurefunc("SetItemRef", AddItemRefInfo)
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, function(tooltip, data)
+	local getterName = tooltip.processingInfo and tooltip.processingInfo.getterName
+	local source = getterName and sources[getterName] or 'spell'
+
+	AddSpellInfo(tooltip, source, data.id, true)
+end)
+
+TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, function(tooltip, data)
+	local info = tooltip.processingInfo
+	local id = spellIdGetters[info.getterName](info.getterArgs)
+
+	AddSpellInfo(tooltip, 'aura', id, true)
+end)

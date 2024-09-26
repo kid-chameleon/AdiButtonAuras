@@ -21,22 +21,27 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('DRUID') then return end
+if not addon.isClass('MONK') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding druid rules')
+	Debug('Rules', 'Adding monk rules')
 
 	return {
-		ImportPlayerSpells { 'DRUID' },
+		ImportPlayerSpells { 'MONK' },
 
 		ShowPower {
 			{
-				1079, -- Rip
-				22568, -- Ferocious Bite
-				22570, -- Maim
-				285381, -- Primal Wrath (Feral)
+				113656, -- Fists of Fury (Windwalker)
+				392983, -- Strike of the Windlord (Windwalker)
 			},
-			'ComboPoints'
+			'Chi',
 		},
+
+		ShowTempPet { 123904, 63508 }, -- Invoke Xuen, the White Tiger (Windwalker)
+
+		ShowTotem { 115313, 620831 }, -- Summon Jade Serpent Statue (Mistweaver)
+		ShowTotem { 132578, 608951 }, -- Invoke Niuzao, the Black Ox (Brewmaster)
+		ShowTotem { 322118, 574571 }, -- Invoke Yu'lon, the Jade Serpent (Mistweaver)
+		ShowTotem { 325197, 877514 }, -- Invoke Chi-Ji, the Red Crane (Mistweaver)
 	}
 end)

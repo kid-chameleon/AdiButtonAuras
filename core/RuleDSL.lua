@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -19,68 +19,68 @@ You should have received a copy of the GNU General Public License
 along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 --]]
 
-local addonName, addon = ...
+local addonName, addon     = ...
 
-local _G = _G
-local bit = _G.bit
-local error = _G.error
-local floor = _G.floor
-local format = _G.format
-local GetItemInfo = _G.GetItemInfo
-local GetSpellInfo = _G.GetSpellInfo
-local GetSpellLink = _G.GetSpellLink
-local GetTime = _G.GetTime
+local _G                   = _G
+local bit                  = _G.bit
+local error                = _G.error
+local floor                = _G.floor
+local format               = _G.format
+local GetItemInfo          = _G.GetItemInfo
+local GetTime              = _G.GetTime
 local GetWeaponEnchantInfo = _G.GetWeaponEnchantInfo
-local gsub = _G.gsub
-local ipairs = _G.ipairs
-local math = _G.math
-local next = _G.next
-local pairs = _G.pairs
-local PowerType = _G.Enum.PowerType
-local select = _G.select
-local setfenv = _G.setfenv
-local strjoin = _G.strjoin
-local strmatch = _G.strmatch
-local tinsert = _G.tinsert
-local tonumber = _G.tonumber
-local tostring = _G.tostring
-local type = _G.type
-local UnitClass = _G.UnitClass
-local UnitHealth = _G.UnitHealth
-local UnitHealthMax = _G.UnitHealthMax
-local UnitPower = _G.UnitPower
-local UnitPowerMax = _G.UnitPowerMax
-local unpack = _G.unpack
-local wipe = _G.wipe
-local xpcall = _G.xpcall
-local geterrorhandler = _G.geterrorhandler
+local GetSpellLink         = C_Spell.GetSpellLink
+local GetSpellName         = C_Spell.GetSpellName
+local gsub                 = _G.gsub
+local ipairs               = _G.ipairs
+local math                 = _G.math
+local next                 = _G.next
+local pairs                = _G.pairs
+local PowerType            = _G.Enum.PowerType
+local select               = _G.select
+local setfenv              = _G.setfenv
+local strjoin              = _G.strjoin
+local strmatch             = _G.strmatch
+local tinsert              = _G.tinsert
+local tonumber             = _G.tonumber
+local tostring             = _G.tostring
+local type                 = _G.type
+local UnitClass            = _G.UnitClass
+local UnitHealth           = _G.UnitHealth
+local UnitHealthMax        = _G.UnitHealthMax
+local UnitPower            = _G.UnitPower
+local UnitPowerMax         = _G.UnitPowerMax
+local unpack               = _G.unpack
+local wipe                 = _G.wipe
+local xpcall               = _G.xpcall
+local geterrorhandler      = _G.geterrorhandler
 
-local getkeys      = addon.getkeys
-local ucfirst      = addon.ucfirst
-local Do           = addon.Do
-local ConcatLists  = addon.ConcatLists
-local FlattenList  = addon.FlattenList
-local AsList       = addon.AsList
-local AsSet        = addon.AsSet
-local MergeSets    = addon.MergeSets
-local BuildKey     = addon.BuildKey
+local getkeys              = addon.getkeys
+local ucfirst              = addon.ucfirst
+local Do                   = addon.Do
+local ConcatLists          = addon.ConcatLists
+local FlattenList          = addon.FlattenList
+local AsList               = addon.AsList
+local AsSet                = addon.AsSet
+local MergeSets            = addon.MergeSets
+local BuildKey             = addon.BuildKey
 
-local DescribeHighlight = addon.DescribeHighlight
-local DescribeFilter    = addon.DescribeFilter
-local DescribeAllTokens = addon.DescribeAllTokens
-local DescribeAllSpells = addon.DescribeAllSpells
-local BuildDesc         = addon.BuildDesc
-local DescribeLPSSource = addon.DescribeLPSSource
+local DescribeHighlight    = addon.DescribeHighlight
+local DescribeFilter       = addon.DescribeFilter
+local DescribeAllTokens    = addon.DescribeAllTokens
+local DescribeAllSpells    = addon.DescribeAllSpells
+local BuildDesc            = addon.BuildDesc
+local DescribeLPSSource    = addon.DescribeLPSSource
 
-local GetPlayerBuff = addon.AuraTools.GetPlayerBuff
-local GetPlayerDebuff = addon.AuraTools.GetPlayerDebuff
+local GetPlayerBuff        = addon.AuraTools.GetPlayerBuff
+local GetPlayerDebuff      = addon.AuraTools.GetPlayerDebuff
 
-local L = addon.L
+local L                    = addon.L
 
-local LibPlayerSpells = addon.GetLib('LibPlayerSpells-1.0')
-local LibSpellbook = addon.GetLib('LibSpellbook-1.0')
+local LibPlayerSpells      = addon.GetLib('LibPlayerSpells-1.0')
+local LibSpellbook         = addon.GetLib('LibSpellbook-1.0')
 
-local PLAYER_CLASS = select(2, UnitClass("player"))
+local PLAYER_CLASS         = select(2, UnitClass("player"))
 
 -- Local debug with dedicated prefix
 local function Debug(...) return addon.Debug('|cffffff00Rules:|r', ...) end
@@ -95,18 +95,18 @@ local descriptions = addon.descriptions
 local function SpellOrItemId(value, callLevel)
 	local spellId = tonumber(type(value) == "string" and strmatch(value, "spell:(%d+)") or value)
 	if spellId then
-		local name = GetSpellInfo(spellId)
+		local name = GetSpellName(spellId)
 		if not name then
-			error(format("Invalid spell identifier: %s", tostring(value)), callLevel+1)
+			error(format("Invalid spell identifier: %s", tostring(value)), callLevel + 1)
 		end
-		return format("spell:%d", spellId), "spell "..(GetSpellLink(spellId) or spellId), name, "spell", spellId
+		return format("spell:%d", spellId), "spell " .. (GetSpellLink(spellId) or spellId), name, "spell", spellId
 	end
 	local itemId = tonumber(strmatch(tostring(value), "item:(%d+)"))
 	if itemId then
 		local name, link = GetItemInfo(itemId)
-		return format("item:%d", itemId), link and ("item "..tostring(link)) or value, name or value, "item"
+		return format("item:%d", itemId), link and ("item " .. tostring(link)) or value, name or value, "item"
 	end
-	error(format("Invalid spell or item identifier: %s", tostring(value)), callLevel+1)
+	error(format("Invalid spell or item identifier: %s", tostring(value)), callLevel + 1)
 end
 
 local function CheckAvailability(info, spellId, providers)
@@ -120,7 +120,7 @@ local function CheckAvailability(info, spellId, providers)
 			return true
 		end
 	end
-	Debug(info..', no providers found: ', unpack(providers))
+	Debug(info .. ', no providers found: ', unpack(providers))
 	return false
 end
 
@@ -130,7 +130,7 @@ local function _AddRuleFor(key, desc, spell, units, events, handlers, providers,
 		return
 	end
 	if key then
-		key = id..':'..key
+		key = id .. ':' .. key
 		desc = gsub(desc or "", "@NAME", name)
 		descriptions[key] = ucfirst(desc)
 	end
@@ -161,22 +161,22 @@ end
 local function CheckRuleArgs(units, events, handlers, providers, callLevel)
 	local numUnits, numEvents
 
-	units, numUnits = AsSet(units, "string", callLevel+1)
+	units, numUnits = AsSet(units, "string", callLevel + 1)
 	if numUnits == 0 then
-		error("Empty unit list", callLevel+1)
+		error("Empty unit list", callLevel + 1)
 	end
 
-	events, numEvents = AsSet(events, "string", callLevel+1)
+	events, numEvents = AsSet(events, "string", callLevel + 1)
 	if numEvents == 0 then
-		error("Empty event list", callLevel+1)
+		error("Empty event list", callLevel + 1)
 	end
 
-	handlers = AsList(handlers, "function", callLevel+1)
+	handlers = AsList(handlers, "function", callLevel + 1)
 	if #handlers == 0 then
-		error("Empty handler list", callLevel+1)
+		error("Empty handler list", callLevel + 1)
 	end
 
-	providers = providers and AsList(providers, "number", callLevel+1) or nil
+	providers = providers and AsList(providers, "number", callLevel + 1) or nil
 
 	return units, events, handlers, providers
 end
@@ -190,13 +190,13 @@ local function Configure(key, desc, spells, units, events, handlers, providers, 
 	callLevel = callLevel or 1
 	spells = AsList(spells)
 	if #spells == 0 then
-		error("Empty spell list", callLevel+1)
+		error("Empty spell list", callLevel + 1)
 	end
-	units, events, handlers, providers = CheckRuleArgs(units, events, handlers, providers, callLevel+1)
+	units, events, handlers, providers = CheckRuleArgs(units, events, handlers, providers, callLevel + 1)
 	local builders = {}
 	for _, spell in ipairs(spells) do
 		tinsert(builders, function()
-			_AddRuleFor(key, desc, spell, units, events, handlers, providers, callLevel+1)
+			_AddRuleFor(key, desc, spell, units, events, handlers, providers, callLevel + 1)
 		end)
 	end
 	return #builders == 1 and builders[1] or builders
@@ -265,9 +265,9 @@ end
 local function BuildAuraHandler_Longest(filter, highlight, token, buffs, callLevel)
 	callLevel = callLevel or 1
 	local numBuffs
-	buffs, numBuffs = AsSet(buffs, "number", callLevel+1)
+	buffs, numBuffs = AsSet(buffs, "number", callLevel + 1)
 	if numBuffs == 1 then
-		return BuildAuraHandler_Single(filter, highlight, token, next(buffs), callLevel+1)
+		return BuildAuraHandler_Single(filter, highlight, token, next(buffs), callLevel + 1)
 	end
 	local IterateAuras = addon.GetAuraIterator(filter)
 	local Show = GetHighlightHandler(highlight)
@@ -288,9 +288,9 @@ end
 local function BuildAuraHandler_FirstOf(filter, highlight, token, buffs, callLevel)
 	callLevel = callLevel or 1
 	local numBuffs
-	buffs, numBuffs = AsSet(buffs, "number", callLevel+1)
+	buffs, numBuffs = AsSet(buffs, "number", callLevel + 1)
 	if numBuffs == 1 then
-		return BuildAuraHandler_Single(filter, highlight, token, next(buffs), callLevel+1)
+		return BuildAuraHandler_Single(filter, highlight, token, next(buffs), callLevel + 1)
 	end
 	local IterateAuras = addon.GetAuraIterator(filter)
 	local Show = GetHighlightHandler(highlight)
@@ -321,16 +321,66 @@ local function BuildDispelHandler(filter, highlight, token, dispellable, callLev
 	end
 end
 
-local function BuildWeaponBuffHandler(enchantId)
+local function BuildTemporaryPetHandler(guid, highlight)
 	return function(_, model)
-		local mainHandEnchanted, mainHandTimeLeft, _, mainHandId, offHandEnchanted, offHandTimeLeft, _, offHandId = GetWeaponEnchantInfo()
-		if mainHandEnchanted and mainHandId == enchantId then
-			model.expiration = GetTime() + mainHandTimeLeft / 1000
-			model.highlight = 'good'
+		local pet = UnitGUID('pet')
+
+		if pet and pet:match('%-' .. guid .. '%-') then
+			local remaining = GetPetTimeRemaining()
+
+			if remaining then
+				model.expiration = GetTime() + remaining / 1000
+				model.highlight = highlight
+
+				return true
+			end
 		end
-		if offHandEnchanted and offHandId == enchantId then
-			model.expiration = GetTime() + offHandTimeLeft / 1000
-			model.highlight = 'good'
+	end
+end
+
+local function BuildTemporaryWeaponEnchantHandler(enchantId, highlight)
+	return function(_, model)
+		local hasMainHandEnchant, mainHandExpiration, mainHandCharges, mainHandEnchantId,
+		hasOffHandEnchant, offHandExpiration, offHandCharges, offHandEnchantId,
+		hasRangedEnchant, rangedExpiration, rangedCharges, rangedEnchantId = GetWeaponEnchantInfo()
+
+		if (enchantId == mainHandEnchantId) then
+			model.expiration = GetTime() + mainHandExpiration / 1000
+			model.count = mainHandCharges or 0
+			model.highlight = highlight
+
+			return true
+		end
+
+		if (enchantId == offHandEnchantId) then
+			model.expiration = GetTime() + offHandExpiration / 1000
+			model.count = offHandCharges or 0
+			model.highlight = highlight
+
+			return true
+		end
+
+		if (enchantId == rangedEnchantId) then
+			model.expiration = GetTime() + rangedExpiration / 1000
+			model.count = rangedCharges or 0
+			model.highlight = highlight
+
+			return true
+		end
+	end
+end
+
+local function BuildTotemHandler(totemTexture, highlight)
+	return function(_, model)
+		for slot = 1, 6 do
+			local found, name, start, duration, texture = GetTotemInfo(slot)
+
+			if found and texture == totemTexture then
+				model.expiration = start + duration
+				model.highlight = highlight
+
+				return true
+			end
 		end
 	end
 end
@@ -344,7 +394,9 @@ local function Auras(filter, highlight, unit, spells)
 	local key = BuildKey('Auras', filter, highlight, unit)
 	local desc = BuildDesc(filter, highlight, unit, '@NAME')
 	for _, spell in ipairs(AsList(spells, "number", 2)) do
-		tinsert(funcs, Configure(key, desc, spell, unit, "UNIT_AURA", BuildAuraHandler_Single(filter, highlight, unit, spell, 2), nil, 2))
+		tinsert(funcs,
+			Configure(key, desc, spell, unit, "UNIT_AURA", BuildAuraHandler_Single(filter, highlight, unit, spell, 2),
+				nil, 2))
 	end
 	return (#funcs > 1) and funcs or funcs[1]
 end
@@ -362,10 +414,12 @@ local function AuraAliases(filter, highlight, unit, spells, buffs, providers)
 	buffs = AsList(buffs or spells, "number", 3)
 	local key = BuildKey("AuraAliases", filter, highlight, unit, spells, buffs)
 	local desc = BuildDesc(filter, highlight, unit, buffs)
-	return Configure(key, desc, spells, unit, "UNIT_AURA", BuildAuraHandler_FirstOf(filter, highlight, unit, buffs, 3), providers, 3)
+	return Configure(key, desc, spells, unit, "UNIT_AURA", BuildAuraHandler_FirstOf(filter, highlight, unit, buffs, 3),
+		providers, 3)
 end
 
-local function ShowCountAndHighlight(key, spells, unit, events, handler, highlight, desc, descWhat, getValue, getMax, providers)
+local function ShowCountAndHighlight(key, spells, unit, events, handler, highlight, desc, descWhat, getValue, getMax,
+									 providers)
 	if type(handler) == "function" then
 		-- User-supplied handler
 		local wrappedHandler = function(units, model)
@@ -388,7 +442,8 @@ local function ShowCountAndHighlight(key, spells, unit, events, handler, highlig
 		model.maxCount = getMax(actualUnit)
 		return true
 	end
-	local showRule = Configure(key..'Display', format(L["Show %s."], descWhat), spells, unit, events, showHandler, providers, 4)
+	local showRule = Configure(key .. 'Display', format(L["Show %s."], descWhat), spells, unit, events, showHandler,
+		providers, 4)
 	if not handler or not highlight then
 		return showRule
 	end
@@ -400,26 +455,21 @@ local function ShowCountAndHighlight(key, spells, unit, events, handler, highlig
 	if handler == 1 then
 		desc = format(L["%s when your %s reaches its maximum."], highlightDesc, descWhat)
 		test = function(current, maxi) return current >= maxi end
-
 	elseif handler == -1 then
 		desc = format(L["%s when your %s is less than its maximum."], highlightDesc, descWhat)
 		test = function(current, maxi) return current < maxi end
-
 	elseif type(handler) ~= "number" then
-		error("Invalid handler type, expected function, number or nil, got "..type(handler), 4)
-
+		error("Invalid handler type, expected function, number or nil, got " .. type(handler), 4)
 	elseif handler < -1.0 then
 		desc = format(L["%s when your %s is below %s."], highlightDesc, descWhat, handler)
 		test = function(current) return -current > handler end
-
 	elseif handler < 0 then
-		desc = format(L["%s when your %s is less than %s."], highlightDesc, descWhat, floor(-100 * handler)..'%')
+		desc = format(L["%s when your %s is less than %s."], highlightDesc, descWhat, floor(-100 * handler) .. '%')
 		test = function(current, maxi) return -current / maxi > handler end
-
 	elseif handler < 1.0 then
-		desc = format(L["%s when your %s is greater than or equal to %s."], highlightDesc, descWhat, floor(100 * handler)..'%')
+		desc = format(L["%s when your %s is greater than or equal to %s."], highlightDesc, descWhat,
+			floor(100 * handler) .. '%')
 		test = function(current, maxi) return current / maxi >= handler end
-
 	else
 		desc = format(L["%s when your %s is greater than or equal to %s."], highlightDesc, descWhat, handler)
 		test = function(current) return current >= handler end
@@ -437,8 +487,19 @@ local function ShowCountAndHighlight(key, spells, unit, events, handler, highlig
 
 	return {
 		showRule,
-		Configure(key..'Threshold', desc, spells, unit, events, highlightHandler, providers, 4)
+		Configure(key .. 'Threshold', desc, spells, unit, events, highlightHandler, providers, 4)
 	}
+end
+
+local function ShowDispellable(spells, unit, canDispel, providers, highlight, desc)
+	local filter = unit == 'enemy' and 'HELPFUL' or 'HARMFUL'
+	local key = BuildKey('Dispel', unit, highlight)
+	local handler = BuildDispelHandler(filter, highlight, unit, AsSet(canDispel, 'string', 4))
+	highlight = highlight or 'hint'
+	desc = desc or
+	BuildDesc(filter == 'HELPFUL' and L['a buff you can dispel'] or L['a debuff you can dispel'], highlight, unit)
+
+	return Configure(key, desc, spells, unit, 'UNIT_AURA', handler, providers, 4)
 end
 
 local function ShowPower(spells, powerType, handler, highlight, providers, desc)
@@ -446,12 +507,13 @@ local function ShowPower(spells, powerType, handler, highlight, providers, desc)
 	if type(powerType) == "string" then
 		powerIndex = PowerType[powerType]
 		if not powerIndex then
-			error("Unknown power "..powerType, 3)
+			error("Unknown power " .. powerType, 3)
 		end
-		powerLoc = _G[powerType:gsub('(%S)(%u)', '%1_%2'):upper()]
+		local powerKey = powerType:gsub('(%S)(%u)', '%1_%2'):upper()
+		powerLoc = _G[powerKey] or _G['POWER_TYPE_' .. powerKey]
 		events = { "UNIT_POWER_FREQUENT", "UNIT_MAXPOWER" }
 	else
-		error("Invalid power type value, expected string, got "..type(powerType), 3)
+		error("Invalid power type value, expected string, got " .. type(powerType), 3)
 	end
 
 	local key = BuildKey("ShowPower", powerType, highlight)
@@ -537,14 +599,31 @@ local function ShowStacks(spells, aura, maxi, unit, handler, highlight, provider
 	)
 end
 
-local function ShowDispellable(spells, unit, canDispel, providers, highlight, desc)
-	local filter = unit == 'enemy' and 'HELPFUL' or 'HARMFUL'
-	local key = BuildKey('Dispel', unit, highlight)
-	local handler = BuildDispelHandler(filter, highlight, unit, AsSet(canDispel, 'string', 4))
-	highlight = highlight or 'hint'
-	desc = desc or BuildDesc(filter == 'HELPFUL' and L['a buff you can dispel'] or L['a debuff you can dispel'], highlight, unit)
+local function ShowTempPet(spells, guid, highlight, providers, description)
+	highlight = highlight or 'good'
+	description = description or L['Show the duration of @NAME']
+	local key = BuildKey('TempPet', guid, highlight)
+	local handler = BuildTemporaryPetHandler(guid, highlight)
 
-	return Configure(key, desc, spells, unit, 'UNIT_AURA', handler, providers, 4)
+	return Configure(key, description, spells, 'player', 'UNIT_PET', handler, providers, 4)
+end
+
+local function ShowTempWeaponEnchant(spells, enchant, highlight, providers, description)
+	highlight = highlight or 'good'
+	description = description or L['Show the duration of @NAME']
+	local key = BuildKey('WeaponEnchant', enchant, highlight)
+	local handler = BuildTemporaryWeaponEnchantHandler(enchant, highlight)
+
+	return Configure(key, description, spells, 'player', 'WEAPON_ENCHANT_CHANGED', handler, providers, 4)
+end
+
+local function ShowTotem(spells, totemTexture, highlight, providers, description)
+	highlight = highlight or 'good'
+	description = description or L['Show the duration of @NAME']
+	local key = BuildKey('Totem', totemTexture, highlight)
+	local handler = BuildTotemHandler(totemTexture, highlight)
+
+	return Configure(key, description, spells, 'player', 'PLAYER_TOTEM_UPDATE', handler, providers, 4)
 end
 
 local function FilterOut(spells, exclude)
@@ -593,7 +672,7 @@ do
 		WarnOnStaleData(category)
 
 		local categoryMask = LibPlayerSpells.constants[category]
-		local exceptions = AsSet({...}, "number", 3)
+		local exceptions = AsSet({ ... }, "number", 3)
 		local builders = {}
 		for buff, flags, provider, modified in LibPlayerSpells:IterateSpells(category, "AURA", "CROWD_CTRL DISPEL RAIDBUFF") do
 			local providers = provider ~= buff and FilterOut(AsList(provider, "number"), exceptions)
@@ -613,13 +692,13 @@ do
 					filter = (filter == "HARMFUL") and "HELPFUL" or "HARMFUL"
 				end
 				if band(flags, UNIQUE_AURA) == 0 and bxor(source, categoryMask) == 0 then
-					filter = filter.." PLAYER"
+					filter = filter .. " PLAYER"
 				end
 				if band(flags, IMPORTANT) ~= 0 then
 					highlight = "flash"
 				end
 				local key = BuildKey('LibPlayerSpell', provider, modified, filter, highlight, token, buff)
-				local desc = BuildDesc(filter, highlight, token, buff).." ["..DescribeLPSSource(category).."]"
+				local desc = BuildDesc(filter, highlight, token, buff) .. " [" .. DescribeLPSSource(category) .. "]"
 				local handler = BuildAuraHandler_Longest(filter, highlight, token, buff, 3)
 				tinsert(builders, Configure(key, desc, spells, token, "UNIT_AURA", handler, provider, 3))
 			end
@@ -642,9 +721,9 @@ end
 -- Base "globals"
 local baseEnv = {
 	-- Common functions and constatns
-	L            = addon.L,
-	Debug        = Debug,
-	PLAYER_CLASS = PLAYER_CLASS,
+	L                        = addon.L,
+	Debug                    = Debug,
+	PLAYER_CLASS             = PLAYER_CLASS,
 
 	-- Intended to be used un Lua
 	AddRuleFor               = AddRuleFor,
@@ -652,68 +731,71 @@ local baseEnv = {
 	BuildAuraHandler_Longest = BuildAuraHandler_Longest,
 	BuildAuraHandler_FirstOf = BuildAuraHandler_FirstOf,
 	BuildDispelHandler       = BuildDispelHandler,
-	BuildWeaponBuffHandler   = BuildWeaponBuffHandler,
+	BuildTemporaryPetHandler = BuildTemporaryPetHandler,
+	BuildTotemHandler        = BuildTotemHandler,
 
 	-- Description helpers
-	BuildDesc         = addon.BuildDesc,
-	BuildKey          = addon.BuildKey,
-	DescribeHighlight = addon.DescribeHighlight,
-	DescribeFilter    = addon.DescribeFilter,
-	DescribeAllTokens = addon.DescribeAllTokens,
-	DescribeAllSpells = addon.DescribeAllSpells,
-	DescribeLPSSource = addon.DescribeLPSSource,
+	BuildDesc                = addon.BuildDesc,
+	BuildKey                 = addon.BuildKey,
+	DescribeHighlight        = addon.DescribeHighlight,
+	DescribeFilter           = addon.DescribeFilter,
+	DescribeAllTokens        = addon.DescribeAllTokens,
+	DescribeAllSpells        = addon.DescribeAllSpells,
+	DescribeLPSSource        = addon.DescribeLPSSource,
 
 	-- Basic functions
-	Configure = WrapTableArgFunc(Configure),
-	ImportPlayerSpells = WrapTableArgFunc(ImportPlayerSpells),
-	PassiveModifier = WrapTableArgFunc(PassiveModifier),
-	ShowDispellable = WrapTableArgFunc(ShowDispellable),
-	ShowHealth = WrapTableArgFunc(ShowHealth),
-	ShowPower = WrapTableArgFunc(ShowPower),
-	ShowStacks = WrapTableArgFunc(ShowStacks),
-	ShowWeaponEnchant = WrapTableArgFunc(ShowWeaponEnchant),
-	ShowWeaponEnchantRanks = WrapTableArgFunc(ShowWeaponEnchantRanks),
+	Configure                = WrapTableArgFunc(Configure),
+	ImportPlayerSpells       = WrapTableArgFunc(ImportPlayerSpells),
+	PassiveModifier          = WrapTableArgFunc(PassiveModifier),
+	ShowDispellable          = WrapTableArgFunc(ShowDispellable),
+	ShowHealth               = WrapTableArgFunc(ShowHealth),
+	ShowPower                = WrapTableArgFunc(ShowPower),
+	ShowStacks               = WrapTableArgFunc(ShowStacks),
+	ShowTempPet              = WrapTableArgFunc(ShowTempPet),
+	ShowTempWeaponEnchant    = WrapTableArgFunc(ShowTempWeaponEnchant),
+	ShowTotem                = WrapTableArgFunc(ShowTotem),
 
 	-- High-level functions
-	SimpleDebuffs = function(spells)
+	SimpleDebuffs            = function(spells)
 		return Auras("HARMFUL PLAYER", "bad", "enemy", spells)
 	end,
 
-	SharedSimpleDebuffs = function(spells)
+	SharedSimpleDebuffs      = function(spells)
 		return Auras("HARMFUL", "bad", "enemy", spells)
 	end,
 
-	SimpleBuffs = function(spells)
+	SimpleBuffs              = function(spells)
 		return Auras("HELPFUL PLAYER", "good", "ally", spells)
 	end,
 
-	SharedSimpleBuffs = function(spells)
+	SharedSimpleBuffs        = function(spells)
 		return Auras("HELPFUL", "good", "ally", spells)
 	end,
 
-	LongestDebuffOf = function(spells, buffs)
+	LongestDebuffOf          = function(spells, buffs)
 		local key = BuildKey('LongestDebuffOf', spells, buffs)
-		local desc =  BuildDesc("HARMFUL", "bad", "enemy", buffs)
-		return Configure(key, desc, spells, "enemy", "UNIT_AURA", BuildAuraHandler_Longest("HARMFUL", "bad", "enemy", buffs or spells, 2), nil, 2)
+		local desc = BuildDesc("HARMFUL", "bad", "enemy", buffs)
+		return Configure(key, desc, spells, "enemy", "UNIT_AURA",
+			BuildAuraHandler_Longest("HARMFUL", "bad", "enemy", buffs or spells, 2), nil, 2)
 	end,
 
-	SelfBuffs = function(spells)
+	SelfBuffs                = function(spells)
 		return Auras("HELPFUL PLAYER", "good", "player", spells)
 	end,
 
-	PetBuffs = function(spells)
+	PetBuffs                 = function(spells)
 		return Auras("HELPFUL PLAYER", "good", "pet", spells)
 	end,
 
-	BuffAliases = function(args)
+	BuffAliases              = function(args)
 		return AuraAliases("HELPFUL PLAYER", "good", "ally", unpack(args))
 	end,
 
-	DebuffAliases = function(args)
+	DebuffAliases            = function(args)
 		return AuraAliases("HARMFUL PLAYER", "bad", "enemy", unpack(args))
 	end,
 
-	SelfBuffAliases = function(args)
+	SelfBuffAliases          = function(args)
 		return AuraAliases("HELPFUL PLAYER", "good", "player", unpack(args))
 	end,
 }

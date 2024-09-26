@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -61,13 +61,12 @@ function testItems:testUnknownItem()
 end
 
 for i, data in pairs {
-	{ false, true, "ally", "HELPFUL PLAYER", "good" },
+	{ false, true,  "ally",   "HELPFUL PLAYER", "good" },
 	{ false, false, "player", "HELPFUL PLAYER", "good" },
-	{ true, false, "enemy", "HARMFUL PLAYER", "bad" },
+	{ true,  false, "enemy",  "HARMFUL PLAYER", "bad" },
 } do
 	local harmful, helpful, token, filter, highlight = unpack(data)
-	testItems['testGetItemSpell'..i] = function(self)
-
+	testItems['testGetItemSpell' .. i] = function(self)
 		when(G.GetItemSpell(456)).thenAnswer("LeBuff")
 		when(G.GetItemInfo(456)).thenAnswer("LeItem", nil, nil, nil, nil, "Miscallaneous")
 
@@ -95,13 +94,12 @@ for i, data in pairs {
 end
 
 for i, data in pairs {
-	{ false, true, "ally", "HELPFUL PLAYER", "good" },
+	{ false, true,  "ally",   "HELPFUL PLAYER", "good" },
 	{ false, false, "player", "HELPFUL PLAYER", "good" },
-	{ true, false, "enemy", "HARMFUL PLAYER", "bad" },
+	{ true,  false, "enemy",  "HARMFUL PLAYER", "bad" },
 } do
 	local harmful, helpful, token, filter, highlight = unpack(data)
-	testItems['testLibItemBuffs'..i] = function(self)
-
+	testItems['testLibItemBuffs' .. i] = function(self)
 		when(LibItemBuffs:GetDatabaseVersion()).thenAnswer(8)
 
 		when(G.GetItemSpell(456)).thenAnswer(nil)

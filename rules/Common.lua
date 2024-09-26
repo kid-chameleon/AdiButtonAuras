@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -77,14 +77,14 @@ AdiButtonAuras:RegisterRules(function()
 	-- Dispels
 	--------------------------------------------------------------------------
 
-	local TARGETING = LibPlayerSpells.masks.TARGETING
-	local PERSONAL  = LibPlayerSpells.constants.PERSONAL
-	local HARMFUL   = LibPlayerSpells.constants.HARMFUL
-	local CURSE     = LibPlayerSpells.constants.CURSE
-	local DISEASE   = LibPlayerSpells.constants.DISEASE
-	local MAGIC     = LibPlayerSpells.constants.MAGIC
-	local POISON    = LibPlayerSpells.constants.POISON
-	local ENRAGE    = LibPlayerSpells.constants.ENRAGE
+	local TARGETING     = LibPlayerSpells.masks.TARGETING
+	local PERSONAL      = LibPlayerSpells.constants.PERSONAL
+	local HARMFUL       = LibPlayerSpells.constants.HARMFUL
+	local CURSE         = LibPlayerSpells.constants.CURSE
+	local DISEASE       = LibPlayerSpells.constants.DISEASE
+	local MAGIC         = LibPlayerSpells.constants.MAGIC
+	local POISON        = LibPlayerSpells.constants.POISON
+	local ENRAGE        = LibPlayerSpells.constants.ENRAGE
 	local inclusionMask = bor(LibPlayerSpells.constants[PLAYER_CLASS], LibPlayerSpells.constants.RACIAL)
 
 	for spell, flags, _, _, _, category, dispelFlags in LibPlayerSpells:IterateSpells('DISPEL') do
@@ -133,7 +133,7 @@ AdiButtonAuras:RegisterRules(function()
 		local source = DescribeLPSSource(PLAYER_CLASS)
 		tinsert(rules, Configure {
 			"Interrupt",
-			format(L["%s when %s is casting/channeling a spell that you can interrupt."].." [%s]",
+			format(L["%s when %s is casting/channeling a spell that you can interrupt."] .. " [%s]",
 				DescribeHighlight("flash"),
 				DescribeAllTokens("enemy"),
 				source

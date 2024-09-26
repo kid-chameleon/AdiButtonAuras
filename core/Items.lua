@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -30,7 +30,6 @@ local IsHelpfulItem = _G.IsHelpfulItem
 local select = _G.select
 local setmetatable = _G.setmetatable
 local tonumber = _G.tonumber
-local UnitAura = _G.UnitAura
 local tinsert = _G.tinsert
 local pairs = _G.pairs
 local type = _G.type
@@ -90,7 +89,8 @@ local function BuildItemRule(itemId, buffName, ...)
 		for i = 1, select('#', ...) do
 			local buffId = select(i, ...)
 			local key = BuildKey('item', itemId, token, filter, highlight, buffId)
-			local desc = BuildDesc(filter, highlight, token, buffId) .. format(" [LIB-%d-%s]", LIBVer, LibItemBuffs:GetDatabaseVersion())
+			local desc = BuildDesc(filter, highlight, token, buffId) ..
+			format(" [LIB-%d-%s]", LIBVer, LibItemBuffs:GetDatabaseVersion())
 			descriptions[key] = desc
 			tinsert(rule.keys, key)
 			tinsert(rule.handlers, BuildBuffIdHandler(key, token, filter, highlight, buffId))
@@ -114,7 +114,7 @@ end)
 local function DeepCopy(t)
 	if type(t) ~= "table" then return t end
 	local n = {}
-	for k,v in pairs(t) do
+	for k, v in pairs(t) do
 		if type(v) == "table" then
 			n[k] = DeepCopy(v)
 		else
@@ -124,10 +124,12 @@ local function DeepCopy(t)
 	return n
 end
 
-setmetatable(addon.rules, { __index = function(self, key)
-	if key == nil then return end
-	local rule = items[key] and DeepCopy(items[key]) or false
-	self[key] = rule
-	return rule
-end })
-setmetatable(addon.descriptions, {  __index = descriptions })
+setmetatable(addon.rules, {
+	__index = function(self, key)
+		if key == nil then return end
+		local rule = items[key] and DeepCopy(items[key]) or false
+		self[key] = rule
+		return rule
+	end
+})
+setmetatable(addon.descriptions, { __index = descriptions })

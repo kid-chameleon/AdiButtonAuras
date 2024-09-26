@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2018 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -24,19 +24,16 @@ local _, addon = ...
 if not addon.isClass('PALADIN') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Adding paladin rules')
-
-	local forbearanceDesc = BuildDesc('HARMFUL', 'bad', 'ally', 25771)
-	local hasForbearance = BuildAuraHandler_Single('HARMFUL', 'bad', 'ally', 25771)
+	Debug('Rules', 'Adding paladin rules')
 
 	return {
 		ImportPlayerSpells {
 			-- import all spells for
 			'PALADIN',
 			-- except for
-			   642, -- Divine Shield
-			  1022, -- Blessing of Protection
-			 25771, -- Forbearance
+			642, -- Divine Shield
+			1022, -- Blessing of Protection
+			25771, -- Forbearance
 		},
 
 		Configure {
@@ -45,7 +42,7 @@ AdiButtonAuras:RegisterRules(function()
 				BuildDesc('HELPFUL PLAYER', 'good', 'player', 642), -- Divine Shield
 				BuildDesc('HARMFUL', 'bad', 'player', 25771) -- Forbearance
 			),
-			642, -- Divine Shield
+			642,                                        -- Divine Shield
 			'player',
 			'UNIT_AURA',
 			(function()

@@ -1,6 +1,10 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
+<<<<<<< HEAD
 Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+=======
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
+>>>>>>> upstream/master
 All rights reserved.
 
 This file is part of AdiButtonAuras.

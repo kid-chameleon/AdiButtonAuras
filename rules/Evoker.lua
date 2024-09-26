@@ -21,22 +21,22 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('DRUID') then return end
+if not addon.isClass('EVOKER') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding druid rules')
+	Debug('Rules', 'Adding evoker rules')
 
 	return {
-		ImportPlayerSpells { 'DRUID' },
+		ImportPlayerSpells { 'EVOKER' },
 
 		ShowPower {
 			{
-				1079, -- Rip
-				22568, -- Ferocious Bite
-				22570, -- Maim
-				285381, -- Primal Wrath (Feral)
+				356995, -- Disintegrate
+				357211, -- Pyre (Devastation)
+				364343, -- Echo (Preservation)
+				395160, -- Eruption (Augmentation)
 			},
-			'ComboPoints'
+			'Essence'
 		},
 	}
 end)

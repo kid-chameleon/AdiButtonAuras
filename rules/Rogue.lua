@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -24,7 +24,7 @@ local _, addon = ...
 if not addon.isClass('ROGUE') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Adding rogue rules')
+	Debug('Rules', 'Adding rogue rules')
 
 	return {
 		ImportPlayerSpells {
@@ -38,10 +38,10 @@ AdiButtonAuras:RegisterRules(function()
 
 		ShowPower {
 			{
-				   408, -- Kidney Shot (Assassination/Subtlety)
-				  1943, -- Rupture (Assasination)
-				  2098, -- Dispatch (Outlaw)
-				 32645, -- Envenom (Assassination)
+				408, -- Kidney Shot
+				1943, -- Rupture (Assassination, Subtlety)
+				2098, -- Dispatch (Outlaw)
+				32645, -- Envenom (Assassination)
 				121411, -- Crimson Tempest (Assassination talent)
 				196819, -- Eviscerate (Subtlety)
 				195452, -- Nightblade (Subtlety)
@@ -57,7 +57,7 @@ AdiButtonAuras:RegisterRules(function()
 		-- don't show Master of Shadows (Subtlety) on Shadow Dance
 		SelfBuffAliases {
 			{
-				  1784, -- Stealth
+				1784, -- Stealth
 				115191, -- Stealth (with Subterfuge talent)
 			},
 			196980, -- Master of Shadows (Subtlety)
@@ -65,7 +65,7 @@ AdiButtonAuras:RegisterRules(function()
 
 		SelfBuffAliases {
 			{
-				  2098, -- Dispatch (Outlaw)
+				2098, -- Dispatch (Outlaw)
 				196819, -- Eviscerate (Subtlety)
 			},
 			193538, -- Alacrity

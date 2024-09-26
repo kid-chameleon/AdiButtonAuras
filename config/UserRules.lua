@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -59,7 +59,6 @@ return Configure {
 local _G = _G
 
 function private.GetUserRulesOptions(addon, addonName)
-
 	local date = _G.date
 	local format = _G.format
 	local GetBuildInfo = _G.GetBuildInfo
@@ -69,7 +68,7 @@ function private.GetUserRulesOptions(addon, addonName)
 	local pairs = _G.pairs
 	local time = _G.time
 	local wipe = _G.wipe
-	local GetAddOnMetadata = _G.GetAddOnMetadata
+	local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 	local tostring = _G.tostring
 	local type = _G.type
 	local unpack = _G.unpack
@@ -77,7 +76,7 @@ function private.GetUserRulesOptions(addon, addonName)
 	local L = addon.L
 
 	local ADDON_VERSION = tostring(GetAddOnMetadata(addonName, "Version"))
-	local PLAYER_NAME = GetUnitName("player", false).. '-'..GetRealmName()
+	local PLAYER_NAME = GetUnitName("player", false) .. '-' .. GetRealmName()
 	local PATCH_NUMBER = GetBuildInfo()
 	--@debug@
 	ADDON_VERSION = 'dev'
@@ -154,11 +153,11 @@ function private.GetUserRulesOptions(addon, addonName)
 		for key, rule in pairs(addon.db.global.userRules) do
 			local title = rule.title
 			if rule.error then
-				title = title..' |cffff0000('..L['error']..')|r'
+				title = title .. ' |cffff0000(' .. L['error'] .. ')|r'
 			elseif not rule.enabled then
-				title = title..' |cff7f7f7f('..L['disabled']..')|r'
+				title = title .. ' |cff7f7f7f(' .. L['disabled'] .. ')|r'
 			elseif not addon.isClass(rule.scope) then
-				title = title..' |cff7f7f7f('..L['inactive']..')|r'
+				title = title .. ' |cff7f7f7f(' .. L['inactive'] .. ')|r'
 			end
 			t[key] = title
 		end
@@ -243,6 +242,7 @@ function private.GetUserRulesOptions(addon, addonName)
 						values = {
 							ALL = L['None'],
 							DRUID = L['DRUID'],
+							EVOKER = L['EVOKER'],
 							HUNTER = L['HUNTER'],
 							MAGE = L['MAGE'],
 							PALADIN = L['PALADIN'],
@@ -264,7 +264,7 @@ function private.GetUserRulesOptions(addon, addonName)
 					_validation = {
 						name = function()
 							local msg = handler:Get('error')
-							return msg and ('|cffff0000Error '..msg:gsub('^[^:]+:(%d+:)', 'line %1')..'|r') or 'OK'
+							return msg and ('|cffff0000Error ' .. msg:gsub('^[^:]+:(%d+:)', 'line %1') .. '|r') or 'OK'
 						end,
 						type = 'description',
 						hidden = function()
@@ -286,5 +286,4 @@ function private.GetUserRulesOptions(addon, addonName)
 			},
 		},
 	}
-
 end

@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -23,36 +23,20 @@ local _, addon = ...
 
 if not addon.isClass('PRIEST') then return end
 
-local function BuildGuardianHandler(guardian)
-	return function(_, model)
-		for slot = 1, 5 do
-			local found, name, start, duration = GetTotemInfo(slot)
-			if found and name == guardian then
-				model.expiration = start + duration
-				model.highlight = 'good'
-				return
-			end
-		end
-	end
-end
-
 AdiButtonAuras:RegisterRules(function()
-	Debug('Adding priest rules')
-
-	local mindbender = GetSpellInfo(123040)
-	local shadowfiend = GetSpellInfo(34433)
+	Debug('Rules', 'Adding priest rules')
 
 	local hasWeakenedSoul = BuildAuraHandler_Single('HARMFUL', 'bad', 'ally', 6788) -- Weakened Soul
-	local isShielded = BuildAuraHandler_Single('HELPFUL', 'good', 'ally', 17) -- Power Word: Shield
+	local isShielded = BuildAuraHandler_Single('HELPFUL', 'good', 'ally', 17)    -- Power Word: Shield
 
 	return {
 		ImportPlayerSpells {
 			-- import all spells for
 			'PRIEST',
 			-- except for
-			    17, -- Power Word: Shield
-			   605, -- Mind Control
-			 21562, -- Power Word: Fortitude
+			17, -- Power Word: Shield
+			605, -- Mind Control
+			21562, -- Power Word: Fortitude
 			194384, -- Atonement (Discipline)
 			193223, -- Surrender to Madness (Shadow)
 			196773, -- Inner Focus (Holy honor talent)
@@ -60,8 +44,8 @@ AdiButtonAuras:RegisterRules(function()
 		},
 
 		SelfBuffAliases {
-			196762,  -- Inner Focus (Holy honor talent)
-			196773,  -- Inner Focus
+			196762, -- Inner Focus (Holy honor talent)
+			196773, -- Inner Focus
 		},
 
 		-- TODO: crowd control rules are evaluated after class rules
@@ -109,9 +93,9 @@ AdiButtonAuras:RegisterRules(function()
 		Configure {
 			'AtonementTracker',
 			format(L['Show the shortest duration and the number of group members with %s.'], GetSpellInfo(194384)), -- Atonement
-			186263, -- Shadow Mend (Discipline)
+			186263,                                                                                        -- Shadow Mend (Discipline)
 			'group',
-			{'GROUP_ROSTER_UPDATE', 'UNIT_AURA'},
+			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
 			function(units, model)
 				local count, minExpiration = 0
 				for unit in next, units.group do
@@ -138,7 +122,7 @@ AdiButtonAuras:RegisterRules(function()
 				BuildDesc('HELPFUL PLAYER', 'good', 'player', 193223), -- Surrender to Madness
 				BuildDesc('HARMFUL PLAYER', 'bad', 'player', 263406) -- Surrendered to Madness
 			),
-			193223, -- Surrender to Madness (Shadow)
+			193223,                                        -- Surrender to Madness (Shadow)
 			'player',
 			'UNIT_AURA',
 			(function()
@@ -155,7 +139,7 @@ AdiButtonAuras:RegisterRules(function()
 			L['Show the number of group members missing @NAME.'],
 			21562, -- Power Word: Fortitude
 			'group',
-			{'GROUP_ROSTER_UPDATE', 'UNIT_AURA'},
+			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
 			function(units, model)
 				local missing = 0
 				local shortest
@@ -190,7 +174,7 @@ AdiButtonAuras:RegisterRules(function()
 				BuildDesc('HARMFUL', 'bad', 'ally', 6788), -- Weakened Soul
 				BuildDesc('HELPFUL', 'good', 'ally', 17) -- Power Word: Shield
 			),
-			17, -- Power Word: Shield
+			17,                                -- Power Word: Shield
 			'ally',
 			'UNIT_AURA',
 			(function()

@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -24,13 +24,12 @@ local _, private = ...
 local _G = _G
 
 function private.GetSpellOptions(addon, addonName)
-
 	local CreateFrame = _G.CreateFrame
 	local format = _G.format
 	local GameTooltip = _G.GameTooltip
 	local GameTooltip_SetDefaultAnchor = _G.GameTooltip_SetDefaultAnchor
 	local GetItemInfo = _G.GetItemInfo
-	local GetSpellInfo = _G.GetSpellInfo
+	local GetSpellName = C_Spell.GetSpellName
 	local hooksecurefunc = _G.hooksecurefunc
 	local ipairs = _G.ipairs
 	local IsShiftKeyDown = _G.IsShiftKeyDown
@@ -49,7 +48,7 @@ function private.GetSpellOptions(addon, addonName)
 	local function wrap(str, width)
 		local a, b = str:find("%s+", width)
 		if not a then return str end
-		return str:sub(1, a-1).."\n"..wrap(str:sub(b+1), width)
+		return str:sub(1, a - 1) .. "\n" .. wrap(str:sub(b + 1), width)
 	end
 
 	------------------------------------------------------------------------------
@@ -121,7 +120,9 @@ function private.GetSpellOptions(addon, addonName)
 	local overlayMeta = { __index = overlayPrototype }
 
 	local backdrop = {
-		bgFile = [[Interface\Tooltips\UI-Tooltip-Background]], tile = true, tileSize = 16,
+		bgFile = [[Interface\Tooltips\UI-Tooltip-Background]],
+		tile = true,
+		tileSize = 16,
 		insets = { left = 0, right = 0, top = 0, bottom = 0 }
 	}
 
@@ -131,7 +132,7 @@ function private.GetSpellOptions(addon, addonName)
 		self:SetFrameStrata("HIGH")
 
 		self:SetBackdrop(backdrop)
-		self:SetBackdropBorderColor(0,0,0,0)
+		self:SetBackdropBorderColor(0, 0, 0, 0)
 
 		self:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]], "ADD")
 
@@ -160,7 +161,7 @@ function private.GetSpellOptions(addon, addonName)
 		local type_, id = self.overlay.actionType, self.overlay.actionId
 		self.conf, self.enabled, self.key = addon:GetActionConfiguration(type_, id)
 		if type_ == "spell" then
-			self.name = GetSpellInfo(id)
+			self.name = GetSpellName(id)
 		elseif type_ == "item" then
 			type_ = GetItemInfo(id)
 		end
@@ -206,7 +207,7 @@ function private.GetSpellOptions(addon, addonName)
 				GameTooltip:AddLine(L['Rules:'])
 				for i, key in ipairs(self.conf.keys) do
 					local enabled = addon.db.profile.rules[key]
-					GameTooltip:AddLine(wrap("- "..descriptions[key], 30), enabled and 0 or 1, enabled and 1 or 0, 0)
+					GameTooltip:AddLine(wrap("- " .. descriptions[key], 30), enabled and 0 or 1, enabled and 1 or 0, 0)
 				end
 			end
 			GameTooltip:AddLine(L['Shift+click to toggle.'])
@@ -231,7 +232,8 @@ function private.GetSpellOptions(addon, addonName)
 			GameTooltip:AddLine(L['AdiButtonAuras cannot handle this button.'], 0.8, 0.4, 0.0)
 		else
 			GameTooltip:AddDoubleLine(L['Status'], UNKNOWN, nil, nil, nil, 0.5, 0.5, 0.5)
-			GameTooltip:AddLine(format(L['AdiButtonAuras has no rules for this %s.'], type_ and L[type_] or L["button"]), 0.5, 0.5, 0.5)
+			GameTooltip:AddLine(format(L['AdiButtonAuras has no rules for this %s.'], type_ and L[type_] or L["button"]),
+				0.5, 0.5, 0.5)
 			if self.key then
 				GameTooltip:AddDoubleLine(L["Action 'key' for reference"], self.key, nil, nil, nil, 1, 1, 1)
 			end
@@ -249,14 +251,16 @@ function private.GetSpellOptions(addon, addonName)
 	-- The frame containing the parent overlays
 	------------------------------------------------------------------------------
 
-	local overlayParent = CreateFrame("Frame", addonName.."ConfigOverlayParent")
+	local overlayParent = CreateFrame("Frame", addonName .. "ConfigOverlayParent")
 
-	local overlays = setmetatable({}, { __index = function(self, overlay)
-		local conf = setmetatable(CreateFrame("Button", overlay:GetName().."Config", overlayParent), overlayMeta)
-		conf:Initialize(overlay)
-		self[overlay] = conf
-		return conf
-	end })
+	local overlays = setmetatable({}, {
+		__index = function(self, overlay)
+			local conf = setmetatable(CreateFrame("Button", overlay:GetName() .. "Config", overlayParent), overlayMeta)
+			conf:Initialize(overlay)
+			self[overlay] = conf
+			return conf
+		end
+	})
 
 	overlayParent:SetScript('OnShow', function()
 		for _, overlay in addon:IterateOverlays() do
@@ -294,7 +298,8 @@ function private.GetSpellOptions(addon, addonName)
 		set = 'Set',
 		args = {
 			_help = {
-				name = L["- Select a spell or item by clicking a highlighted button from your actionbars. \n- Green buttons have recognized settings and are enabled. Red buttons are recognized but disabled. \n- Darkened buttons indicate spells and items unknown to AdiButtonAuras."],
+				name = L
+				["- Select a spell or item by clicking a highlighted button from your actionbars. \n- Green buttons have recognized settings and are enabled. Red buttons are recognized but disabled. \n- Darkened buttons indicate spells and items unknown to AdiButtonAuras."],
 				type = 'description',
 				order = 1,
 			},
@@ -366,5 +371,4 @@ function private.GetSpellOptions(addon, addonName)
 			},
 		},
 	}
-
 end

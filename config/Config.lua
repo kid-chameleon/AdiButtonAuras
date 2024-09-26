@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -21,14 +21,7 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, private = ...
 
-local _G = _G
-
 AdiButtonAuras:CreateConfig(function(addonName, addon)
-
-	local GetItemInfo = _G.GetItemInfo
-	local GetSpellInfo = _G.GetSpellInfo
-	local strmatch = _G.strmatch
-
 	local AceConfig = addon.GetLib('AceConfig-3.0')
 	local AceConfigDialog = addon.GetLib('AceConfigDialog-3.0')
 	local LibSpellbook = addon.GetLib('LibSpellbook-1.0')
@@ -42,7 +35,7 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 
 	AceConfig:RegisterOptionsTable(addonName, {
 		--@debug@
-		name = addonName..' DEV',
+		name = addonName .. ' DEV',
 		--@end-debug@
 		--[===[@non-debug@
 		name = addonName..' @project-version@',
@@ -85,7 +78,7 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 		what = (what or ""):trim():lower()
 
 		if panels[what] then
-			return _G.InterfaceOptionsFrame_OpenToCategory(panels[what])
+			return _G.Settings.OpenToCategory(panels[what])
 		end
 
 		local _type, id = strmatch(what, '([si][pt]e[lm]l?):(%d+)')
@@ -95,11 +88,10 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 				_type = 'spell'
 			end
 		end
-		local key = (_type == 'spell' or _type == 'item') and id and _type..':'..id
+		local key = (_type == 'spell' or _type == 'item') and id and _type .. ':' .. id
 		if key and addon.spells[key] then
-			_G.InterfaceOptionsFrame_OpenToCategory(panels.spells)
+			_G.Settings.OpenToCategory(panels.spells)
 			private.SelectSpell(key)
 		end
 	end
-
 end)

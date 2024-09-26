@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -24,7 +24,7 @@ local _, addon = ...
 if not addon.isClass('HUNTER') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Adding hunter rules')
+	Debug('Rules', 'Adding hunter rules')
 
 	return {
 		ImportPlayerSpells { 'HUNTER' },

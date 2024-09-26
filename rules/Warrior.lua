@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -24,7 +24,7 @@ local _, addon = ...
 if not addon.isClass('WARRIOR') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Adding warrior rules')
+	Debug('Rules', 'Adding warrior rules')
 
 	return {
 		ImportPlayerSpells {
@@ -39,7 +39,7 @@ AdiButtonAuras:RegisterRules(function()
 			L['Show the number of group members missing @NAME.'],
 			6673, -- Battle Shout
 			'group',
-			{'GROUP_ROSTER_UPDATE', 'UNIT_AURA'},
+			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
 			function(units, model)
 				local missing = 0
 				local shortest

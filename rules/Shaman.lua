@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2018 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -42,7 +42,7 @@ end
 local function BuildWeaponEnchantHandler(enchantId)
 	return function(_, model)
 		local hasMainHandEnchant, mainHandExpiration, _, mainBuffId,
-			  hasOffHandEnchant, offHandExpiration, _, offBuffId = GetWeaponEnchantInfo()
+		hasOffHandEnchant, offHandExpiration, _, offBuffId = GetWeaponEnchantInfo()
 
 		if hasMainHandEnchant and mainBuffId == enchantId then
 			model.highlight = 'good'
@@ -58,65 +58,65 @@ AdiButtonAuras:RegisterRules(function()
 	Debug('Adding shaman rules')
 
 	-- All totem ranks
-	local earthbindTotem        = {2484}
-	local earthElementalTotem   = {2062}
-	local diseaseCleansingTotem = {8170}
-	local fireElementalTotem    = {2894}
-	local fireNovaTotem         = {1535, 8498, 8499, 11314, 11315, 25546, 25547}
-	local fireResistanceTotem   = {8184, 10537, 10538, 25563}
-	local flametongueTotem      = {8227, 8249, 10526, 16387, 25557}
-	local frostResistanceTotem  = {8181, 10478, 10479, 25560}
-	local graceOfAirTotem       = {8835, 10627, 25359}
-	local groundingTotem        = {8177}
-	local healingStreamTotem    = {5394, 6375, 6377, 10462, 10463, 25567}
-	local magmaTotem            = {8190, 10585, 10586, 10587, 25552}
-	local manaSpringTotem       = {5675, 10495, 10496, 10497, 25570}
-	local manaTideTotem         = {16190}
-	local natureResistanceTotem = {10595, 10600, 10601, 25574}
-	local poisonCleansingTotem  = {8166}
-	local searingTotem          = {3599, 6363, 6364, 6365, 10437, 10438, 25533}
-	local sentryTotem           = {6495}
-	local stoneclawTotem        = {5730, 6390, 6391, 6392, 10427, 10428, 25525}
-	local stoneskinTotem        = {8071, 8154, 8155, 10406, 10407, 10408, 25508, 25509}
-	local strengthOfEarthTotem  = {8075, 8160, 8161, 10442, 25361, 25528}
-	local tranquilAirTotem      = {25908}
-	local tremorTotem           = {8143}
-	local windfuryTotem         = {8512, 10613, 10614, 25585, 25587}
-	local windwallTotem         = {15107, 15111, 15112, 25577}
-	local wrathOfAirTotem       = {3738}
+	local earthbindTotem        = { 2484 }
+	local earthElementalTotem   = { 2062 }
+	local diseaseCleansingTotem = { 8170 }
+	local fireElementalTotem    = { 2894 }
+	local fireNovaTotem         = { 1535, 8498, 8499, 11314, 11315, 25546, 25547 }
+	local fireResistanceTotem   = { 8184, 10537, 10538, 25563 }
+	local flametongueTotem      = { 8227, 8249, 10526, 16387, 25557 }
+	local frostResistanceTotem  = { 8181, 10478, 10479, 25560 }
+	local graceOfAirTotem       = { 8835, 10627, 25359 }
+	local groundingTotem        = { 8177 }
+	local healingStreamTotem    = { 5394, 6375, 6377, 10462, 10463, 25567 }
+	local magmaTotem            = { 8190, 10585, 10586, 10587, 25552 }
+	local manaSpringTotem       = { 5675, 10495, 10496, 10497, 25570 }
+	local manaTideTotem         = { 16190 }
+	local natureResistanceTotem = { 10595, 10600, 10601, 25574 }
+	local poisonCleansingTotem  = { 8166 }
+	local searingTotem          = { 3599, 6363, 6364, 6365, 10437, 10438, 25533 }
+	local sentryTotem           = { 6495 }
+	local stoneclawTotem        = { 5730, 6390, 6391, 6392, 10427, 10428, 25525 }
+	local stoneskinTotem        = { 8071, 8154, 8155, 10406, 10407, 10408, 25508, 25509 }
+	local strengthOfEarthTotem  = { 8075, 8160, 8161, 10442, 25361, 25528 }
+	local tranquilAirTotem      = { 25908 }
+	local tremorTotem           = { 8143 }
+	local windfuryTotem         = { 8512, 10613, 10614, 25585, 25587 }
+	local windwallTotem         = { 15107, 15111, 15112, 25577 }
+	local wrathOfAirTotem       = { 3738 }
 
-	local flametongueWeapon = {
-		{8024, 5},
-		{8027, 4},
-		{8030, 3},
-		{16339, 523},
-		{16341, 1665},
-		{16342, 1666},
+	local flametongueWeapon     = {
+		{ 8024,  5 },
+		{ 8027,  4 },
+		{ 8030,  3 },
+		{ 16339, 523 },
+		{ 16341, 1665 },
+		{ 16342, 1666 },
 	}
 
-	local frostbrandWeapon = {
-		{8033, 2},
-		{8038, 12},
-		{10456, 524},
-		{16355, 1667},
-		{16356, 1668},
+	local frostbrandWeapon      = {
+		{ 8033,  2 },
+		{ 8038,  12 },
+		{ 10456, 524 },
+		{ 16355, 1667 },
+		{ 16356, 1668 },
 	}
 
-	local rockbiterWeapon = {
-		{8017, 29},
-		{8018, 6},
-		{8019, 1},
-		{10399, 503},
-		{16314, 1663},
-		{16315, 683},
-		{16316, 1664},
+	local rockbiterWeapon       = {
+		{ 8017,  29 },
+		{ 8018,  6 },
+		{ 8019,  1 },
+		{ 10399, 503 },
+		{ 16314, 1663 },
+		{ 16315, 683 },
+		{ 16316, 1664 },
 	}
 
-	local windfuryWeapon = {
-		{8232, 283},
-		{8235, 284},
-		{10486, 525},
-		{16362, 1669},
+	local windfuryWeapon        = {
+		{ 8232,  283 },
+		{ 8235,  284 },
+		{ 10486, 525 },
+		{ 16362, 1669 },
 	}
 
 	return {
@@ -154,7 +154,7 @@ AdiButtonAuras:RegisterRules(function()
 			earthbindTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(earthbindTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(earthbindTotem[1])),
 		},
 
 		Configure {
@@ -163,7 +163,7 @@ AdiButtonAuras:RegisterRules(function()
 			earthElementalTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(earthElementalTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(earthElementalTotem[1])),
 		},
 
 		Configure {
@@ -172,7 +172,7 @@ AdiButtonAuras:RegisterRules(function()
 			diseaseCleansingTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(diseaseCleansingTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(diseaseCleansingTotem[1])),
 		},
 
 		Configure {
@@ -181,7 +181,7 @@ AdiButtonAuras:RegisterRules(function()
 			fireElementalTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(fireElementalTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(fireElementalTotem[1])),
 		},
 
 		Configure {
@@ -190,7 +190,7 @@ AdiButtonAuras:RegisterRules(function()
 			fireNovaTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(fireNovaTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(fireNovaTotem[1])),
 		},
 
 		Configure {
@@ -199,7 +199,7 @@ AdiButtonAuras:RegisterRules(function()
 			fireResistanceTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(fireResistanceTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(fireResistanceTotem[1])),
 		},
 
 		Configure {
@@ -208,7 +208,7 @@ AdiButtonAuras:RegisterRules(function()
 			flametongueTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(flametongueTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(flametongueTotem[1])),
 		},
 
 		Configure {
@@ -217,7 +217,7 @@ AdiButtonAuras:RegisterRules(function()
 			frostResistanceTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(frostResistanceTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(frostResistanceTotem[1])),
 		},
 
 		Configure {
@@ -226,7 +226,7 @@ AdiButtonAuras:RegisterRules(function()
 			graceOfAirTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(graceOfAirTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(graceOfAirTotem[1])),
 		},
 
 		Configure {
@@ -235,7 +235,7 @@ AdiButtonAuras:RegisterRules(function()
 			groundingTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(groundingTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(groundingTotem[1])),
 		},
 
 		Configure {
@@ -244,7 +244,7 @@ AdiButtonAuras:RegisterRules(function()
 			healingStreamTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(healingStreamTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(healingStreamTotem[1])),
 		},
 
 		Configure {
@@ -253,7 +253,7 @@ AdiButtonAuras:RegisterRules(function()
 			magmaTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(magmaTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(magmaTotem[1])),
 		},
 
 		Configure {
@@ -262,7 +262,7 @@ AdiButtonAuras:RegisterRules(function()
 			manaSpringTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(manaSpringTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(manaSpringTotem[1])),
 		},
 
 		Configure {
@@ -271,7 +271,7 @@ AdiButtonAuras:RegisterRules(function()
 			manaTideTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(manaTideTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(manaTideTotem[1])),
 		},
 
 		Configure {
@@ -280,7 +280,7 @@ AdiButtonAuras:RegisterRules(function()
 			natureResistanceTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(natureResistanceTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(natureResistanceTotem[1])),
 		},
 
 		Configure {
@@ -289,7 +289,7 @@ AdiButtonAuras:RegisterRules(function()
 			poisonCleansingTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(poisonCleansingTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(poisonCleansingTotem[1])),
 		},
 
 		Configure {
@@ -298,7 +298,7 @@ AdiButtonAuras:RegisterRules(function()
 			searingTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(searingTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(searingTotem[1])),
 		},
 
 		Configure {
@@ -307,7 +307,7 @@ AdiButtonAuras:RegisterRules(function()
 			sentryTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(sentryTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(sentryTotem[1])),
 		},
 
 		Configure {
@@ -316,7 +316,7 @@ AdiButtonAuras:RegisterRules(function()
 			stoneclawTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(stoneclawTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(stoneclawTotem[1])),
 		},
 
 		Configure {
@@ -325,7 +325,7 @@ AdiButtonAuras:RegisterRules(function()
 			stoneskinTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(stoneskinTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(stoneskinTotem[1])),
 		},
 
 		Configure {
@@ -334,7 +334,7 @@ AdiButtonAuras:RegisterRules(function()
 			strengthOfEarthTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(strengthOfEarthTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(strengthOfEarthTotem[1])),
 		},
 
 		Configure {
@@ -343,7 +343,7 @@ AdiButtonAuras:RegisterRules(function()
 			tranquilAirTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(tranquilAirTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(tranquilAirTotem[1])),
 		},
 
 		Configure {
@@ -352,7 +352,7 @@ AdiButtonAuras:RegisterRules(function()
 			tremorTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(tremorTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(tremorTotem[1])),
 		},
 
 		Configure {
@@ -361,7 +361,7 @@ AdiButtonAuras:RegisterRules(function()
 			windfuryTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(windfuryTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(windfuryTotem[1])),
 		},
 
 		Configure {
@@ -370,7 +370,7 @@ AdiButtonAuras:RegisterRules(function()
 			windwallTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(windwallTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(windwallTotem[1])),
 		},
 
 		Configure {
@@ -379,7 +379,7 @@ AdiButtonAuras:RegisterRules(function()
 			wrathOfAirTotem,
 			'player',
 			'PLAYER_TOTEM_UPDATE',
-			BuildTotemHandler(GetSpellInfo(wrathOfAirTotem[1])),
+			BuildTotemHandler(C_Spell.GetSpellInfo(wrathOfAirTotem[1])),
 		},
 
 	}

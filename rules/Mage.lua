@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -24,18 +24,18 @@ local _, addon = ...
 if not addon.isClass('MAGE') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Adding mage rules')
+	Debug('Rules', 'Adding mage rules')
 
 	return {
 		ImportPlayerSpells {
 			-- import all spell for
 			'MAGE',
 			-- except for
-			  1459, -- Begin Arcane Intellect
-			  1460,
-			  1461,
-			  10156,
-			  10157, -- End Arcane Intellect
+			1459, -- Begin Arcane Intellect
+			1460,
+			1461,
+			10156,
+			10157, -- End Arcane Intellect
 		},
 
 		Configure {
@@ -49,7 +49,7 @@ AdiButtonAuras:RegisterRules(function()
 				10157, -- End Arcane Intellect
 			},
 			'group',
-			{'GROUP_ROSTER_UPDATE', 'UNIT_AURA'},
+			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
 			function(units, model)
 				local missing = 0
 				local shortest

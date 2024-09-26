@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -26,20 +26,16 @@ local CloseAllWindows = _G.CloseAllWindows
 local CreateFrame = _G.CreateFrame
 local error = _G.error
 local format = _G.format
-local GetAddOnInfo = _G.GetAddOnInfo
 local GetCVarBool = _G.GetCVarBool
 local geterrorhandler = _G.geterrorhandler
 local GetModifiedClick = _G.GetModifiedClick
 local gsub = _G.gsub
 local hooksecurefunc = _G.hooksecurefunc
-local InterfaceOptionsFrame_OpenToCategory = _G.InterfaceOptionsFrame_OpenToCategory
-local InterfaceOptions_AddCategory = _G.InterfaceOptions_AddCategory
-local INTERFACEOPTIONS_ADDONCATEGORIES = _G.INTERFACEOPTIONS_ADDONCATEGORIES
 local ipairs = _G.ipairs
-local IsAddOnLoaded = _G.IsAddOnLoaded
+local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 local IsInGroup = _G.IsInGroup
 local IsInRaid = _G.IsInRaid
-local LoadAddOn = _G.LoadAddOn
+local LoadAddOn = C_AddOns.LoadAddOn
 local next = _G.next
 local NUM_ACTIONBAR_BUTTONS = _G.NUM_ACTIONBAR_BUTTONS
 local NUM_PET_ACTION_SLOTS = _G.NUM_PET_ACTION_SLOTS
@@ -147,6 +143,7 @@ local events = GetLib('CallbackHandler-1.0'):New(mixins, 'RegisterEvent', 'Unreg
 local frame = CreateFrame("Frame")
 frame:SetScript('OnEvent', function(_, ...) return events:Fire(...) end)
 function events:OnUsed(_, event) return frame:RegisterEvent(event) end
+
 function events:OnUnused(_, event) return frame:UnregisterEvent(event) end
 
 -- Messaging using CallbackHandler-1.0
@@ -160,15 +157,18 @@ function bus:OnUsed(_, message)
 		messages[message].OnUsed(message)
 	end
 end
+
 function bus:OnUnused(_, message)
 	addon.Debug('Messages', 'OnUnused', message)
 	if messages[message] and messages[message].OnUnused then
 		messages[message].OnUnused(message)
 	end
 end
+
 function mixins:DeclareMessage(message, OnUsed, OnUnused)
 	messages[message] = { OnUsed = OnUsed, OnUnused = OnUnused }
 end
+
 function mixins:IsDeclaredMessage(str)
 	return str and messages[str] and true
 end
@@ -205,9 +205,9 @@ end
 -- Event names
 ------------------------------------------------------------------------------
 
-local CONFIG_CHANGED = addonName..'_Config_Changed'
-local THEME_CHANGED = addonName..'_Theme_Changed'
-local RULES_UPDATED = addonName..'_Rules_Updated'
+local CONFIG_CHANGED = addonName .. '_Config_Changed'
+local THEME_CHANGED = addonName .. '_Theme_Changed'
+local RULES_UPDATED = addonName .. '_Rules_Updated'
 
 addon.RULES_UPDATED = RULES_UPDATED
 addon.CONFIG_CHANGED = CONFIG_CHANGED
@@ -231,7 +231,7 @@ end
 
 local hookedFrames = {}
 local function RegisterDominos()
-	for _, button in next, _G.Dominos.ActionButtons do
+	for button in _G.Dominos.ActionButtons:GetAll() do
 		if not hookedFrames[button] then
 			hookedFrames[button] = true
 			hooksecurefunc(button, 'Update', UpdateHandlerForButton)
@@ -288,7 +288,7 @@ end
 addon:RegisterEvent('ADDON_LOADED')
 
 function addon:Initialize()
-	self.db = GetLib('AceDB-3.0'):New(addonName.."DB", self.DEFAULT_SETTINGS, true)
+	self.db = GetLib('AceDB-3.0'):New(addonName .. "DB", self.DEFAULT_SETTINGS, true)
 
 	-- migrate SV from old inverted to new missing
 	local profile = self.db.profile
@@ -319,20 +319,20 @@ function addon:Initialize()
 	self:ScanButtons("StanceButton", NUM_STANCE_SLOTS)
 	self:ScanButtons("PetActionButton", NUM_PET_ACTION_SLOTS)
 
-
 	for _, actionBarButton in next, _G.ActionBarButtonEventsFrame.frames do
 		hookedFrames[actionBarButton] = true
 		hooksecurefunc(actionBarButton, 'Update', UpdateHandlerForButton)
 	end
 
-	hooksecurefunc('PetActionBar_Update', function()
-		for i = 1, NUM_PET_ACTION_SLOTS do
-			UpdateHandler('PetActionBar_Update', _G['PetActionButton'..i])
+	hooksecurefunc(_G.PetActionBar, "Update", function()
+		for _, button in next, _G.PetActionBar.actionButtons do
+			UpdateHandler("PetActionBar_Update", button)
 		end
 	end)
-	hooksecurefunc('StanceBar_UpdateState', function()
-		for i = 1, NUM_STANCE_SLOTS do
-			UpdateHandler('StanceBar_UpdateState', _G['StanceButton'..i])
+
+	hooksecurefunc(_G.StanceBar, "UpdateState", function()
+		for _, button in next, _G.StanceBar.actionButtons do
+			UpdateHandler("StanceBar_UpdateState", button)
 		end
 	end)
 
@@ -375,7 +375,7 @@ addon.rules = rules
 addon.descriptions = descriptions
 
 local function errorhandler(msg)
-	addon:Debug('|cffff0000'..tostring(msg)..'|r')
+	addon:Debug('|cffff0000' .. tostring(msg) .. '|r')
 	return geterrorhandler()(msg)
 end
 
@@ -422,7 +422,7 @@ function addon:GetActionConfiguration(actionType, actionId)
 		return nil, false, nil
 	end
 	assert(actionType == "item" or actionType == "spell", format("Invalid action type: %q", tostring(actionType)))
-	local key = actionType..':'..actionId
+	local key = actionType .. ':' .. actionId
 	local rule = rules[key]
 	if rule then
 		return rule, self.db.profile.enabled[key], key
@@ -439,15 +439,8 @@ function addon.isClass(class)
 end
 
 ------------------------------------------------------------------------------
--- Handle load-on-demand configuration
+-- Handle configuration
 ------------------------------------------------------------------------------
-
--- Create a fake configuration panel
-local configLoaderPanel = CreateFrame("Frame")
-configLoaderPanel.name = addonName
-configLoaderPanel:Hide()
-configLoaderPanel:SetScript('OnShow', function() return addon:OpenConfiguration() end)
-InterfaceOptions_AddCategory(configLoaderPanel)
 
 -- The loading handler
 function addon:OpenConfiguration(args)
@@ -456,26 +449,17 @@ function addon:OpenConfiguration(args)
 	-- Replace the handler to avoid infinite recursive loops
 	addon.OpenConfiguration = function()
 		if not loaded then
-			print(format('|cffff0000[%s] %s: %s|r', addonName, L["Could not load configuration panel"], _G["ADDON_"..why]))
-		end
-	end
-
-	-- Remove the fake configuration panel
-	configLoaderPanel:SetScript('OnShow', nil)
-	configLoaderPanel:Hide()
-	for i, panel in ipairs(INTERFACEOPTIONS_ADDONCATEGORIES) do
-		if panel == configLoaderPanel then
-			tremove(INTERFACEOPTIONS_ADDONCATEGORIES, i)
-			break
+			print(format('|cffff0000[%s] %s: %s|r', addonName, L["Could not load configuration panel"], _G
+			["ADDON_" .. why]))
 		end
 	end
 
 	-- Load the configuration addon
-	loaded, why = LoadAddOn(addonName..'_Config')
+	loaded, why = LoadAddOn(addonName .. '_Config')
 	if loaded then
 		CloseAllWindows()
 		CloseAllWindows()
-		InterfaceOptionsFrame_OpenToCategory(addonName)
+		_G.Settings.OpenToCategory(addonName)
 	end
 
 	-- Forward the arguments
@@ -496,7 +480,7 @@ end
 -- Group roster update
 ------------------------------------------------------------------------------
 
-local GROUP_CHANGED = addonName..'_Group_Changed'
+local GROUP_CHANGED = addonName .. '_Group_Changed'
 local groupPrefix, groupSize = "", 0
 local groupUnits = {}
 addon.GROUP_CHANGED, addon.groupUnits = GROUP_CHANGED, groupUnits
@@ -519,7 +503,7 @@ function addon:GROUP_ROSTER_UPDATE(event)
 		if i == 0 then
 			unit, petUnit = "player", "pet"
 		else
-			unit, petUnit = prefix..i, prefix..'pet'..i
+			unit, petUnit = prefix .. i, prefix .. 'pet' .. i
 		end
 		local guid, petGUID = UnitGUID(unit), UnitGUID(petUnit)
 		if groupUnits[unit] ~= guid or groupUnits[petUnit] ~= petGUID then
@@ -538,7 +522,7 @@ function addon:UNIT_PET(event, unit)
 	if unit == "player" then
 		petUnit = "pet"
 	elseif groupUnits[unit] then
-		petUnit = gsub(unit.."pet", "(%d+)pet", "pet%1")
+		petUnit = gsub(unit .. "pet", "(%d+)pet", "pet%1")
 	else
 		return
 	end
@@ -566,14 +550,14 @@ addon:DeclareMessage(
 -- Mouseover watching
 ------------------------------------------------------------------------------
 
-local MOUSEOVER_CHANGED = addonName..'_Mouseover_Changed'
-local MOUSEOVER_TICK = addonName..'_Mouseover_Tick'
+local MOUSEOVER_CHANGED = addonName .. '_Mouseover_Changed'
+local MOUSEOVER_TICK = addonName .. '_Mouseover_Tick'
 local unitList = { "player", "pet", "target", "focus" }
 
 addon.MOUSEOVER_CHANGED, addon.MOUSEOVER_TICK, addon.unitList = MOUSEOVER_CHANGED, MOUSEOVER_TICK, unitList
 
-for i = 1,4 do tinsert(unitList, "party"..i) end
-for i = 1,40 do tinsert(unitList, "raid"..i) end
+for i = 1, 4 do tinsert(unitList, "party" .. i) end
+for i = 1, 40 do tinsert(unitList, "raid" .. i) end
 
 local mouseoverUnit, mouseoverGUID = 'mouseover'
 
@@ -647,7 +631,7 @@ end
 -- "ally" and "enemy" pseudo-units
 ------------------------------------------------------------------------------
 
-local DYNAMIC_UNIT_CONDITONALS_CHANGED = addonName..'_DynamicUnitConditionals_Changed'
+local DYNAMIC_UNIT_CONDITONALS_CHANGED = addonName .. '_DynamicUnitConditionals_Changed'
 local dynamicUnitConditionals = {}
 
 addon.DYNAMIC_UNIT_CONDITONALS_CHANGED = DYNAMIC_UNIT_CONDITONALS_CHANGED
@@ -663,11 +647,11 @@ function addon:UpdateDynamicUnitConditionals()
 		ally = "[help]"
 	end
 	if focusCast ~= "NONE" then
-		enemy = "[@focus,mod:"..focusCast.."]"..enemy
-		ally = "[@focus,mod:"..focusCast.."]"..ally
+		enemy = "[@focus,mod:" .. focusCast .. "]" .. enemy
+		ally = "[@focus,mod:" .. focusCast .. "]" .. ally
 	end
 	if selfCast ~= "NONE" then
-		ally = "[@player,mod:"..selfCast.."]"..ally
+		ally = "[@player,mod:" .. selfCast .. "]" .. ally
 	end
 	if dynamicUnitConditionals.enemy ~= enemy or dynamicUnitConditionals.ally ~= ally then
 		dynamicUnitConditionals.enemy, dynamicUnitConditionals.ally = enemy, ally

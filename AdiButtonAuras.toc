@@ -1,5 +1,5 @@
 # AdiButtonAuras - Display auras on action buttons.
-# Copyright 2013-2018 Adirelle (adirelle@gmail.com)
+# Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 # All rights reserved.
 #
 # This file is part of AdiButtonAuras.
@@ -17,9 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
-## Interface-Retail: 90005
-## Interface-Classic: 11306
-## Interface-BCC: 20501
+## Interface: 110002
 
 ## Title: AdiButtonAurasClassic
 ## Notes: Display auras on action buttons.
@@ -33,7 +31,23 @@
 
 ## OptionalDeps: Ace3, LibSpellbook-1.0, LibItemBuffs-1.0, LibPlayerSpells-1.0, LibDualSpec-1.0, LibButtonGlow-1.0, LibSharedMedia-3.0, SharedMedia_ButtonHighlight, AdiDebug, Dominos, LibActionButton-1.0, Bartender4, Masque, ElvUI
 
-#@lib-replace@
+#@non-debug@
+# #@no-lib-strip@
+# libs\LibStub\LibStub.lua
+# libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+# libs\BugGrabber\load.xml
+# libs\AceDB-3.0\AceDB-3.0.xml
+# libs\LibDualSpec-1.0\LibDualSpec-1.0.lua
+# libs\LibPlayerSpells-1.0\lib.xml
+# libs\LibSharedMedia-3.0\lib.xml
+# libs\LibButtonGlow-1.0\LibButtonGlow-1.0.lua
+# #@end-no-lib-strip@
+# libs\LibSpellbook-1.0\LibSpellbook-1.0.xml
+# libs\LibItemBuffs-1.0\LibItemBuffs-1.0.xml
+
+# # Not in libs subfolder to shorten the path
+# SMBH\lib.xml
+#@end-non-debug@
 
 Localization.lua
 

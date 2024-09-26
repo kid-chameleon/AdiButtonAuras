@@ -1,6 +1,6 @@
 --[[
 AdiButtonAuras - Display auras on action buttons.
-Copyright 2013-2021 Adirelle (adirelle@gmail.com)
+Copyright 2013-2023 Adirelle (adirelle@gmail.com)
 All rights reserved.
 
 This file is part of AdiButtonAuras.
@@ -24,7 +24,6 @@ local _, private = ...
 local _G = _G
 
 function private.GetGlobalOptions(addon)
-
 	local format = _G.format
 
 	local L = addon.L
@@ -61,7 +60,8 @@ function private.GetGlobalOptions(addon)
 			},
 			hints = {
 				name = L['Spell Hints'],
-				desc = L['AdiButtonAuras provides custom rules to suggest the use of some spells. Choose how these hints are displayed below.'],
+				desc = L
+				['AdiButtonAuras provides custom rules to suggest the use of some spells. Choose how these hints are displayed below.'],
 				type = 'select',
 				order = 20,
 				values = {
@@ -89,7 +89,7 @@ function private.GetGlobalOptions(addon)
 						width = 'full',
 						order = 10,
 						min = 0,
-						max = 3600*5,
+						max = 3600 * 5,
 						softMax = 600,
 						step = 5,
 					},
@@ -129,5 +129,4 @@ function private.GetGlobalOptions(addon)
 			},
 		},
 	}
-
 end

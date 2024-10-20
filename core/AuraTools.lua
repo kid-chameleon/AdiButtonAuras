@@ -152,7 +152,6 @@ local aurasMetatable = {
 }
 
 local function UpdateUnit(self, info)
-	-- print('Called UpdateUnit for', self.__unit, nil ~= info, info.isFullUpdate)
 	for _, auras in next, self do
 		if type(auras) == 'table' then
 			auras:Update(info)

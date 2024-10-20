@@ -19,6 +19,27 @@ AdiButtonAuras_RegisterRules(function()
 end)
 ```
 
+## Game flavors
+
+The addon runs on several classic clients from one codebase. Flavor names
+follow the TOC suffixes, lowercased: `vanilla` (Classic Era), `tbc`
+(Anniversary), later `wrath`, ... Rule files are organized by flavor:
+
+- `rules/<flavor>/Class.lua` - complete per-flavor rule files. There is no
+  overlay or merging: each flavor gets a full copy. Every flavored file starts
+  with a one-line guard, since XML includes cannot be conditional:
+  `if not addon.isFlavor('tbc') then return end`
+- `rules/Class.lua` (root) - classes not yet ported load on all flavors.
+  Porting a class means writing its `vanilla/` and `tbc/` files, deleting the
+  root file and updating `rules/rules.xml`.
+
+The matching spell databases live in `data/<flavor>/` in LibPlayerSpells-1.0,
+with the same guard convention (`if lib.flavor ~= 'tbc' then return end`).
+
+Inside rules, prefer ordered expansion checks over flavor equality when the
+logic is "this expansion and later": `expansion >= LE_EXPANSION_BURNING_CRUSADE`
+keeps working when the anniversary client progresses to the next expansion.
+
 ## Rule anatomy
 
 A rule is built around 5 elements : spells, units, events, handlers and providers.
@@ -87,8 +108,16 @@ The other constants and functions are useful only if you have to write your own 
 
 - `L` - the localization table, e.g. `L["flash"]`
 - `PLAYER_CLASS` - english class name of the player.
+- `flavor` - the game flavor the client runs (`"vanilla"`, `"tbc"`, ...), see [Game flavors](#game-flavors).
+- `expansion` - the numeric expansion level (`LE_EXPANSION_LEVEL_CURRENT`).
+- `isSoD` - true when playing Season of Discovery on the era client.
+- `LE_EXPANSION_CLASSIC`, `LE_EXPANSION_BURNING_CRUSADE`, `LE_EXPANSION_WRATH_OF_THE_LICH_KING`, `LE_EXPANSION_CATACLYSM` - expansion levels for ordered comparisons against `expansion`.
 
 ### Functions
+
+#### isFlavor(flavor)
+
+Returns true if the given flavor is `"ALL"` or the current game flavor.
 
 #### Debug(...)
 

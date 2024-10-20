@@ -15,6 +15,9 @@ externals:
   libs/AceDBOptions-3.0:
     url: https://repos.wowace.com/wow/ace3/trunk/AceDBOptions-3.0
     tag: latest
+  libs/LibDualSpec-1.0:
+    url: https://repos.wowace.com/wow/libdualspec-1-0
+    tag: latest
   libs/AceGUI-3.0:
     url: https://repos.wowace.com/wow/ace3/trunk/AceGUI-3.0
     tag: latest
@@ -30,9 +33,6 @@ externals:
   libs/LibButtonGlow-1.0:
     url: https://repos.wowace.com/wow/libbuttonglow-1-0
     tag: latest
-  libs/LibClassicDurations:
-    url: git@github.com:rgd87/LibClassicDurations.git
-    tag: master
   libs/AceGUI-3.0-SharedMediaWidgets: https://repos.wowace.com/wow/ace-gui-3-0-shared-media-widgets/trunk
   libs/LibSpellbook-1.0: git@github.com:kid-chameleon/LibSpellbook-1.0.git
   libs/LibItemBuffs-1.0: git@github.com:kid-chameleon/LibItemBuffs-1.0.git

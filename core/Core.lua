@@ -65,6 +65,20 @@ addon.api = api
 _G.AdiButtonAuras = api
 
 ------------------------------------------------------------------------------
+-- Game flavor detection
+------------------------------------------------------------------------------
+
+local FLAVORS = { [0] = 'vanilla', [1] = 'tbc', [2] = 'wrath', [3] = 'cata' }
+addon.expansion = _G.LE_EXPANSION_LEVEL_CURRENT
+addon.flavor = FLAVORS[addon.expansion] or 'vanilla'
+addon.isSoD = _G.C_Seasons and _G.C_Seasons.HasActiveSeason()
+	and _G.C_Seasons.GetActiveSeason() == _G.Enum.SeasonID.SeasonOfDiscovery or false
+
+function addon.isFlavor(flavor)
+	return flavor == 'ALL' or flavor == addon.flavor
+end
+
+------------------------------------------------------------------------------
 -- Default config
 ------------------------------------------------------------------------------
 
@@ -222,11 +236,31 @@ local function UpdateHandler(event, button)
 	end
 end
 
+-- era drives the action bars through legacy global functions; from TBC
+-- (anniversary) on the buttons are mixin-based like retail and each button's
+-- Update method has to be hooked instead
+local useLegacyHooks = addon.expansion < _G.LE_EXPANSION_BURNING_CRUSADE
+
+local function UpdateHandlerForButton(button)
+	return UpdateHandler('ActionButton_Update', button)
+end
+
+local hookedFrames = {}
+local function HookButtonUpdate(button)
+	if not hookedFrames[button] then
+		hookedFrames[button] = true
+		hooksecurefunc(button, 'Update', UpdateHandlerForButton)
+	end
+end
+
 local function RegisterDominos()
-	-- updates are covered by the global ActionButton_Update hook installed in
-	-- addon:Initialize(); the overlays only have to exist for these buttons
+	-- on era, updates are covered by the global ActionButton_Update hook
+	-- installed in addon:Initialize(), so the overlays only have to exist
 	local Dominos = GetLib('AceAddon-3.0'):GetAddon('Dominos')
 	for button in Dominos.ActionButtons:GetAll() do
+		if not useLegacyHooks then
+			HookButtonUpdate(button)
+		end
 		local _ = addon:GetOverlay(button)
 	end
 end
@@ -300,7 +334,13 @@ function addon:Initialize()
 	self.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
 	self.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
 
-	--GetLib('LibDualSpec-1.0'):EnhanceDatabase(self.db, addonName)
+	-- the anniversary edition has dual spec, original era does not
+	if addon.expansion >= _G.LE_EXPANSION_BURNING_CRUSADE then
+		local LibDualSpec = GetLib('LibDualSpec-1.0', true)
+		if LibDualSpec then
+			LibDualSpec:EnhanceDatabase(self.db, addonName)
+		end
+	end
 
 	self:ScanButtons("ActionButton", NUM_ACTIONBAR_BUTTONS)
 	self:ScanButtons("BonusActionButton", NUM_ACTIONBAR_BUTTONS)
@@ -311,20 +351,38 @@ function addon:Initialize()
 	self:ScanButtons("StanceButton", NUM_STANCE_SLOTS)
 	self:ScanButtons("PetActionButton", NUM_PET_ACTION_SLOTS)
 
-	hooksecurefunc('ActionButton_Update', function(button)
-		return UpdateHandler('ActionButton_Update', button)
-	end)
+	if useLegacyHooks then
+		hooksecurefunc('ActionButton_Update', function(button)
+			return UpdateHandler('ActionButton_Update', button)
+		end)
 
-	hooksecurefunc('PetActionBar_Update', function()
-		for i = 1, NUM_PET_ACTION_SLOTS do
-			UpdateHandler('PetActionBar_Update', _G['PetActionButton' .. i])
+		hooksecurefunc('PetActionBar_Update', function()
+			for i = 1, NUM_PET_ACTION_SLOTS do
+				UpdateHandler('PetActionBar_Update', _G['PetActionButton' .. i])
+			end
+		end)
+		hooksecurefunc('StanceBar_UpdateState', function()
+			for i = 1, NUM_STANCE_SLOTS do
+				UpdateHandler('StanceBar_UpdateState', _G['StanceButton' .. i])
+			end
+		end)
+	else
+		for _, actionBarButton in next, _G.ActionBarButtonEventsFrame.frames do
+			HookButtonUpdate(actionBarButton)
 		end
-	end)
-	hooksecurefunc('StanceBar_UpdateState', function()
-		for i = 1, NUM_STANCE_SLOTS do
-			UpdateHandler('StanceBar_UpdateState', _G['StanceButton' .. i])
-		end
-	end)
+
+		hooksecurefunc(_G.PetActionBar, 'Update', function()
+			for _, button in next, _G.PetActionBar.actionButtons do
+				UpdateHandler('PetActionBar_Update', button)
+			end
+		end)
+
+		hooksecurefunc(_G.StanceBar, 'UpdateState', function()
+			for _, button in next, _G.StanceBar.actionButtons do
+				UpdateHandler('StanceBar_UpdateState', button)
+			end
+		end)
+	end
 
 	self:RegisterEvent('UPDATE_MACROS')
 

@@ -29,7 +29,12 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 	local L = addon.L
 
 	local profiles = addon.GetLib('AceDBOptions-3.0'):GetOptionsTable(addon.db)
-	addon.GetLib('LibDualSpec-1.0'):EnhanceOptions(profiles, addon.db)
+	if addon.expansion >= LE_EXPANSION_BURNING_CRUSADE then
+		local LibDualSpec = addon.GetLib('LibDualSpec-1.0', true)
+		if LibDualSpec then
+			LibDualSpec:EnhanceOptions(profiles, addon.db)
+		end
+	end
 	profiles.order = -10
 	profiles.disabled = false
 
@@ -38,7 +43,7 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 		name = addonName..' DEV',
 		--@end-debug@
 		--[===[@non-debug@
-		name = addonName..' 11.0.1',
+		name = addonName..' @project-version@',
 		--@end-non-debug@]===]
 		type = 'group',
 		childGroups = 'tab',

@@ -109,9 +109,9 @@ local conditionalPrefixes = {
 	['#showtooltip'] = true,
 	['#show'] = true,
 }
-for _, cmd in pairs({ "CAST", "CASTRANDOM", "CASTSEQUENCE", "USE", "USERANDOM" }) do
+for _, cmd in pairs({"CAST", "CASTRANDOM", "CASTSEQUENCE", "USE", "USERANDOM"}) do
 	for i = 1, 16 do
-		local alias = _G["SLASH_" .. cmd .. i]
+		local alias = _G["SLASH_"..cmd..i]
 		if alias then
 			conditionalPrefixes[strlower(alias)] = true
 		else
@@ -236,7 +236,7 @@ end
 
 function overlayPrototype:OnEvent(event, ...)
 	if self:IsVisible() then
-		return assert(self[event], "No event handler for " .. event)(self, event, ...)
+		return assert(self[event], "No event handler for "..event)(self, event, ...)
 	end
 end
 
@@ -260,13 +260,11 @@ function overlayPrototype:ForceUpdate(event)
 	end
 	self:UpdateCooldown(event)
 end
-
 overlayPrototype.PLAYER_ENTERING_WORLD = overlayPrototype.ForceUpdate
 
 function overlayPrototype:UpdateAction(event)
 	local actionType, actionId, actionSubType = self:GetAction()
-	local actualType, actualId, macroConditionals = GetActionSpell(actionType, actionId, actionSubType,
-		self:GetActionId())
+	local actualType, actualId, macroConditionals = GetActionSpell(actionType, actionId, actionSubType, self:GetActionId())
 	self:Debug('UpdateAction', event, '|', actionType, actionSubType, actionId, '=>', actualId, macroConditionals)
 	return self:SetAction(event, actualType, actualId, macroConditionals)
 end
@@ -299,7 +297,7 @@ function overlayPrototype:SetAction(event, actionType, actionId, macroConditiona
 
 		for token, default in pairs(addon.dynamicUnitConditionals) do
 			if units[token] then
-				local cond = macroConditionals and gsub(macroConditionals, "%[%]", default) or default
+				local cond = macroConditionals and gsub(macroConditionals , "%[%]", default) or default
 				self.unitConditionals[token] = cond
 				-- Dynamic always includes target
 				units.target = 'UpdateDynamicUnits'
@@ -410,7 +408,6 @@ function overlayPrototype:UpdateCooldown(event)
 		self:ApplyFlash()
 	end
 end
-
 overlayPrototype.ACTIONBAR_UPDATE_COOLDOWN = overlayPrototype.UpdateCooldown
 
 function overlayPrototype:UpdateDynamicUnits(event, unit)
@@ -480,7 +477,7 @@ local modelProxy = setmetatable({}, {
 			if value == "flash" then
 				key, value = value, true
 			elseif value ~= nil and value ~= "good" and value ~= "bad"
-				and value ~= "darken" and value ~= "lighten" and value ~= "dispel" then
+					and value ~= "darken" and value ~= "lighten" and value ~= "dispel" then
 				return error(
 					format(
 						'Invalid %s, should be one of "flash", "good", "bad", "darken", "lighten", "dispel" or nil, not %s',
@@ -681,7 +678,7 @@ local overlays = addon.Memoize(function(button)
 				meta = petActionButtonMeta
 			end
 		end
-		local overlay = setmetatable(CreateFrame("Frame", name and (name .. 'Overlay'), button), meta)
+		local overlay = setmetatable(CreateFrame("Frame", name and (name..'Overlay'), button), meta)
 		overlay:Initialize(button)
 		return overlay
 	else
@@ -699,7 +696,7 @@ end
 
 function addon:ScanButtons(prefix, count)
 	for i = 1, count or 12 do
-		local button = _G[prefix .. i]
+		local button = _G[prefix..i]
 		if button then
 			local dummy = overlays[button]
 		end

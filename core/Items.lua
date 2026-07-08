@@ -36,13 +36,6 @@ local type = _G.type
 
 local LibItemBuffs, LIBVer = addon.GetLib('LibItemBuffs-1.0')
 
---local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
-
---if LibClassicDurations then
---	LibClassicDurations:Register(addonName)
---	UnitAura = LibClassicDurations.UnitAuraWrapper
---end
-
 local BuildKey = addon.BuildKey
 local BuildDesc = addon.BuildDesc
 
@@ -89,8 +82,7 @@ local function BuildItemRule(itemId, buffName, ...)
 		for i = 1, select('#', ...) do
 			local buffId = select(i, ...)
 			local key = BuildKey('item', itemId, token, filter, highlight, buffId)
-			local desc = BuildDesc(filter, highlight, token, buffId) ..
-			format(" [LIB-%d-%s]", LIBVer, LibItemBuffs:GetDatabaseVersion())
+			local desc = BuildDesc(filter, highlight, token, buffId) .. format(" [LIB-%d-%s]", LIBVer, LibItemBuffs:GetDatabaseVersion())
 			descriptions[key] = desc
 			tinsert(rule.keys, key)
 			tinsert(rule.handlers, BuildBuffIdHandler(key, token, filter, highlight, buffId))
@@ -114,7 +106,7 @@ end)
 local function DeepCopy(t)
 	if type(t) ~= "table" then return t end
 	local n = {}
-	for k, v in pairs(t) do
+	for k,v in pairs(t) do
 		if type(v) == "table" then
 			n[k] = DeepCopy(v)
 		else
@@ -124,12 +116,10 @@ local function DeepCopy(t)
 	return n
 end
 
-setmetatable(addon.rules, {
-	__index = function(self, key)
-		if key == nil then return end
-		local rule = items[key] and DeepCopy(items[key]) or false
-		self[key] = rule
-		return rule
-	end
-})
-setmetatable(addon.descriptions, { __index = descriptions })
+setmetatable(addon.rules, { __index = function(self, key)
+	if key == nil then return end
+	local rule = items[key] and DeepCopy(items[key]) or false
+	self[key] = rule
+	return rule
+end })
+setmetatable(addon.descriptions, {  __index = descriptions })

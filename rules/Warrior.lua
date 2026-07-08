@@ -27,44 +27,6 @@ AdiButtonAuras:RegisterRules(function()
 	Debug('Rules', 'Adding warrior rules')
 
 	return {
-		ImportPlayerSpells {
-			-- add all spells for
-			'WARRIOR',
-			-- except for
-			6673, -- Battle Shout
-		},
-
-		Configure {
-			'BattleShout',
-			L['Show the number of group members missing @NAME.'],
-			6673, -- Battle Shout
-			'group',
-			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
-			function(units, model)
-				local missing = 0
-				local shortest
-				for unit in next, units.group do
-					if UnitIsPlayer(unit) and not UnitIsDeadOrGhost(unit) then
-						local found, _, expiration = GetBuff(unit, 6673)
-						if found then
-							if not shortest or expiration < shortest then
-								shortest = expiration
-							end
-						else
-							missing = missing + 1
-						end
-					end
-				end
-
-				if shortest then
-					model.expiration = shortest
-					model.highlight = 'good'
-				end
-				if missing > 0 then
-					model.count = missing
-					model.hint = true
-				end
-			end,
-		},
+		ImportPlayerSpells { 'WARRIOR' },
 	}
 end)

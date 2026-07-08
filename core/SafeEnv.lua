@@ -60,6 +60,7 @@ end
 
 -- Build a read-only environnement, allowing accessing to a restricted sets of libraries and globals
 function addon.BuildSafeEnv(baseEnv, allowedLibraries, allowedGlobals)
+
 	allowedLibraries = addon.AsSet(allowedLibraries, "string", 0)
 
 	baseEnv.GetLib = function(major)

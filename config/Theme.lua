@@ -24,6 +24,7 @@ local _, private = ...
 local _G = _G
 
 function private.GetThemeOptions(addon, addonName)
+
 	local unpack = _G.unpack
 	local L = addon.L
 	local Masque = addon.GetLib('Masque', true)
@@ -228,4 +229,5 @@ function private.GetThemeOptions(addon, addonName)
 			},
 		},
 	}
+
 end

@@ -27,48 +27,23 @@ AdiButtonAuras:RegisterRules(function()
 	Debug('Rules', 'Adding rogue rules')
 
 	return {
-		ImportPlayerSpells {
-			-- import all spells for
-			'ROGUE',
-			-- except for
-			193538, -- Alacrity
-			193641, -- Elaborate Planning (Assassination talent)
-			196980, -- Master of Shadows (Subtlety)
-		},
+		ImportPlayerSpells { 'ROGUE' },
 
 		ShowPower {
 			{
-				408, -- Kidney Shot
-				1943, -- Rupture (Assassination, Subtlety)
-				2098, -- Dispatch (Outlaw)
-				32645, -- Envenom (Assassination)
-				121411, -- Crimson Tempest (Assassination talent)
-				196819, -- Eviscerate (Subtlety)
-				195452, -- Nightblade (Subtlety)
-				199804, -- Between the Eyes (Outlaw)
-				269513, -- Death from Above (honor talent)
-				280719, -- Secret Technique (Subtlety talent)
-				315496, -- Slice and Dice (Outlaw)
-				315508, -- Roll the Bones (Outlaw)
+				   408, -- Kidney Shot
+				  1943, -- Rupture (Assassination, Subtlety)
+				  2098, -- Dispatch (Outlaw)
+				 32645, -- Envenom (Assassination)
+				 51690, -- Killing Spree (Outlaw)
+				121411, -- Crimson Tempest (Assassination)
+				196819, -- Eviscerate (Subtlety) -- TODO: ranked 231716
+				280719, -- Secret Technique (Subtlety)
+				315341, -- Between the Eyes (Outlaw)
+				315496, -- Slice and Dice
+				319175, -- Black Powder (Subtlety)
 			},
-			'ComboPoints',
-		},
-
-		-- don't show Master of Shadows (Subtlety) on Shadow Dance
-		SelfBuffAliases {
-			{
-				1784, -- Stealth
-				115191, -- Stealth (with Subterfuge talent)
-			},
-			196980, -- Master of Shadows (Subtlety)
-		},
-
-		SelfBuffAliases {
-			{
-				2098, -- Dispatch (Outlaw)
-				196819, -- Eviscerate (Subtlety)
-			},
-			193538, -- Alacrity
+			'ComboPoints'
 		},
 	}
 end)

@@ -103,7 +103,7 @@ function addon:CompileUserRules()
 		end
 	end
 
-	for i = count + 1, #builders do
+	for i = count+1, #builders do
 		builders[i] = nil
 	end
 

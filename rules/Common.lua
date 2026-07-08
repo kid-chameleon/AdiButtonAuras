@@ -22,7 +22,45 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 AdiButtonAuras:RegisterRules(function()
 	Debug('Adding common rules')
 
-	local rules = {}
+	local rules = {
+	--------------------------------------------------------------------------
+	-- Bloodlust
+	--------------------------------------------------------------------------
+
+		-- Configure {
+		-- 	"bloodlust",
+		-- 	L["Show when @NAME or an equivalent haste buff is found on yourself."],
+		-- 	{
+		-- 		  2825, -- Bloodlust (Horde shaman)
+		-- 		 32182, -- Heroism (Alliance shaman)
+		-- 		"item:102351", -- Drums of Rage
+		-- 		"item:120257", -- Drums of Fury
+		-- 	},
+		-- 	"ally",
+		-- 	"UNIT_AURA",
+		-- 	(function()
+		-- 		local hasBloodlust = BuildAuraHandler_Longest("HELPFUL", "good", "ally",{
+		-- 			  2825, -- Bloodlust (Horde shaman)
+		-- 			 32182, -- Heroism (Alliance shaman)
+		-- 			 80353, -- Time Warp (mage)
+		-- 			146555, -- Drums of Rage
+		-- 			178207, -- Drums of Fury
+		-- 			264667, -- Primal Rage (hunter ferocity pets)
+		-- 			390386, -- Fury of the Aspects (evoker)
+		-- 		})
+		-- 		local isSated = BuildAuraHandler_Longest("HARMFUL", "bad", "ally", {
+		-- 			 57723, -- Exhaustion (Drums of Rage/Fury debuff)
+		-- 			 57724, -- Sated (Bloodlst/Heroism debuff),
+		-- 			 80354, -- Temporal Displacement (Time Warp debuff)
+		-- 			264689, -- Fatigued (Primal Rage debuff)
+		-- 			390435, -- Exhaustion (Fury of the Aspects debuff)
+		-- 		})
+		-- 		return function(units, model)
+		-- 			return hasBloodlust(units, model) or isSated(units, model)
+		-- 		end
+		-- 	end)(),
+		-- },
+	}
 
 	--------------------------------------------------------------------------
 	-- Crowd-control spells
@@ -77,14 +115,14 @@ AdiButtonAuras:RegisterRules(function()
 	-- Dispels
 	--------------------------------------------------------------------------
 
-	local TARGETING     = LibPlayerSpells.masks.TARGETING
-	local PERSONAL      = LibPlayerSpells.constants.PERSONAL
-	local HARMFUL       = LibPlayerSpells.constants.HARMFUL
-	local CURSE         = LibPlayerSpells.constants.CURSE
-	local DISEASE       = LibPlayerSpells.constants.DISEASE
-	local MAGIC         = LibPlayerSpells.constants.MAGIC
-	local POISON        = LibPlayerSpells.constants.POISON
-	local ENRAGE        = LibPlayerSpells.constants.ENRAGE
+	local TARGETING = LibPlayerSpells.masks.TARGETING
+	local PERSONAL  = LibPlayerSpells.constants.PERSONAL
+	local HARMFUL   = LibPlayerSpells.constants.HARMFUL
+	local CURSE     = LibPlayerSpells.constants.CURSE
+	local DISEASE   = LibPlayerSpells.constants.DISEASE
+	local MAGIC     = LibPlayerSpells.constants.MAGIC
+	local POISON    = LibPlayerSpells.constants.POISON
+	local ENRAGE    = LibPlayerSpells.constants.ENRAGE
 	local inclusionMask = bor(LibPlayerSpells.constants[PLAYER_CLASS], LibPlayerSpells.constants.RACIAL)
 
 	for spell, flags, _, _, _, category, dispelFlags in LibPlayerSpells:IterateSpells('DISPEL') do
@@ -133,7 +171,7 @@ AdiButtonAuras:RegisterRules(function()
 		local source = DescribeLPSSource(PLAYER_CLASS)
 		tinsert(rules, Configure {
 			"Interrupt",
-			format(L["%s when %s is casting/channeling a spell that you can interrupt."] .. " [%s]",
+			format(L["%s when %s is casting/channeling a spell that you can interrupt."].." [%s]",
 				DescribeHighlight("flash"),
 				DescribeAllTokens("enemy"),
 				source
@@ -154,11 +192,11 @@ AdiButtonAuras:RegisterRules(function()
 			function(units, model)
 				local unit = units.enemy
 				if unit and UnitCanAttack("player", unit) then
-					local name, _, _, _, endTime, _, _, notInterruptible = CastingInfo(unit)
+					local name, _, _, _, endTime, _, _, notInterruptible = UnitCastingInfo(unit)
 					if name and not notInterruptible then
 						model.flash, model.expiration = true, endTime / 1000
 					end
-					name, _, _, _, endTime, _, notInterruptible = ChannelInfo(unit)
+					name, _, _, _, endTime, _, notInterruptible = UnitChannelInfo(unit)
 					if name and not notInterruptible then
 						model.flash, model.expiration = true, endTime / 1000
 					end

@@ -27,49 +27,7 @@ AdiButtonAuras:RegisterRules(function()
 	Debug('Rules', 'Adding paladin rules')
 
 	return {
-		ImportPlayerSpells {
-			-- import all spells for
-			'PALADIN',
-			-- except for
-			642, -- Divine Shield
-			1022, -- Blessing of Protection
-			25771, -- Forbearance
-		},
-
-		Configure {
-			'DivineShield',
-			format(L['%s %s'],
-				BuildDesc('HELPFUL PLAYER', 'good', 'player', 642), -- Divine Shield
-				BuildDesc('HARMFUL', 'bad', 'player', 25771) -- Forbearance
-			),
-			642,                                        -- Divine Shield
-			'player',
-			'UNIT_AURA',
-			(function()
-				local hasForbearanceOnSelf = BuildAuraHandler_Single('HARMFUL', 'bad', 'player', 25771)
-				local hasDivineShield = BuildAuraHandler_Single('HELPFUL', 'good', 'player', 642)
-				return function(units, model)
-					return hasDivineShield(units, model) or hasForbearanceOnSelf(units, model)
-				end
-			end)(),
-		},
-
-		Configure {
-			'BlessingOfProtection',
-			format(L['%s %s'],
-				BuildDesc('HELPFUL', 'good', 'ally', 1022),
-				forbearanceDesc
-			),
-			1022,
-			'ally',
-			'UNIT_AURA',
-			(function()
-				local hasBlessingOfProtection = BuildAuraHandler_Single('HELPFUL', 'good', 'ally', 1022)
-				return function(units, model)
-					return hasBlessingOfProtection(units, model) or hasForbearance(units, model)
-				end
-			end)(),
-		},
+		ImportPlayerSpells { 'PALADIN' },
 
 	}
 end)

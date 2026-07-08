@@ -43,14 +43,12 @@ local math = _G.math
 ------------------------------------------------------------------------------
 
 local function Memoize(func)
-	return setmetatable({}, {
-		__index = function(self, key)
-			if key == nil then return nil end
-			local value = func(key)
-			self[key] = value
-			return value
-		end
-	})
+	return setmetatable({}, {__index = function(self, key)
+		if key == nil then return nil end
+		local value = func(key)
+		self[key] = value
+		return value
+	end})
 end
 addon.Memoize = Memoize
 
@@ -71,7 +69,7 @@ addon.getkeys = getkeys
 ------------------------------------------------------------------------------
 
 local function ucfirst(s)
-	return s:sub(0, 1):upper() .. s:sub(2)
+	return s:sub(0,1):upper()..s:sub(2)
 end
 addon.ucfirst = ucfirst
 
@@ -149,8 +147,8 @@ local function ColorsAndPercent(a, b, ...)
 	end
 
 	local num = select('#', ...) / 3
-	local segment, relperc = math.modf((a / b) * (num - 1))
-	return relperc, select((segment * 3) + 1, ...)
+	local segment, relperc = math.modf((a/b)*(num-1))
+	return relperc, select((segment*3)+1, ...)
 end
 
 function addon.ColorGradient(...)
@@ -158,11 +156,11 @@ function addon.ColorGradient(...)
 	if not relperc then return r1, g1, b1 end
 	local h1, c1, y1 = RGBToHCY(r1, g1, b1)
 	local h2, c2, y2 = RGBToHCY(r2, g2, b2)
-	local c = c1 + (c2 - c1) * relperc
-	local y = y1 + (y2 - y1) * relperc
+	local c = c1 + (c2-c1) * relperc
+	local y = y1 + (y2-y1) * relperc
 	if h1 and h2 then
 		local dh = h2 - h1
-		if dh < -0.5 then
+		if dh < -0.5  then
 			dh = dh + 1
 		elseif dh > 0.5 then
 			dh = dh - 1
@@ -208,7 +206,7 @@ local function AsList(value, checkType, callLevel)
 		if checkType then
 			for i, v in ipairs(value) do
 				if type(v) ~= checkType then
-					error(format("Invalid value type, expected %s, got %s", checkType, type(v)), callLevel + 1)
+					error(format("Invalid value type, expected %s, got %s", checkType, type(v)), callLevel+1)
 				end
 			end
 		end
@@ -216,7 +214,7 @@ local function AsList(value, checkType, callLevel)
 	elseif checkType == nil or type(value) == checkType then
 		return { value }
 	else
-		error(format("Invalid value type, expected %s, got %s", checkType, type(value)), callLevel + 1)
+		error(format("Invalid value type, expected %s, got %s", checkType, type(value)), callLevel+1)
 	end
 end
 addon.AsList = AsList
@@ -224,7 +222,7 @@ addon.AsList = AsList
 local function AsSet(value, checkType, callLevel)
 	local set = {}
 	local size = 0
-	for i, value in ipairs(AsList(value, checkType, callLevel + 1)) do
+	for i, value in ipairs(AsList(value, checkType, callLevel+1)) do
 		if not set[value] then
 			set[value] = true
 			size = size + 1

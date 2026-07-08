@@ -27,21 +27,14 @@ local Enum = _G.Enum
 local BreakUpLargeNumbers = _G.BreakUpLargeNumbers
 local GetActionInfo = _G.GetActionInfo
 local GetActionText = _G.GetActionText
-local GetItemInfo = _G.GetItemInfo
-local GetItemSpell = _G.GetItemSpell
+local GetItemInfo = C_Item.GetItemInfo
+local GetItemSpell = C_Item.GetItemSpell
 local GetMacroInfo = _G.GetMacroInfo
 local GetMacroItem = _G.GetMacroItem
 local GetMacroSpell = _G.GetMacroSpell
 local GetPetActionInfo = _G.GetPetActionInfo
 local select = _G.select
 local TooltipDataProcessor = _G.TooltipDataProcessor
-
-local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
-
-if LibClassicDurations then
-	LibClassicDurations:Register(addonName)
-	UnitAura = LibClassicDurations.UnitAuraWrapper
-end
 
 local function IsDisabled()
 	return not (addon.db and addon.db.profile.debuggingTooltip)
@@ -134,28 +127,28 @@ local sources = {
 	GetTraitEntry = 'talent',
 }
 
-TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
-	AddItemInfo(tooltip, data.id, true)
-end)
+-- TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
+-- 	AddItemInfo(tooltip, data.id, true)
+-- end)
 
-TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Macro, function(tooltip, data)
-	AddActionInfo(tooltip, unpack(tooltip.processingInfo.getterArgs))
-end)
+-- TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Macro, function(tooltip, data)
+-- 	AddActionInfo(tooltip, unpack(tooltip.processingInfo.getterArgs))
+-- end)
 
-TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.PetAction, function(tooltip, data)
-	AddPetActionInfo(tooltip, unpack(tooltip.processingInfo.getterArgs))
-end)
+-- TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.PetAction, function(tooltip, data)
+-- 	AddPetActionInfo(tooltip, unpack(tooltip.processingInfo.getterArgs))
+-- end)
 
-TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, function(tooltip, data)
-	local getterName = tooltip.processingInfo and tooltip.processingInfo.getterName
-	local source = getterName and sources[getterName] or 'spell'
+-- TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, function(tooltip, data)
+-- 	local getterName = tooltip.processingInfo and tooltip.processingInfo.getterName
+-- 	local source = getterName and sources[getterName] or 'spell'
 
-	AddSpellInfo(tooltip, source, data.id, true)
-end)
+-- 	AddSpellInfo(tooltip, source, data.id, true)
+-- end)
 
-TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, function(tooltip, data)
-	local info = tooltip.processingInfo
-	local id = spellIdGetters[info.getterName](info.getterArgs)
+-- TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, function(tooltip, data)
+-- 	local info = tooltip.processingInfo
+-- 	local id = spellIdGetters[info.getterName](info.getterArgs)
 
-	AddSpellInfo(tooltip, 'aura', id, true)
-end)
+-- 	AddSpellInfo(tooltip, 'aura', id, true)
+-- end)

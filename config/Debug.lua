@@ -24,6 +24,7 @@ local _, private = ...
 local _G = _G
 
 function private.GetDebugOptions(addon, addonName)
+
 	local floor = _G.floor
 	local format = _G.format
 	local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
@@ -67,7 +68,7 @@ function private.GetDebugOptions(addon, addonName)
 	local p = function(...) tinsert(t, strjoin(" ", tostringall(...))) end
 
 	local function GetMainDebug()
-		p("\nVersion", "|cffffffff" .. tostring(GetAddOnMetadata(addonName, "Version")) .. "|r")
+		p("\nVersion", "|cffffffff"..tostring(GetAddOnMetadata(addonName, "Version")).."|r")
 
 		local errorHandler
 		if addon.BugGrabber then
@@ -82,15 +83,15 @@ function private.GetDebugOptions(addon, addonName)
 		elseif GetCVarBool('scriptErrors') then
 			errorHandler = "Blizzard Lua display"
 		end
-		p("\nError handler:", errorHandler and ("|cffffffff" .. errorHandler .. "|r") or "|cffff0000NONE|r")
+		p("\nError handler:", errorHandler and ("|cffffffff"..errorHandler.."|r") or "|cffff0000NONE|r")
 	end
 
 	local function GetLibraryVersions()
 		for major, minor in pairs(addon.libraries) do
 			if minor then
-				p("- " .. major .. ": |cffffffff" .. tostring(minor) .. "|r")
+				p("- "..major..": |cffffffff"..tostring(minor).."|r")
 			else
-				p("- " .. major .. ": |cffff0000NOT FOUND|r")
+				p("- "..major..": |cffff0000NOT FOUND|r")
 			end
 		end
 	end
@@ -99,7 +100,7 @@ function private.GetDebugOptions(addon, addonName)
 		local lps = LibStub('LibPlayerSpells-1.0')
 		for cat in lps:IterateCategories() do
 			local _, patch, rev = lps:GetVersionInfo(cat)
-			local maj, min = floor(patch / 10000), floor(patch / 100) % 100
+			local maj, min = floor(patch/10000), floor(patch/100) % 100
 			p(format("- %s: %d.%d, v%d", _G[cat] or cat, maj, min, rev))
 		end
 	end
@@ -112,7 +113,7 @@ function private.GetDebugOptions(addon, addonName)
 	end
 
 	local function GetKnownRules()
-		local ruleKeys = { addon.getkeys(addon.rules) }
+		local ruleKeys = {addon.getkeys(addon.rules)}
 		local spellList = {}
 		local itemList = {}
 		IdToLink(spellList, itemList, unpack(ruleKeys))
@@ -146,15 +147,16 @@ function private.GetDebugOptions(addon, addonName)
 	end
 
 	return {
-		name        = 'Debug',
-		type        = 'group',
-		order       = -1,
-		childGroups = 'tab',
-		args        = {
+		name = 'Debug',
+		type = 'group',
+		order = -1,
+		childGroups  = 'tab',
+		args = {
 			general   = CreatePanel('General', 10, GetMainDebug),
 			libraries = CreatePanel('Libraries', 20, GetLibraryVersions),
 			lps       = CreatePanel('LibPlayerSpells-1.0', 30, GetLPS),
 			spells    = CreatePanel('Rules', 40, GetKnownRules),
 		},
 	}
+
 end

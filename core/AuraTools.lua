@@ -36,14 +36,6 @@ local UnitGUID = _G.UnitGUID
 
 local Debug = function(...) addon.Debug('AuraTools', ...) end
 
---local LibClassicDurations, LCDVer = addon.GetLib('LibClassicDurations')
-
---Debug(LibClassicDurations, LCDVer)
---if LibClassicDurations then
---	LibClassicDurations:Register(addonName)
---	UnitAura = LibClassicDurations.UnitAuraWrapper
---end
-
 ------------------------------------------------------------------------------
 -- Table recycling
 ------------------------------------------------------------------------------
@@ -82,14 +74,14 @@ end
 local empty = {}
 local aurasMetatable = {
 	__index = {
-		CheckGUID = function(self)
+		CheckGUID = function (self)
 			if self.__guid ~= UnitGUID(self.__unit) then
 				self:Update()
 			end
 
 			return self
 		end,
-		Update = function(self, info)
+		Update = function (self, info)
 			self.__guid = UnitGUID(self.__unit)
 
 			if not self.__guid then
@@ -109,7 +101,7 @@ local aurasMetatable = {
 				self:IncrementalUpdate(self.__unit, self.__filter, info)
 			end
 		end,
-		FullUpdate = function(self, unit, filter)
+		FullUpdate = function (self, unit, filter)
 			for k, v in next, self do
 				if type(k) == 'number' then
 					self[k] = del(v)
@@ -123,7 +115,7 @@ local aurasMetatable = {
 				self[data.auraInstanceID] = ProcessAura(data, new())
 			end
 		end,
-		IncrementalUpdate = function(self, unit, filter, info)
+		IncrementalUpdate = function (self, unit, filter, info)
 			for _, data in next, info.addedAuras or empty do
 				if not IsAuraFilteredOutByInstanceID(unit, data.auraInstanceID, filter) then
 					self[data.auraInstanceID] = ProcessAura(data, new())
@@ -147,7 +139,7 @@ local aurasMetatable = {
 				end
 			end
 		end,
-		GetById = function(self, id)
+		GetById = function (self, id)
 			for k, v in next, self do
 				if type(k) == 'number' and v.id == id then
 					return v
@@ -211,7 +203,7 @@ local unitMetatable = {
 local cache = setmetatable({}, {
 	__index = function(self, unit)
 		Debug('Spawning cache for', unit)
-		local unitAuras = setmetatable({ __unit = unit }, unitMetatable)
+		local unitAuras = setmetatable({__unit = unit}, unitMetatable)
 		self[unit] = unitAuras
 		return unitAuras
 	end
@@ -285,10 +277,10 @@ addon.AuraTools = {
 	end
 }
 for suffix, getter in next, getters do
-	addon.AuraTools["Get" .. suffix] = getter
+	addon.AuraTools["Get"..suffix] = getter
 end
 for suffix, iterator in next, iterators do
-	addon.AuraTools["Iterate" .. suffix .. "s"] = iterator
+	addon.AuraTools["Iterate"..suffix.."s"] = iterator
 end
 
 ------------------------------------------------------------------------------

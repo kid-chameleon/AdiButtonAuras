@@ -29,17 +29,17 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 	local L = addon.L
 
 	local profiles = addon.GetLib('AceDBOptions-3.0'):GetOptionsTable(addon.db)
-	--addon.GetLib('LibDualSpec-1.0'):EnhanceOptions(profiles, addon.db)
+	addon.GetLib('LibDualSpec-1.0'):EnhanceOptions(profiles, addon.db)
 	profiles.order = -10
 	profiles.disabled = false
 
 	AceConfig:RegisterOptionsTable(addonName, {
-		--@debug@
-		name = addonName .. ' DEV',
-		--@end-debug@
-		--[===[@non-debug@
-		name = addonName..' @project-version@',
-		--@end-non-debug@]===]
+		--[==[@debug@
+		name = addonName..' DEV',
+		--@end-debug@]==]
+		--@non-debug@
+		name = addonName..' 11.0.1',
+		--@end-non-debug@
 		type = 'group',
 		childGroups = 'tab',
 		args = {
@@ -47,9 +47,9 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 			spells    = private.GetSpellOptions(addon, addonName),
 			theme     = private.GetThemeOptions(addon, addonName),
 			userRules = private.GetUserRulesOptions(addon, addonName),
-			--@debug@
+			--[==[@debug@
 			debug     = private.GetDebugOptions(addon, addonName),
-			--@end-debug@
+			--@end-debug@]==]
 			profiles  = profiles,
 		},
 	})
@@ -60,9 +60,9 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 		theme     = AceConfigDialog:AddToBlizOptions(addonName, L['Theme'], addonName, "theme"),
 		userRules = AceConfigDialog:AddToBlizOptions(addonName, L['User rules'], addonName, "userRules"),
 		profiles  = AceConfigDialog:AddToBlizOptions(addonName, L['Profiles'], addonName, "profiles"),
-		--@debug@
+		--[==[@debug@
 		debug     = AceConfigDialog:AddToBlizOptions(addonName, "Debug", addonName, "debug"),
-		--@end-debug@
+		--@end-debug@]==]
 	}
 
 	-- Pass the spell panel frame
@@ -88,10 +88,11 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 				_type = 'spell'
 			end
 		end
-		local key = (_type == 'spell' or _type == 'item') and id and _type .. ':' .. id
+		local key = (_type == 'spell' or _type == 'item') and id and _type..':'..id
 		if key and addon.spells[key] then
 			_G.Settings.OpenToCategory(panels.spells)
 			private.SelectSpell(key)
 		end
 	end
+
 end)

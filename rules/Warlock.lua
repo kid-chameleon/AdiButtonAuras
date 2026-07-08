@@ -27,19 +27,13 @@ AdiButtonAuras:RegisterRules(function()
 	Debug('Rules', 'Adding warlock rules')
 
 	return {
-		ImportPlayerSpells {
-			-- import all spells for
-			'WARLOCK',
-			-- except
-			111400, -- Burning Rush (talent)
-			212580, -- Eye of the Observer (Demonology honor talent)
-		},
+		ImportPlayerSpells { 'WARLOCK' },
 
 		ShowPower {
 			{
-				5740, -- Rain of Fire (Destruction)
-				17877, -- Shadowburn (Destruction)
-				27243, -- Seed of Corruption (Affliction)
+				  5740, -- Rain of Fire (Destruction)
+				 17877, -- Shadowburn (Destruction)
+				 27243, -- Seed of Corruption (Affliction)
 				104316, -- Call Dreadstalkers (Demonology)
 				105174, -- Hand of Gul'dan (Demonology)
 				111898, -- Grimoire: Felguard (Demonology)
@@ -54,55 +48,12 @@ AdiButtonAuras:RegisterRules(function()
 			'SoulShards',
 		},
 
-		Configure {
-			'DemonicGateway',
-			BuildDesc('HARMFUL', 'bad', 'player', 113942),
-			111771, -- Demonic Gateway
-			'player',
-			'UNIT_AURA',
-			function(_, model)
-				local found, _, expiration = GetDebuff('player', 113942)
-				if found then
-					model.expiration = expiration
-					model.highlight = 'bad'
-				end
-			end,
-		},
-
-		Configure {
-			'SummonInfernal',
-			L['Show the duration of @NAME.'],
-			1122, -- Summon Infernal (Destruction)
-			'player',
-			'PLAYER_TOTEM_UPDATE',
-			BuildDemonHandler(infernal),
-		},
-
-		Configure {
-			'CallFelLord',
-			L['Show the duration of @NAME.'],
-			212459, -- Call Fel Lord (Demonology honor talent)
-			'player',
-			'PLAYER_TOTEM_UPDATE',
-			BuildDemonHandler(felLord),
-		},
-
-		Configure {
-			'Observer',
-			L['Show the duration of @NAME.'],
-			201996, -- Call Observer (Demonology honor talent)
-			'player',
-			'PLAYER_TOTEM_UPDATE',
-			BuildDemonHandler(observer),
-		},
-
-		Configure {
-			'Darkglare',
-			L['Show the duration of @NAME.'],
-			205180, -- Summon Darkglare (Affliction)
-			'player',
-			'PLAYER_TOTEM_UPDATE',
-			BuildDemonHandler(darkglare),
-		},
+		ShowTotem {   1122,  136219 }, -- Summon Infernal (Destruction)
+		ShowTotem { 104316, 1378282 }, -- Call Dreadstalkers (Demonology)
+		ShowTotem { 111898,  237562 }, -- Grimoire: Felguard (Demonology)
+		ShowTotem { 205180, 1416161 }, -- Summon Darkglare (Affliction)
+		ShowTotem { 264119, 1616211 }, -- Summon Vilefiend (Demonology)
+		ShowTotem { 455465, 1709932 }, -- Summon Gloomhound (Demonology)
+		ShowTotem { 455476, 1709931 }, -- Summon Charhound (Demonology)
 	}
 end)

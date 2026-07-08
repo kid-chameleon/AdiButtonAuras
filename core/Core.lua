@@ -143,7 +143,6 @@ local events = GetLib('CallbackHandler-1.0'):New(mixins, 'RegisterEvent', 'Unreg
 local frame = CreateFrame("Frame")
 frame:SetScript('OnEvent', function(_, ...) return events:Fire(...) end)
 function events:OnUsed(_, event) return frame:RegisterEvent(event) end
-
 function events:OnUnused(_, event) return frame:UnregisterEvent(event) end
 
 -- Messaging using CallbackHandler-1.0
@@ -157,18 +156,15 @@ function bus:OnUsed(_, message)
 		messages[message].OnUsed(message)
 	end
 end
-
 function bus:OnUnused(_, message)
 	addon.Debug('Messages', 'OnUnused', message)
 	if messages[message] and messages[message].OnUnused then
 		messages[message].OnUnused(message)
 	end
 end
-
 function mixins:DeclareMessage(message, OnUsed, OnUnused)
 	messages[message] = { OnUsed = OnUsed, OnUnused = OnUnused }
 end
-
 function mixins:IsDeclaredMessage(str)
 	return str and messages[str] and true
 end
@@ -205,9 +201,9 @@ end
 -- Event names
 ------------------------------------------------------------------------------
 
-local CONFIG_CHANGED = addonName .. '_Config_Changed'
-local THEME_CHANGED = addonName .. '_Theme_Changed'
-local RULES_UPDATED = addonName .. '_Rules_Updated'
+local CONFIG_CHANGED = addonName..'_Config_Changed'
+local THEME_CHANGED = addonName..'_Theme_Changed'
+local RULES_UPDATED = addonName..'_Rules_Updated'
 
 addon.RULES_UPDATED = RULES_UPDATED
 addon.CONFIG_CHANGED = CONFIG_CHANGED
@@ -225,16 +221,14 @@ local function UpdateHandler(event, button)
 	end
 end
 
-local function UpdateHandlerForButton(button)
-	return UpdateHandler('ActionButton_Update', button)
-end
-
 local hookedFrames = {}
 local function RegisterDominos()
 	for button in _G.Dominos.ActionButtons:GetAll() do
 		if not hookedFrames[button] then
 			hookedFrames[button] = true
-			hooksecurefunc(button, 'Update', UpdateHandlerForButton)
+			hooksecurefunc('ActionButton_Update', function(button)
+				return UpdateHandler('ActionButton_Update', button)
+			end)
 		end
 	end
 end
@@ -288,7 +282,7 @@ end
 addon:RegisterEvent('ADDON_LOADED')
 
 function addon:Initialize()
-	self.db = GetLib('AceDB-3.0'):New(addonName .. "DB", self.DEFAULT_SETTINGS, true)
+	self.db = GetLib('AceDB-3.0'):New(addonName.."DB", self.DEFAULT_SETTINGS, true)
 
 	-- migrate SV from old inverted to new missing
 	local profile = self.db.profile
@@ -308,7 +302,7 @@ function addon:Initialize()
 	self.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
 	self.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
 
-	--GetLib('LibDualSpec-1.0'):EnhanceDatabase(self.db, addonName)
+	GetLib('LibDualSpec-1.0'):EnhanceDatabase(self.db, addonName)
 
 	self:ScanButtons("ActionButton", NUM_ACTIONBAR_BUTTONS)
 	self:ScanButtons("BonusActionButton", NUM_ACTIONBAR_BUTTONS)
@@ -319,20 +313,18 @@ function addon:Initialize()
 	self:ScanButtons("StanceButton", NUM_STANCE_SLOTS)
 	self:ScanButtons("PetActionButton", NUM_PET_ACTION_SLOTS)
 
-	for _, actionBarButton in next, _G.ActionBarButtonEventsFrame.frames do
-		hookedFrames[actionBarButton] = true
-		hooksecurefunc(actionBarButton, 'Update', UpdateHandlerForButton)
-	end
-
-	hooksecurefunc(_G.PetActionBar, "Update", function()
-		for _, button in next, _G.PetActionBar.actionButtons do
-			UpdateHandler("PetActionBar_Update", button)
-		end
+	hooksecurefunc('ActionButton_Update', function(button)
+		return UpdateHandler('ActionButton_Update', button)
 	end)
 
-	hooksecurefunc(_G.StanceBar, "UpdateState", function()
-		for _, button in next, _G.StanceBar.actionButtons do
-			UpdateHandler("StanceBar_UpdateState", button)
+	hooksecurefunc('PetActionBar_Update', function()
+		for i = 1, NUM_PET_ACTION_SLOTS do
+			UpdateHandler('PetActionBar_Update', _G['PetActionButton' .. i])
+		end
+	end)
+	hooksecurefunc('StanceBar_UpdateState', function()
+		for i = 1, NUM_STANCE_SLOTS do
+			UpdateHandler('StanceBar_UpdateState', _G['StanceButton' .. i])
 		end
 	end)
 
@@ -375,7 +367,7 @@ addon.rules = rules
 addon.descriptions = descriptions
 
 local function errorhandler(msg)
-	addon:Debug('|cffff0000' .. tostring(msg) .. '|r')
+	addon:Debug('|cffff0000'..tostring(msg)..'|r')
 	return geterrorhandler()(msg)
 end
 
@@ -422,7 +414,7 @@ function addon:GetActionConfiguration(actionType, actionId)
 		return nil, false, nil
 	end
 	assert(actionType == "item" or actionType == "spell", format("Invalid action type: %q", tostring(actionType)))
-	local key = actionType .. ':' .. actionId
+	local key = actionType..':'..actionId
 	local rule = rules[key]
 	if rule then
 		return rule, self.db.profile.enabled[key], key
@@ -433,9 +425,9 @@ end
 
 function addon.isClass(class)
 	return class == 'ALL' or class == select(2, UnitClass("player"))
-	--@debug@
+	--[==[@debug@
 	--	or true
-	--@end-debug@
+	--@end-debug@]==]
 end
 
 ------------------------------------------------------------------------------
@@ -449,13 +441,12 @@ function addon:OpenConfiguration(args)
 	-- Replace the handler to avoid infinite recursive loops
 	addon.OpenConfiguration = function()
 		if not loaded then
-			print(format('|cffff0000[%s] %s: %s|r', addonName, L["Could not load configuration panel"], _G
-			["ADDON_" .. why]))
+			print(format('|cffff0000[%s] %s: %s|r', addonName, L["Could not load configuration panel"], _G["ADDON_"..why]))
 		end
 	end
 
 	-- Load the configuration addon
-	loaded, why = LoadAddOn(addonName .. '_Config')
+	loaded, why = LoadAddOn(addonName..'_Config')
 	if loaded then
 		CloseAllWindows()
 		CloseAllWindows()
@@ -480,7 +471,7 @@ end
 -- Group roster update
 ------------------------------------------------------------------------------
 
-local GROUP_CHANGED = addonName .. '_Group_Changed'
+local GROUP_CHANGED = addonName..'_Group_Changed'
 local groupPrefix, groupSize = "", 0
 local groupUnits = {}
 addon.GROUP_CHANGED, addon.groupUnits = GROUP_CHANGED, groupUnits
@@ -503,7 +494,7 @@ function addon:GROUP_ROSTER_UPDATE(event)
 		if i == 0 then
 			unit, petUnit = "player", "pet"
 		else
-			unit, petUnit = prefix .. i, prefix .. 'pet' .. i
+			unit, petUnit = prefix..i, prefix..'pet'..i
 		end
 		local guid, petGUID = UnitGUID(unit), UnitGUID(petUnit)
 		if groupUnits[unit] ~= guid or groupUnits[petUnit] ~= petGUID then
@@ -522,7 +513,7 @@ function addon:UNIT_PET(event, unit)
 	if unit == "player" then
 		petUnit = "pet"
 	elseif groupUnits[unit] then
-		petUnit = gsub(unit .. "pet", "(%d+)pet", "pet%1")
+		petUnit = gsub(unit.."pet", "(%d+)pet", "pet%1")
 	else
 		return
 	end
@@ -550,14 +541,14 @@ addon:DeclareMessage(
 -- Mouseover watching
 ------------------------------------------------------------------------------
 
-local MOUSEOVER_CHANGED = addonName .. '_Mouseover_Changed'
-local MOUSEOVER_TICK = addonName .. '_Mouseover_Tick'
+local MOUSEOVER_CHANGED = addonName..'_Mouseover_Changed'
+local MOUSEOVER_TICK = addonName..'_Mouseover_Tick'
 local unitList = { "player", "pet", "target", "focus" }
 
 addon.MOUSEOVER_CHANGED, addon.MOUSEOVER_TICK, addon.unitList = MOUSEOVER_CHANGED, MOUSEOVER_TICK, unitList
 
-for i = 1, 4 do tinsert(unitList, "party" .. i) end
-for i = 1, 40 do tinsert(unitList, "raid" .. i) end
+for i = 1,4 do tinsert(unitList, "party"..i) end
+for i = 1,40 do tinsert(unitList, "raid"..i) end
 
 local mouseoverUnit, mouseoverGUID = 'mouseover'
 
@@ -631,7 +622,7 @@ end
 -- "ally" and "enemy" pseudo-units
 ------------------------------------------------------------------------------
 
-local DYNAMIC_UNIT_CONDITONALS_CHANGED = addonName .. '_DynamicUnitConditionals_Changed'
+local DYNAMIC_UNIT_CONDITONALS_CHANGED = addonName..'_DynamicUnitConditionals_Changed'
 local dynamicUnitConditionals = {}
 
 addon.DYNAMIC_UNIT_CONDITONALS_CHANGED = DYNAMIC_UNIT_CONDITONALS_CHANGED
@@ -647,11 +638,11 @@ function addon:UpdateDynamicUnitConditionals()
 		ally = "[help]"
 	end
 	if focusCast ~= "NONE" then
-		enemy = "[@focus,mod:" .. focusCast .. "]" .. enemy
-		ally = "[@focus,mod:" .. focusCast .. "]" .. ally
+		enemy = "[@focus,mod:"..focusCast.."]"..enemy
+		ally = "[@focus,mod:"..focusCast.."]"..ally
 	end
 	if selfCast ~= "NONE" then
-		ally = "[@player,mod:" .. selfCast .. "]" .. ally
+		ally = "[@player,mod:"..selfCast.."]"..ally
 	end
 	if dynamicUnitConditionals.enemy ~= enemy or dynamicUnitConditionals.ally ~= ally then
 		dynamicUnitConditionals.enemy, dynamicUnitConditionals.ally = enemy, ally

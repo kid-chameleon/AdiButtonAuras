@@ -59,6 +59,7 @@ return Configure {
 local _G = _G
 
 function private.GetUserRulesOptions(addon, addonName)
+
 	local date = _G.date
 	local format = _G.format
 	local GetBuildInfo = _G.GetBuildInfo
@@ -76,11 +77,11 @@ function private.GetUserRulesOptions(addon, addonName)
 	local L = addon.L
 
 	local ADDON_VERSION = tostring(GetAddOnMetadata(addonName, "Version"))
-	local PLAYER_NAME = GetUnitName("player", false) .. '-' .. GetRealmName()
+	local PLAYER_NAME = GetUnitName("player", false).. '-'..GetRealmName()
 	local PATCH_NUMBER = GetBuildInfo()
-	--@debug@
+	--[==[@debug@
 	ADDON_VERSION = 'dev'
-	--@end-debug@
+	--@end-debug@]==]
 
 	local handler = {
 		current = next(addon.db.global.userRules)
@@ -153,11 +154,11 @@ function private.GetUserRulesOptions(addon, addonName)
 		for key, rule in pairs(addon.db.global.userRules) do
 			local title = rule.title
 			if rule.error then
-				title = title .. ' |cffff0000(' .. L['error'] .. ')|r'
+				title = title..' |cffff0000('..L['error']..')|r'
 			elseif not rule.enabled then
-				title = title .. ' |cff7f7f7f(' .. L['disabled'] .. ')|r'
+				title = title..' |cff7f7f7f('..L['disabled']..')|r'
 			elseif not addon.isClass(rule.scope) then
-				title = title .. ' |cff7f7f7f(' .. L['inactive'] .. ')|r'
+				title = title..' |cff7f7f7f('..L['inactive']..')|r'
 			end
 			t[key] = title
 		end
@@ -241,10 +242,13 @@ function private.GetUserRulesOptions(addon, addonName)
 						order = 25,
 						values = {
 							ALL = L['None'],
+							DEATHKNIGHT = L['DEATHKNIGHT'],
+							DEMONHUNTER = L['DEMONHUNTER'],
 							DRUID = L['DRUID'],
 							EVOKER = L['EVOKER'],
 							HUNTER = L['HUNTER'],
 							MAGE = L['MAGE'],
+							MONK = L['MONK'],
 							PALADIN = L['PALADIN'],
 							PRIEST = L['PRIEST'],
 							ROGUE = L['ROGUE'],
@@ -264,7 +268,7 @@ function private.GetUserRulesOptions(addon, addonName)
 					_validation = {
 						name = function()
 							local msg = handler:Get('error')
-							return msg and ('|cffff0000Error ' .. msg:gsub('^[^:]+:(%d+:)', 'line %1') .. '|r') or 'OK'
+							return msg and ('|cffff0000Error '..msg:gsub('^[^:]+:(%d+:)', 'line %1')..'|r') or 'OK'
 						end,
 						type = 'description',
 						hidden = function()
@@ -286,4 +290,5 @@ function private.GetUserRulesOptions(addon, addonName)
 			},
 		},
 	}
+
 end

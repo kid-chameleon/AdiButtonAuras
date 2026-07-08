@@ -27,55 +27,11 @@ AdiButtonAuras:RegisterRules(function()
 	Debug('Rules', 'Adding mage rules')
 
 	return {
-		ImportPlayerSpells {
-			-- import all spell for
-			'MAGE',
-			-- except for
-			1459, -- Begin Arcane Intellect
-			1460,
-			1461,
-			10156,
-			10157, -- End Arcane Intellect
-		},
+		ImportPlayerSpells { 'MAGE' },
 
-		Configure {
-			'ArcaneIntellect',
-			L['Show the number of group members missing @NAME.'],
-			{
-				1459, -- Begin Arcane Intellect
-				1460,
-				1461,
-				10156,
-				10157, -- End Arcane Intellect
-			},
-			'group',
-			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
-			function(units, model)
-				local missing = 0
-				local shortest
-				for unit in next, units.group do
-					if UnitIsPlayer(unit) and not UnitIsDeadOrGhost(unit) then
-						local found, _, expiration = GetBuff(unit, 1459)
-						if found then
-							if not shortest or expiration < shortest then
-								shortest = expiration
-							end
-						else
-							missing = missing + 1
-						end
-					end
-				end
-
-				if shortest then
-					model.expiration = shortest
-					model.highlight = 'good'
-				end
-				if missing > 0 then
-					model.count = missing
-					model.maxCount = missing
-					model.hint = true
-				end
-			end,
+		ShowPower {
+			44425, -- Arcane Barrage (Arcane)
+			'ArcaneCharges',
 		},
 	}
 end)

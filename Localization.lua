@@ -24,9 +24,9 @@ local _, addon = ...
 local L = setmetatable({}, {
 	__index = function(self, key)
 		if not key then return end
-		--[==[@debug@
+		--@debug@
 		addon.Debug('Localization', key)
-		--@end-debug@]==]
+		--@end-debug@
 		self[key] = key
 		return key
 	end,

@@ -210,7 +210,7 @@ function private.GetSpellOptions(addon, addonName)
 				end
 			end
 			GameTooltip:AddLine(L['Shift+click to toggle.'])
-			--[==[@debug@
+			--@debug@
 			GameTooltip:AddLine("-- debug --", 0.5, 0.5, 0.5)
 			GameTooltip:AddDoubleLine("Key", self.key, nil, nil, nil, 1, 1, 1)
 			GameTooltip:AddDoubleLine("Id", self.id, nil, nil, nil, 1, 1, 1)
@@ -225,7 +225,7 @@ function private.GetSpellOptions(addon, addonName)
 				title = " "
 			end
 			GameTooltip:AddDoubleLine('Handlers', #(self.conf.handlers), nil, nil, nil, 1, 1, 1)
-			--@end-debug@]==]
+			--@end-debug@
 		elseif type_ == 'unsupported' then
 			GameTooltip:AddDoubleLine(L['Status'], L['unsupported'], nil, nil, nil, 0.8, 0.4, 0.0)
 			GameTooltip:AddLine(L['AdiButtonAuras cannot handle this button.'], 0.8, 0.4, 0.0)

@@ -302,7 +302,7 @@ function addon:Initialize()
 	self.db.RegisterCallback(self, "OnProfileCopied", "OnProfileChanged")
 	self.db.RegisterCallback(self, "OnProfileReset", "OnProfileChanged")
 
-	GetLib('LibDualSpec-1.0'):EnhanceDatabase(self.db, addonName)
+	--GetLib('LibDualSpec-1.0'):EnhanceDatabase(self.db, addonName)
 
 	self:ScanButtons("ActionButton", NUM_ACTIONBAR_BUTTONS)
 	self:ScanButtons("BonusActionButton", NUM_ACTIONBAR_BUTTONS)
@@ -425,9 +425,9 @@ end
 
 function addon.isClass(class)
 	return class == 'ALL' or class == select(2, UnitClass("player"))
-	--[==[@debug@
+	--@debug@
 	--	or true
-	--@end-debug@]==]
+	--@end-debug@
 end
 
 ------------------------------------------------------------------------------

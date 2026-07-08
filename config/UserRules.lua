@@ -79,9 +79,9 @@ function private.GetUserRulesOptions(addon, addonName)
 	local ADDON_VERSION = tostring(GetAddOnMetadata(addonName, "Version"))
 	local PLAYER_NAME = GetUnitName("player", false).. '-'..GetRealmName()
 	local PATCH_NUMBER = GetBuildInfo()
-	--[==[@debug@
+	--@debug@
 	ADDON_VERSION = 'dev'
-	--@end-debug@]==]
+	--@end-debug@
 
 	local handler = {
 		current = next(addon.db.global.userRules)

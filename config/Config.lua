@@ -34,12 +34,12 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 	profiles.disabled = false
 
 	AceConfig:RegisterOptionsTable(addonName, {
-		--[==[@debug@
+		--@debug@
 		name = addonName..' DEV',
-		--@end-debug@]==]
-		--@non-debug@
+		--@end-debug@
+		--[===[@non-debug@
 		name = addonName..' 11.0.1',
-		--@end-non-debug@
+		--@end-non-debug@]===]
 		type = 'group',
 		childGroups = 'tab',
 		args = {
@@ -47,9 +47,9 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 			spells    = private.GetSpellOptions(addon, addonName),
 			theme     = private.GetThemeOptions(addon, addonName),
 			userRules = private.GetUserRulesOptions(addon, addonName),
-			--[==[@debug@
+			--@debug@
 			debug     = private.GetDebugOptions(addon, addonName),
-			--@end-debug@]==]
+			--@end-debug@
 			profiles  = profiles,
 		},
 	})
@@ -60,9 +60,9 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 		theme     = AceConfigDialog:AddToBlizOptions(addonName, L['Theme'], addonName, "theme"),
 		userRules = AceConfigDialog:AddToBlizOptions(addonName, L['User rules'], addonName, "userRules"),
 		profiles  = AceConfigDialog:AddToBlizOptions(addonName, L['Profiles'], addonName, "profiles"),
-		--[==[@debug@
+		--@debug@
 		debug     = AceConfigDialog:AddToBlizOptions(addonName, "Debug", addonName, "debug"),
-		--@end-debug@]==]
+		--@end-debug@
 	}
 
 	-- Pass the spell panel frame

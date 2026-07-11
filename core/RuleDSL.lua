@@ -132,14 +132,16 @@ local function _AddRuleFor(key, desc, spell, units, events, handlers, providers,
 		desc = gsub(desc or "", "@NAME", name)
 		descriptions[key] = ucfirst(desc)
 	end
-	Debug("Adding rule for", info,
-		"key:", key,
-		"desc:", desc,
-		"units:", strjoin(",", getkeys(units)),
-		"events:", strjoin(",", getkeys(events)),
-		"handlers:", handlers,
-		"providers:", providers and strjoin(",", unpack(providers)) or "-"
-	)
+	if addon.debugEnabled then
+		Debug("Adding rule for", info,
+			"key:", key,
+			"desc:", desc,
+			"units:", strjoin(",", getkeys(units)),
+			"events:", strjoin(",", getkeys(events)),
+			"handlers:", handlers,
+			"providers:", providers and strjoin(",", unpack(providers)) or "-"
+		)
+	end
 	local rule = rules[id]
 	if not rule then
 		rule = { name = name, units = {}, events = {}, handlers = {}, keys = {} }

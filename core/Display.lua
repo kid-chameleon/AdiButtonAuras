@@ -49,50 +49,82 @@ local fontFile, fontSize, fontFlag = [[Fonts\ARIALN.TTF]], 13, "OUTLINE"
 local overlayPrototype = addon.overlayPrototype
 local ColorGradient = addon.ColorGradient
 
-local function Timer_Update(self)
+local Timer_Update
+
+-- Stale callbacks bail out when the generation has moved on, so only one
+-- update chain per fontstring stays alive.
+local function Timer_Schedule(self, delay)
+	local gen = self.generation
+	C_Timer.After(max(0.1, delay), function()
+		if self.generation == gen then
+			return Timer_Update(self)
+		end
+	end)
+end
+
+function Timer_Update(self)
 	local timeLeft = (self.expiration or 0) - GetTime()
 	if timeLeft <= 0 then
-		self:Hide()
+		if self:IsShown() then
+			self:Hide()
+		end
 		return
 	end
 
 	local prefs = addon.db.profile
 	if timeLeft > prefs.maxCountdown then
-		C_Timer.After(max(0.1, timeLeft - prefs.maxCountdown), function() return Timer_Update(self) end)
-		self:Hide()
+		Timer_Schedule(self, timeLeft - prefs.maxCountdown)
+		if self:IsShown() then
+			self:Hide()
+		end
 		return
 	end
 
-	local delay
+	local style, value, delay
 	if timeLeft > 3600 then
-		self:SetFormattedText("%dh", floor(timeLeft/3600))
+		style, value = "%dh", floor(timeLeft/3600)
 		delay = ceil(timeLeft % 3600)
 	elseif timeLeft > (self.compactTimeLeft and prefs.minMinuteSecs or prefs.minMinutes) then
-		self:SetFormattedText("%dm", floor(timeLeft/60))
+		style, value = "%dm", floor(timeLeft/60)
 		delay = ceil(timeLeft % 60)
 	elseif timeLeft > prefs.minMinuteSecs then
-		self:SetFormattedText("%d:%02d", floor(timeLeft/60), floor(timeLeft%60))
+		style, value = "%d:%02d", floor(timeLeft)
 		delay = ceil((timeLeft % 1) * 10) / 10
 	elseif timeLeft > prefs.maxTenth then
-		self:SetFormattedText("%d", floor(timeLeft))
+		style, value = "%d", floor(timeLeft)
 		delay = ceil((timeLeft % 1) * 10) / 10
 	else
-		self:SetFormattedText("%.1f", floor(timeLeft*10)/10)
+		style, value = "%.1f", floor(timeLeft*10)
 		delay = 0.1
 	end
-
-	local r, g, b = unpack(prefs.colors.countdownHigh)
-	if timeLeft <= 3 then
-		local r1, g1, b1 = unpack(prefs.colors.countdownLow)
-		local r2, g2, b2 = unpack(prefs.colors.countdownMedium)
-		r, g, b = ColorGradient(timeLeft, 3, r1, g1, b1, r2, g2, b2)
-	elseif timeLeft <= 10 then
-		local r2, g2, b2 = unpack(prefs.colors.countdownMedium)
-		r, g, b = ColorGradient(timeLeft - 3, 7, r2, g2, b2, r, g, b)
+	if style ~= self.displayedStyle or value ~= self.displayedValue then
+		self.displayedStyle, self.displayedValue = style, value
+		if style == "%d:%02d" then
+			self:SetFormattedText(style, floor(value/60), value % 60)
+		elseif style == "%.1f" then
+			self:SetFormattedText(style, value/10)
+		else
+			self:SetFormattedText(style, value)
+		end
 	end
-	self:SetTextColor(r, g, b, 1)
 
-	C_Timer.After(max(0.1, delay), function() return Timer_Update(self) end)
+	-- the color gradient only moves below 10 seconds, in displayable tenths
+	local colorBucket = timeLeft > 10 and -1 or floor(timeLeft * 10)
+	if colorBucket ~= self.displayedColorBucket then
+		self.displayedColorBucket = colorBucket
+		local r, g, b = unpack(prefs.colors.countdownHigh)
+		if timeLeft <= 3 then
+			local r1, g1, b1 = unpack(prefs.colors.countdownLow)
+			local r2, g2, b2 = unpack(prefs.colors.countdownMedium)
+			r, g, b = ColorGradient(timeLeft, 3, r1, g1, b1, r2, g2, b2)
+		elseif timeLeft <= 10 then
+			local r2, g2, b2 = unpack(prefs.colors.countdownMedium)
+			r, g, b = ColorGradient(timeLeft - 3, 7, r2, g2, b2, r, g, b)
+		end
+		self:SetTextColor(r, g, b, 1)
+	end
+
+	Timer_Schedule(self, delay)
 
 	-- avoid triggering the OnShow handler for nothing
 	if not self:IsShown() then
@@ -126,6 +158,7 @@ function overlayPrototype:InitializeDisplay()
 	timer:SetPoint(options.textPosition .. "RIGHT", -options.textXOffset, options.textYOffset)
 	timer:SetJustifyV("BOTTOM")
 	timer.Update = Timer_Update
+	timer.generation = 0
 	timer:Hide()
 	hooksecurefunc(timer, "Show", Text_OnShowHide)
 	hooksecurefunc(timer, "Hide", Text_OnShowHide)
@@ -283,9 +316,12 @@ end
 ------------------------------------------------------------------------------
 
 function overlayPrototype:ApplyExpiration()
-	local expiration = self.expiration
-	self.Timer.expiration = expiration
-	self.Timer:Update()
+	local timer = self.Timer
+	timer.expiration = self.expiration
+	timer.generation = timer.generation + 1
+	-- invalidate render caches, as preferences may have changed
+	timer.displayedStyle, timer.displayedValue, timer.displayedColorBucket = nil, nil, nil
+	timer:Update()
 end
 
 local function ScaleDown(value, unit, ...)

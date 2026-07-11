@@ -133,6 +133,8 @@ addon.libraries, addon.GetLib = libraries, GetLib
 if AdiDebug then
 	AdiDebug:Embed(addon, addonName)
 	addon.GetName = function() return addonName end
+	-- guards debug calls with costly argument expressions
+	addon.debugEnabled = true
 else
 	addon.Debug = function() end
 end
@@ -216,20 +218,15 @@ addon.THEME_CHANGED = THEME_CHANGED
 local function UpdateHandler(event, button)
 	local overlay = addon:GetOverlay(button)
 	if overlay and overlay:IsVisible() then
-		overlay:ApplySkin()
 		return overlay:UpdateAction(event)
 	end
 end
 
-local hookedFrames = {}
 local function RegisterDominos()
+	-- updates are covered by the global ActionButton_Update hook installed in
+	-- addon:Initialize(); the overlays only have to exist for these buttons
 	for button in _G.Dominos.ActionButtons:GetAll() do
-		if not hookedFrames[button] then
-			hookedFrames[button] = true
-			hooksecurefunc('ActionButton_Update', function(button)
-				return UpdateHandler('ActionButton_Update', button)
-			end)
-		end
+		local _ = addon:GetOverlay(button)
 	end
 end
 
@@ -413,7 +410,9 @@ function addon:GetActionConfiguration(actionType, actionId)
 	if actionType == "empty" or actionType == "unsupported" or actionType == "hidden" then
 		return nil, false, nil
 	end
-	assert(actionType == "item" or actionType == "spell", format("Invalid action type: %q", tostring(actionType)))
+	if actionType ~= "item" and actionType ~= "spell" then
+		error(format("Invalid action type: %q", tostring(actionType)))
+	end
 	local key = actionType..':'..actionId
 	local rule = rules[key]
 	if rule then
@@ -503,7 +502,9 @@ function addon:GROUP_ROSTER_UPDATE(event)
 		end
 	end
 	if changed then
-		addon.Debug('Group', addon.getkeys(groupUnits))
+		if addon.debugEnabled then
+			addon.Debug('Group', addon.getkeys(groupUnits))
+		end
 		return self:SendMessage(GROUP_CHANGED)
 	end
 end

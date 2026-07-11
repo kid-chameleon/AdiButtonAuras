@@ -225,7 +225,8 @@ end
 local function RegisterDominos()
 	-- updates are covered by the global ActionButton_Update hook installed in
 	-- addon:Initialize(); the overlays only have to exist for these buttons
-	for button in _G.Dominos.ActionButtons:GetAll() do
+	local Dominos = GetLib('AceAddon-3.0'):GetAddon('Dominos')
+	for button in Dominos.ActionButtons:GetAll() do
 		local _ = addon:GetOverlay(button)
 	end
 end
@@ -261,7 +262,7 @@ function addon:ADDON_LOADED(event, name)
 	self:Initialize()
 
 	if IsAddOnLoaded('Dominos') then
-		_G.Dominos.RegisterCallback(addon, 'LAYOUT_LOADED', RegisterDominos)
+		GetLib('AceAddon-3.0'):GetAddon('Dominos').RegisterCallback(addon, 'LAYOUT_LOADED', RegisterDominos)
 	end
 
 	if IsAddOnLoaded('Bartender4') then

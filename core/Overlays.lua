@@ -236,7 +236,11 @@ end
 
 function overlayPrototype:OnEvent(event, ...)
 	if self:IsVisible() then
-		return assert(self[event], "No event handler for "..event)(self, event, ...)
+		local handler = self[event]
+		if not handler then
+			error("No event handler for "..event)
+		end
+		return handler(self, event, ...)
 	end
 end
 
@@ -287,7 +291,9 @@ function overlayPrototype:SetAction(event, actionType, actionId, macroConditiona
 	self:UnregisterAllMessages()
 
 	if conf then
-		self:Debug('SetAction', event, GetSpellLink(spellId), macroConditionals)
+		if addon.debugEnabled then
+			self:Debug('SetAction', event, GetSpellLink(spellId), macroConditionals)
+		end
 		for event in pairs(conf.events) do
 			events[event] = 'ScheduleUpdate'
 		end

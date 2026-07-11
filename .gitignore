@@ -1,3 +1,4 @@
 .release/*
 !.release/libreplace.lua
 .vscode
+doc/

@@ -9,7 +9,9 @@
 	<Script file="Paladin.lua"/>
 	<Script file="Priest.lua"/>
 	<Script file="Rogue.lua"/>
-	<Script file="Shaman.lua"/>
+	<Script file="vanilla\Shaman.lua"/>
+	<Script file="tbc\Shaman.lua"/>
 	<Script file="Warlock.lua"/>
-	<Script file="Warrior.lua"/>
+	<Script file="vanilla\Warrior.lua"/>
+	<Script file="tbc\Warrior.lua"/>
 </Ui>

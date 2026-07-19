@@ -708,6 +708,17 @@ local baseEnv = {
 	Debug        = Debug,
 	PLAYER_CLASS = PLAYER_CLASS,
 
+	-- Game flavor
+	flavor    = addon.flavor,
+	expansion = addon.expansion,
+	isSoD     = addon.isSoD,
+	isFlavor  = addon.isFlavor,
+
+	LE_EXPANSION_CLASSIC                = _G.LE_EXPANSION_CLASSIC,
+	LE_EXPANSION_BURNING_CRUSADE        = _G.LE_EXPANSION_BURNING_CRUSADE,
+	LE_EXPANSION_WRATH_OF_THE_LICH_KING = _G.LE_EXPANSION_WRATH_OF_THE_LICH_KING,
+	LE_EXPANSION_CATACLYSM              = _G.LE_EXPANSION_CATACLYSM,
+
 	-- Intended to be used un Lua
 	AddRuleFor               = AddRuleFor,
 	BuildAuraHandler_Single  = BuildAuraHandler_Single,

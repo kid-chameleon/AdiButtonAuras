@@ -22,28 +22,12 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('HUNTER') then return end
-
+if not addon.isFlavor('tbc') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding hunter rules')
+	Debug('Rules', 'Adding tbc hunter rules')
 
 	return {
 		ImportPlayerSpells { 'HUNTER' },
-
-		ShowStacks {
-			{
-				19434, -- Begin Aimed Shot
-				20900,
-				20901,
-				20902,
-				20903,
-				20904, -- End Aimed Shot
-			},
-			415401, -- Sniper Training
-			5,
-			"player",
-			1,
-			"highlight",
-		},
 	}
 end)

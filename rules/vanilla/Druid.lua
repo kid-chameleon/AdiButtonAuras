@@ -22,21 +22,29 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('DRUID') then return end
+if not addon.isFlavor('vanilla') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding druid rules')
+	Debug('Rules', 'Adding vanilla druid rules')
 
 	return {
 		ImportPlayerSpells { 'DRUID' },
 
 		ShowPower {
 			{
-				  1079, -- Rip
-				 22568, -- Ferocious Bite
-				 22570, -- Maim
-				285381, -- Primal Wrath (Feral)
+				1079, -- Begin Rip
+				9492,
+				9493,
+				9752,
+				9894,
+				9896, -- End Rip
+				22568, -- Begin Ferocious Bite
+				22827,
+				22828,
+				22829,
+				31018, -- End Ferocious Bite
 			},
-			'ComboPoints'
+			'ComboPoints',
 		},
 	}
 end)

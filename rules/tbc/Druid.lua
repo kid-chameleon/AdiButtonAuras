@@ -21,17 +21,33 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('MAGE') then return end
+if not addon.isClass('DRUID') then return end
+if not addon.isFlavor('tbc') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding mage rules')
+	Debug('Rules', 'Adding tbc druid rules')
 
 	return {
-		ImportPlayerSpells { 'MAGE' },
+		ImportPlayerSpells { 'DRUID' },
 
 		ShowPower {
-			44425, -- Arcane Barrage (Arcane)
-			'ArcaneCharges',
+			{
+				1079, -- Begin Rip
+				9492,
+				9493,
+				9752,
+				9894,
+				9896,
+				27008, -- End Rip
+				22568, -- Begin Ferocious Bite
+				22827,
+				22828,
+				22829,
+				31018,
+				24248, -- End Ferocious Bite
+				22570, -- Maim
+			},
+			'ComboPoints',
 		},
 	}
 end)

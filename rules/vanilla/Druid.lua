@@ -21,15 +21,30 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('PRIEST') then return end
+if not addon.isClass('DRUID') then return end
+if not addon.isFlavor('vanilla') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding priest rules')
+	Debug('Rules', 'Adding vanilla druid rules')
 
 	return {
-		ImportPlayerSpells { 'PRIEST' },
+		ImportPlayerSpells { 'DRUID' },
 
-		ShowTotem {  34433, 136199 }, -- Shadowfiend
-		ShowTotem { 200174, 136214 }, -- Mindbender
+		ShowPower {
+			{
+				1079, -- Begin Rip
+				9492,
+				9493,
+				9752,
+				9894,
+				9896, -- End Rip
+				22568, -- Begin Ferocious Bite
+				22827,
+				22828,
+				22829,
+				31018, -- End Ferocious Bite
+			},
+			'ComboPoints',
+		},
 	}
 end)

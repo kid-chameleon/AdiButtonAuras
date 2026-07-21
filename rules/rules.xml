@@ -2,14 +2,21 @@
 ..\FrameXML\UI.xsd">
 	<Script file="UserRules.lua"/>
 	<Script file="Common.lua"/>
-	<Script file="Druid.lua"/>
+	<Script file="vanilla\Druid.lua"/>
+	<Script file="tbc\Druid.lua"/>
 	<Script file="vanilla\Hunter.lua"/>
 	<Script file="tbc\Hunter.lua"/>
-	<Script file="Mage.lua"/>
+	<Script file="vanilla\Mage.lua"/>
+	<Script file="tbc\Mage.lua"/>
 	<Script file="Paladin.lua"/>
-	<Script file="Priest.lua"/>
-	<Script file="Rogue.lua"/>
-	<Script file="Shaman.lua"/>
-	<Script file="Warlock.lua"/>
-	<Script file="Warrior.lua"/>
+	<Script file="vanilla\Priest.lua"/>
+	<Script file="tbc\Priest.lua"/>
+	<Script file="vanilla\Rogue.lua"/>
+	<Script file="tbc\Rogue.lua"/>
+	<Script file="vanilla\Shaman.lua"/>
+	<Script file="tbc\Shaman.lua"/>
+	<Script file="vanilla\Warlock.lua"/>
+	<Script file="tbc\Warlock.lua"/>
+	<Script file="vanilla\Warrior.lua"/>
+	<Script file="tbc\Warrior.lua"/>
 </Ui>

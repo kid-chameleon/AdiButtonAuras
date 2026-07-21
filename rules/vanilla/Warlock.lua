@@ -21,29 +21,13 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('ROGUE') then return end
+if not addon.isClass('WARLOCK') then return end
+if not addon.isFlavor('vanilla') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding rogue rules')
+	Debug('Rules', 'Adding vanilla warlock rules')
 
 	return {
-		ImportPlayerSpells { 'ROGUE' },
-
-		ShowPower {
-			{
-				   408, -- Kidney Shot
-				  1943, -- Rupture (Assassination, Subtlety)
-				  2098, -- Dispatch (Outlaw)
-				 32645, -- Envenom (Assassination)
-				 51690, -- Killing Spree (Outlaw)
-				121411, -- Crimson Tempest (Assassination)
-				196819, -- Eviscerate (Subtlety) -- TODO: ranked 231716
-				280719, -- Secret Technique (Subtlety)
-				315341, -- Between the Eyes (Outlaw)
-				315496, -- Slice and Dice
-				319175, -- Black Powder (Subtlety)
-			},
-			'ComboPoints'
-		},
+		ImportPlayerSpells { 'WARLOCK' },
 	}
 end)

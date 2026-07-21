@@ -22,11 +22,46 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('WARRIOR') then return end
+if not addon.isFlavor('vanilla') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding warrior rules')
+	Debug('Rules', 'Adding vanilla warrior rules')
 
-	return {
-		ImportPlayerSpells { 'WARRIOR' },
+	-- the shouts are flagged RAIDBUFF and thus not imported; show the
+	-- duration of any rank found on the player, whoever cast it
+	local battleShout = {
+		6673, -- Begin Battle Shout
+		5242,
+		6192,
+		11549,
+		11550,
+		11551,
+		25289, -- End Battle Shout
 	}
+
+	local rules = {
+		ImportPlayerSpells { 'WARRIOR' },
+
+		Configure {
+			'BattleShout',
+			BuildDesc('HELPFUL', 'good', 'player', 6673),
+			battleShout,
+			'player',
+			'UNIT_AURA',
+			BuildAuraHandler_FirstOf('HELPFUL', 'good', 'player', battleShout),
+		},
+	}
+
+	if isSoD then
+		tinsert(rules, Configure {
+			'CommandingShout',
+			BuildDesc('HELPFUL', 'good', 'player', 403215),
+			403215, -- Commanding Shout
+			'player',
+			'UNIT_AURA',
+			BuildAuraHandler_Single('HELPFUL', 'good', 'player', 403215),
+		})
+	end
+
+	return rules
 end)

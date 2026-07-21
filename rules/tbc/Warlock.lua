@@ -21,17 +21,13 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('MAGE') then return end
+if not addon.isClass('WARLOCK') then return end
+if not addon.isFlavor('tbc') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding mage rules')
+	Debug('Rules', 'Adding tbc warlock rules')
 
 	return {
-		ImportPlayerSpells { 'MAGE' },
-
-		ShowPower {
-			44425, -- Arcane Barrage (Arcane)
-			'ArcaneCharges',
-		},
+		ImportPlayerSpells { 'WARLOCK' },
 	}
 end)

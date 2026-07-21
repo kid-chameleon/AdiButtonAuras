@@ -39,7 +39,6 @@ local LoadAddOn = C_AddOns.LoadAddOn
 local next = _G.next
 local NUM_ACTIONBAR_BUTTONS = _G.NUM_ACTIONBAR_BUTTONS
 local NUM_PET_ACTION_SLOTS = _G.NUM_PET_ACTION_SLOTS
-local NUM_STANCE_SLOTS = _G.NUM_STANCE_SLOTS
 local pairs = _G.pairs
 local print = _G.print
 local select = _G.select
@@ -236,11 +235,6 @@ local function UpdateHandler(event, button)
 	end
 end
 
--- era drives the action bars through legacy global functions; from TBC
--- (anniversary) on the buttons are mixin-based like retail and each button's
--- Update method has to be hooked instead
-local useLegacyHooks = addon.expansion < _G.LE_EXPANSION_BURNING_CRUSADE
-
 local function UpdateHandlerForButton(button)
 	return UpdateHandler('ActionButton_Update', button)
 end
@@ -254,13 +248,9 @@ local function HookButtonUpdate(button)
 end
 
 local function RegisterDominos()
-	-- on era, updates are covered by the global ActionButton_Update hook
-	-- installed in addon:Initialize(), so the overlays only have to exist
 	local Dominos = GetLib('AceAddon-3.0'):GetAddon('Dominos')
 	for button in Dominos.ActionButtons:GetAll() do
-		if not useLegacyHooks then
-			HookButtonUpdate(button)
-		end
+		HookButtonUpdate(button)
 		local _ = addon:GetOverlay(button)
 	end
 end
@@ -302,7 +292,7 @@ function addon:ADDON_LOADED(event, name)
 	if IsAddOnLoaded('Bartender4') then
 		self:ScanButtons("BT4Button", 120)
 		self:ScanButtons("BT4PetButton", NUM_PET_ACTION_SLOTS)
-		self:ScanButtons("BT4StanceButton", NUM_STANCE_SLOTS)
+		self:ScanButtons("BT4StanceButton")
 	end
 
 	-- LibActionButton support
@@ -343,46 +333,28 @@ function addon:Initialize()
 	end
 
 	self:ScanButtons("ActionButton", NUM_ACTIONBAR_BUTTONS)
-	self:ScanButtons("BonusActionButton", NUM_ACTIONBAR_BUTTONS)
 	self:ScanButtons("MultiBarRightButton", NUM_ACTIONBAR_BUTTONS)
 	self:ScanButtons("MultiBarLeftButton", NUM_ACTIONBAR_BUTTONS)
 	self:ScanButtons("MultiBarBottomRightButton", NUM_ACTIONBAR_BUTTONS)
 	self:ScanButtons("MultiBarBottomLeftButton", NUM_ACTIONBAR_BUTTONS)
-	self:ScanButtons("StanceButton", NUM_STANCE_SLOTS)
+	self:ScanButtons("StanceButton")
 	self:ScanButtons("PetActionButton", NUM_PET_ACTION_SLOTS)
 
-	if useLegacyHooks then
-		hooksecurefunc('ActionButton_Update', function(button)
-			return UpdateHandler('ActionButton_Update', button)
-		end)
-
-		hooksecurefunc('PetActionBar_Update', function()
-			for i = 1, NUM_PET_ACTION_SLOTS do
-				UpdateHandler('PetActionBar_Update', _G['PetActionButton' .. i])
-			end
-		end)
-		hooksecurefunc('StanceBar_UpdateState', function()
-			for i = 1, NUM_STANCE_SLOTS do
-				UpdateHandler('StanceBar_UpdateState', _G['StanceButton' .. i])
-			end
-		end)
-	else
-		for _, actionBarButton in next, _G.ActionBarButtonEventsFrame.frames do
-			HookButtonUpdate(actionBarButton)
-		end
-
-		hooksecurefunc(_G.PetActionBar, 'Update', function()
-			for _, button in next, _G.PetActionBar.actionButtons do
-				UpdateHandler('PetActionBar_Update', button)
-			end
-		end)
-
-		hooksecurefunc(_G.StanceBar, 'UpdateState', function()
-			for _, button in next, _G.StanceBar.actionButtons do
-				UpdateHandler('StanceBar_UpdateState', button)
-			end
-		end)
+	for _, actionBarButton in next, _G.ActionBarButtonEventsFrame.frames do
+		HookButtonUpdate(actionBarButton)
 	end
+
+	hooksecurefunc(_G.PetActionBar, 'Update', function()
+		for _, button in next, _G.PetActionBar.actionButtons do
+			UpdateHandler('PetActionBar_Update', button)
+		end
+	end)
+
+	hooksecurefunc(_G.StanceBar, 'UpdateState', function()
+		for _, button in next, _G.StanceBar.actionButtons do
+			UpdateHandler('StanceBar_UpdateState', button)
+		end
+	end)
 
 	self:RegisterEvent('UPDATE_MACROS')
 

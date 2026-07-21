@@ -27,9 +27,9 @@ local CreateFrame = _G.CreateFrame
 local C_Timer = _G.C_Timer
 local error = _G.error
 local format = _G.format
-local GetActionCooldown = _G.GetActionCooldown
+local GetActionCooldown = _G.C_ActionBar.GetActionCooldown
 local GetActionInfo = _G.GetActionInfo
-local GetActionText = _G.GetActionText
+local GetActionText = _G.C_ActionBar.GetActionText
 local GetMacroBody = _G.GetMacroBody
 local GetMacroItem = _G.GetMacroItem
 local GetMacroSpell = _G.GetMacroSpell
@@ -597,7 +597,8 @@ end
 
 function blizzardSupportPrototype:GetActionCooldown()
 	if self.button.action then
-		return GetActionCooldown(self.button.action)
+		local cooldownInfo = GetActionCooldown(self.button.action)
+		return cooldownInfo.startTime, cooldownInfo.duration
 	end
 end
 

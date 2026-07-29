@@ -27,9 +27,6 @@ if not addon.isFlavor('tbc') then return end
 AdiButtonAuras:RegisterRules(function()
 	Debug('Rules', 'Adding tbc shaman rules')
 
-	-- Every imbue rank has its own enchant id, hence one rule per rank.
-	-- Rockbiter Weapon is no temporary enchant in tbc and cannot be tracked
-	-- with GetWeaponEnchantInfo.
 	local imbues = { -- { rank spell, enchant id }
 		{  8024,    5 }, -- Begin Flametongue Weapon
 		{  8027,    4 },
@@ -44,6 +41,42 @@ AdiButtonAuras:RegisterRules(function()
 		{ 16355, 1667 },
 		{ 16356, 1668 },
 		{ 25500, 2635 }, -- End Frostbrand Weapon
+		{  8017,   29 }, -- Begin Rockbiter Weapon
+		{  8017, 3021 },
+		{  8017, 3022 },
+		{  8017, 3023 },
+		{  8018,    6 },
+		{  8018, 3024 },
+		{  8018, 3025 },
+		{  8018, 3026 },
+		{  8019,    1 },
+		{  8019, 3027 },
+		{  8019, 3028 },
+		{  8019, 3029 },
+		{ 10399,  503 },
+		{ 10399, 3030 },
+		{ 10399, 3031 },
+		{ 10399, 3032 },
+		{ 16314, 1663 },
+		{ 16314, 3033 },
+		{ 16314, 3034 },
+		{ 16314, 3035 },
+		{ 16315,  683 },
+		{ 16315, 3036 },
+		{ 16315, 3037 },
+		{ 16315, 3038 },
+		{ 16316, 1664 },
+		{ 16316, 3039 },
+		{ 16316, 3040 },
+		{ 16316, 3041 },
+		{ 25479, 2632 },
+		{ 25479, 3042 },
+		{ 25479, 3043 },
+		{ 25479, 3044 },
+		{ 25485, 2633 },
+		{ 25485, 3018 },
+		{ 25485, 3019 },
+		{ 25485, 3020 }, -- End Rockbiter Weapon
 		{  8232,  283 }, -- Begin Windfury Weapon
 		{  8235,  284 },
 		{ 10486,  525 },

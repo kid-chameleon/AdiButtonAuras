@@ -597,7 +597,7 @@ local function ShowTempWeaponEnchant(spells, enchant, highlight, providers, desc
 	local key = BuildKey('WeaponEnchant', enchant, highlight)
 	local handler = BuildTemporaryWeaponEnchantHandler(enchant, highlight)
 
-	return Configure(key, description, spells, 'player', 'WEAPON_ENCHANT_CHANGED', handler, providers, 4)
+	return Configure(key, description, spells, 'player', { 'WEAPON_ENCHANT_CHANGED', 'WEAPON_SLOT_CHANGED' }, handler, providers, 4)
 end
 
 local function ShowTotem(spells, totemTexture, highlight, providers, description)

@@ -480,11 +480,17 @@ function addon:OpenConfiguration(args)
 	if loaded then
 		CloseAllWindows()
 		CloseAllWindows()
-		_G.Settings.OpenToCategory(addonName)
 	end
 
 	-- Forward the arguments
 	return addon:OpenConfiguration(args)
+end
+
+-- Load the configuration addon alongside the settings panel
+if _G.SettingsPanel then
+	_G.SettingsPanel:HookScript('OnShow', function()
+		LoadAddOn(addonName..'_Config')
+	end)
 end
 
 -- The slash command

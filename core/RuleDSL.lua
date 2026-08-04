@@ -719,6 +719,9 @@ local baseEnv = {
 	LE_EXPANSION_WRATH_OF_THE_LICH_KING = _G.LE_EXPANSION_WRATH_OF_THE_LICH_KING,
 	LE_EXPANSION_CATACLYSM              = _G.LE_EXPANSION_CATACLYSM,
 
+	-- Namespaced API that the allowed-globals list cannot reach
+	IsSpellUsable = C_Spell.IsSpellUsable,
+
 	-- Intended to be used un Lua
 	AddRuleFor               = AddRuleFor,
 	BuildAuraHandler_Single  = BuildAuraHandler_Single,

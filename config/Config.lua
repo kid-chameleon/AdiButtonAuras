@@ -59,31 +59,34 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 		},
 	})
 
-	local panels = {
-		main      = AceConfigDialog:AddToBlizOptions(addonName, addonName, nil, "global"),
-		spells    = AceConfigDialog:AddToBlizOptions(addonName, L['Spells & items'], addonName, "spells"),
-		theme     = AceConfigDialog:AddToBlizOptions(addonName, L['Theme'], addonName, "theme"),
-		userRules = AceConfigDialog:AddToBlizOptions(addonName, L['User rules'], addonName, "userRules"),
-		profiles  = AceConfigDialog:AddToBlizOptions(addonName, L['Profiles'], addonName, "profiles"),
-		--@debug@
-		debug     = AceConfigDialog:AddToBlizOptions(addonName, "Debug", addonName, "debug"),
-		--@end-debug@
-	}
+	-- AddToBlizOptions returns the panel frame and the category id
+	local panels, categoryIDs = {}, {}
+	local function AddPanel(key, name, parent, path)
+		panels[key], categoryIDs[key] = AceConfigDialog:AddToBlizOptions(addonName, name, parent, path)
+	end
+	AddPanel('main', addonName, nil, "global")
+	AddPanel('spells', L['Spells & items'], addonName, "spells")
+	AddPanel('theme', L['Theme'], addonName, "theme")
+	AddPanel('userRules', L['User rules'], addonName, "userRules")
+	AddPanel('profiles', L['Profiles'], addonName, "profiles")
+	--@debug@
+	AddPanel('debug', "Debug", addonName, "debug")
+	--@end-debug@
 
 	-- Pass the spell panel frame
 	private.SetOverlayParent(panels.spells)
 
 	-- Aliases
-	panels[""] = panels.main
-	panels.spell = panels.spells
-	panels.profile = panels.profiles
+	categoryIDs[""] = categoryIDs.main
+	categoryIDs.spell = categoryIDs.spells
+	categoryIDs.profile = categoryIDs.profiles
 
 	-- Override addon OpenConfiguration
 	function addon:OpenConfiguration(what)
 		what = (what or ""):trim():lower()
 
-		if panels[what] then
-			return _G.Settings.OpenToCategory(panels[what])
+		if categoryIDs[what] then
+			return _G.Settings.OpenToCategory(categoryIDs[what])
 		end
 
 		local _type, id = strmatch(what, '([si][pt]e[lm]l?):(%d+)')
@@ -95,7 +98,7 @@ AdiButtonAuras:CreateConfig(function(addonName, addon)
 		end
 		local key = (_type == 'spell' or _type == 'item') and id and _type..':'..id
 		if key and addon.spells[key] then
-			_G.Settings.OpenToCategory(panels.spells)
+			_G.Settings.OpenToCategory(categoryIDs.spells)
 			private.SelectSpell(key)
 		end
 	end

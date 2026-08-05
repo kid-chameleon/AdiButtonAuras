@@ -31,6 +31,15 @@ AdiButtonAuras:RegisterRules(function()
 	local forbearanceDesc = BuildDesc('HARMFUL', 'bad', 'ally', 25771)
 	local hasForbearance = BuildAuraHandler_Single('HARMFUL', 'bad', 'ally', 25771)
 
+	local hammerOfWrath = {
+		24275, -- Begin Hammer of Wrath
+		24274,
+		24239, -- End Hammer of Wrath
+	}
+	if isFlavor('tbc') then
+		tinsert(hammerOfWrath, 27180) -- Rank 4, id unknown to the vanilla client
+	end
+
 	return {
 		ImportPlayerSpells {
 			-- import all spells for
@@ -84,6 +93,11 @@ AdiButtonAuras:RegisterRules(function()
 					return hasBlessingOfProtection(units, model) or hasForbearance(units, model)
 				end
 			end)(),
+		},
+
+		ShowReactive {
+			hammerOfWrath,
+			L['Flash when @NAME is usable on enemies below 20% health.'],
 		},
 	}
 end)

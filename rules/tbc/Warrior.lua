@@ -84,5 +84,32 @@ AdiButtonAuras:RegisterRules(function()
 			},
 			L['Flash when @NAME is usable after you block, dodge or parry.'],
 		},
+
+		ShowReactive {
+			{
+				5308, -- Begin Execute
+				20658,
+				20660,
+				20661,
+				20662,
+				25234,
+				25236, -- End Execute
+			},
+			L['Flash when @NAME is usable on enemies below 20% health.'],
+		},
+
+		ShowReactive {
+			34428, -- Victory Rush
+			L['Flash when @NAME is usable after you kill an enemy.'],
+		},
+
+		ShowReactive {
+			{
+				29801, -- Begin Rampage
+				30030,
+				30033, -- End Rampage
+			},
+			L['Flash when @NAME is usable after you critically hit.'],
+		},
 	}
 end)

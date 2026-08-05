@@ -72,6 +72,17 @@ AdiButtonAuras:RegisterRules(function()
 			},
 			L['Flash when @NAME is usable after you block, dodge or parry.'],
 		},
+
+		ShowReactive {
+			{
+				5308, -- Begin Execute
+				20658,
+				20660,
+				20661,
+				20662, -- End Execute
+			},
+			L['Flash when @NAME is usable on enemies below 20% health.'],
+		},
 	}
 
 	if isSoD then
@@ -82,6 +93,16 @@ AdiButtonAuras:RegisterRules(function()
 			'player',
 			'UNIT_AURA',
 			BuildAuraHandler_Single('HELPFUL', 'good', 'player', 403215),
+		})
+
+		tinsert(rules, ShowReactive {
+			402927, -- Victory Rush (rune)
+			L['Flash when @NAME is usable after you kill an enemy.'],
+		})
+
+		tinsert(rules, ShowReactive {
+			402911, -- Raging Blow (rune)
+			L['Flash when @NAME is usable while you are Enraged.'],
 		})
 	end
 

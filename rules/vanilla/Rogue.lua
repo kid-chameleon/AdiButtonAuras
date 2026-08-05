@@ -70,6 +70,11 @@ AdiButtonAuras:RegisterRules(function()
 	local rules = {
 		ImportPlayerSpells { 'ROGUE' },
 
+		ShowReactive {
+			14251, -- Riposte
+			L['Flash when @NAME is usable after you parry.'],
+		},
+
 		ShowPower {
 			{
 				408, -- Begin Kidney Shot

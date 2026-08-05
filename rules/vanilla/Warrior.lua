@@ -50,6 +50,28 @@ AdiButtonAuras:RegisterRules(function()
 			'UNIT_AURA',
 			BuildAuraHandler_FirstOf('HELPFUL', 'good', 'player', battleShout),
 		},
+
+		ShowReactive {
+			{
+				7384, -- Begin Overpower
+				7887,
+				11584,
+				11585, -- End Overpower
+			},
+			L['Flash when @NAME is usable after your target dodges.'],
+		},
+
+		ShowReactive {
+			{
+				6572, -- Begin Revenge
+				6574,
+				7379,
+				11600,
+				11601,
+				25288, -- End Revenge
+			},
+			L['Flash when @NAME is usable after you block, dodge or parry.'],
+		},
 	}
 
 	if isSoD then

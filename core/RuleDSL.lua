@@ -29,6 +29,7 @@ local format = _G.format
 local GetItemInfo = _G.GetItemInfo
 local GetSpellLink = C_Spell.GetSpellLink
 local GetSpellName = C_Spell.GetSpellName
+local IsSpellUsable = C_Spell.IsSpellUsable
 local gsub = _G.gsub
 local ipairs = _G.ipairs
 local math = _G.math
@@ -582,6 +583,29 @@ local function ShowStacks(spells, aura, maxi, unit, handler, highlight, provider
 	)
 end
 
+local function ShowReactive(spells, desc)
+	local funcs = {}
+	for _, spell in ipairs(AsList(spells, "number", 3)) do
+		local handler = function(_, model)
+			local usable, noPower = IsSpellUsable(spell)
+			if usable or noPower then
+				model.flash = true
+			end
+		end
+		tinsert(funcs, Configure(
+			BuildKey("ShowReactive", spell),
+			desc or L["Flash when @NAME becomes usable."],
+			spell,
+			"player",
+			"SPELL_UPDATE_USABLE",
+			handler,
+			nil,
+			3
+		))
+	end
+	return funcs
+end
+
 local function ShowTempPet(spells, guid, highlight, providers, description)
 	highlight = highlight or 'good'
 	description = description or L['Show the duration of @NAME']
@@ -719,9 +743,6 @@ local baseEnv = {
 	LE_EXPANSION_WRATH_OF_THE_LICH_KING = _G.LE_EXPANSION_WRATH_OF_THE_LICH_KING,
 	LE_EXPANSION_CATACLYSM              = _G.LE_EXPANSION_CATACLYSM,
 
-	-- Namespaced API that the allowed-globals list cannot reach
-	IsSpellUsable = C_Spell.IsSpellUsable,
-
 	-- Intended to be used un Lua
 	AddRuleFor               = AddRuleFor,
 	BuildAuraHandler_Single  = BuildAuraHandler_Single,
@@ -747,6 +768,7 @@ local baseEnv = {
 	ShowDispellable = WrapTableArgFunc(ShowDispellable),
 	ShowHealth = WrapTableArgFunc(ShowHealth),
 	ShowPower = WrapTableArgFunc(ShowPower),
+	ShowReactive = WrapTableArgFunc(ShowReactive),
 	ShowStacks = WrapTableArgFunc(ShowStacks),
 	ShowTempPet = WrapTableArgFunc(ShowTempPet),
 	ShowTempWeaponEnchant = WrapTableArgFunc(ShowTempWeaponEnchant),

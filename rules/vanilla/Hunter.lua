@@ -29,6 +29,25 @@ AdiButtonAuras:RegisterRules(function()
 
 	local rules = {
 		ImportPlayerSpells { 'HUNTER' },
+
+		ShowReactive {
+			{
+				1495, -- Begin Mongoose Bite
+				14269,
+				14270,
+				14271, -- End Mongoose Bite
+			},
+			L['Flash when @NAME is usable after you dodge.'],
+		},
+
+		ShowReactive {
+			{
+				19306, -- Begin Counterattack
+				20909,
+				20910, -- End Counterattack
+			},
+			L['Flash when @NAME is usable after you parry.'],
+		},
 	}
 
 	if isSoD then

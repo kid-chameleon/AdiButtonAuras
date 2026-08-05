@@ -27,23 +27,33 @@ if not addon.isFlavor('tbc') then return end
 AdiButtonAuras:RegisterRules(function()
 	Debug('Rules', 'Adding tbc hunter rules')
 
-	local killCommand = 34026
-
 	return {
 		ImportPlayerSpells { 'HUNTER' },
 
-		Configure {
-			'KillCommand',
+		ShowReactive {
+			34026, -- Kill Command
 			L['Flash when @NAME is usable after one of your attacks critically hits.'],
-			killCommand,
-			'player',
-			'SPELL_UPDATE_USABLE',
-			function(_, model)
-				local usable, noMana = IsSpellUsable(killCommand)
-				if usable or noMana then
-					model.flash = true
-				end
-			end,
+		},
+
+		ShowReactive {
+			{
+				1495, -- Begin Mongoose Bite
+				14269,
+				14270,
+				14271,
+				36916, -- End Mongoose Bite
+			},
+			L['Flash when @NAME is usable after you dodge.'],
+		},
+
+		ShowReactive {
+			{
+				19306, -- Begin Counterattack
+				20909,
+				20910,
+				27067, -- End Counterattack
+			},
+			L['Flash when @NAME is usable after you parry.'],
 		},
 	}
 end)

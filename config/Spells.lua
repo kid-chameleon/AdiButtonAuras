@@ -29,7 +29,7 @@ function private.GetSpellOptions(addon, addonName)
 	local format = _G.format
 	local GameTooltip = _G.GameTooltip
 	local GameTooltip_SetDefaultAnchor = _G.GameTooltip_SetDefaultAnchor
-	local GetItemInfo = _G.GetItemInfo
+	local GetItemInfo = _G.GetItemInfo or _G.C_Item.GetItemInfo
 	local GetSpellName = C_Spell.GetSpellName
 	local hooksecurefunc = _G.hooksecurefunc
 	local ipairs = _G.ipairs

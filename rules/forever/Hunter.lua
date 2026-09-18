@@ -22,10 +22,10 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('HUNTER') then return end
-if not addon.isFlavor('vanilla') then return end
+if not addon.isFlavor('forever') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding vanilla hunter rules')
+	Debug('Rules', 'Adding forever hunter rules')
 
 	local rules = {
 		ImportPlayerSpells { 'HUNTER' },

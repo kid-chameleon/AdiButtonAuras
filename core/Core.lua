@@ -70,11 +70,37 @@ _G.AdiButtonAuras = api
 local FLAVORS = { [0] = 'vanilla', [1] = 'tbc', [2] = 'wrath', [3] = 'cata' }
 addon.expansion = _G.LE_EXPANSION_LEVEL_CURRENT
 addon.flavor = FLAVORS[addon.expansion] or 'vanilla'
-addon.isSoD = _G.C_Seasons and _G.C_Seasons.HasActiveSeason()
-	and _G.C_Seasons.GetActiveSeason() == _G.Enum.SeasonID.SeasonOfDiscovery or false
+
+-- The forever beta reports the vanilla expansion level but ships its own spell data and rules.
+-- It currently has no project constant, only the 1.60.x interface version.
+-- TODO: update this if that changes.
+do
+	local tocVersion = select(4, _G.GetBuildInfo())
+	if tocVersion >= 16000 and tocVersion < 20000 then
+		addon.flavor = 'forever'
+	end
+end
 
 function addon.isFlavor(flavor)
 	return flavor == 'ALL' or flavor == addon.flavor
+end
+
+-- Clients that enforce "secret values" hide aura, cooldown, power and health values from addons in combat.
+-- The aura display is then delegated to the engine using AuraContainers. See core/SecretAuras.lua.
+addon.hasSecrets = (_G.C_Secrets and _G.C_Secrets.HasSecretRestrictions and _G.C_Secrets.HasSecretRestrictions()) or false
+
+local issecretvalue = _G.issecretvalue or function() return false end
+addon.issecretvalue = issecretvalue
+
+do
+	function addon.Unsecret(func)
+		if not addon.hasSecrets then return func end
+		return function(...)
+			local a, b, c, d, e = func(...)
+			if issecretvalue(a) then return nil end
+			return a, b, c, d, e
+		end
+	end
 end
 
 ------------------------------------------------------------------------------
@@ -496,7 +522,12 @@ end
 -- The slash command
 _G.SLASH_ADIBUTTONAURAS1 = "/adibuttonauras"
 _G.SLASH_ADIBUTTONAURAS2 = "/aba"
-_G.SlashCmdList["ADIBUTTONAURAS"] = function(args) return addon:OpenConfiguration(args) end
+_G.SlashCmdList["ADIBUTTONAURAS"] = function(args)
+	if _G.InCombatLockdown() then
+		return print(format('|cffff0000[%s] %s|r', addonName, _G.ERR_NOT_IN_COMBAT))
+	end
+	return addon:OpenConfiguration(args)
+end
 
 -- Used to register the actual configuration GUI, with access to internals
 function addon.api:CreateConfig(func)

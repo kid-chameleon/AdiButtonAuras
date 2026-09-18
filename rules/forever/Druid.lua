@@ -21,34 +21,31 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('HUNTER') then return end
-if not addon.isFlavor('vanilla') then return end
+if not addon.isClass('DRUID') then return end
+if not addon.isFlavor('forever') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding vanilla hunter rules')
+	Debug('Rules', 'Adding forever druid rules')
 
-	local rules = {
-		ImportPlayerSpells { 'HUNTER' },
+	return {
+		ImportPlayerSpells { 'DRUID' },
 
-		ShowReactive {
-			{
-				1495, -- Begin Mongoose Bite
-				14269,
-				14270,
-				14271, -- End Mongoose Bite
-			},
-			L['Flash when @NAME is usable after you dodge.'],
-		},
-
-		ShowReactive {
-			{
-				19306, -- Begin Counterattack
-				20909,
-				20910, -- End Counterattack
-			},
-			L['Flash when @NAME is usable after you parry.'],
-		},
+		-- combo points are secret currently and can't be read. might be changed later.
+		-- ShowPower {
+		-- 	{
+		-- 		1079, -- Begin Rip
+		-- 		9492,
+		-- 		9493,
+		-- 		9752,
+		-- 		9894,
+		-- 		9896, -- End Rip
+		-- 		22568, -- Begin Ferocious Bite
+		-- 		22827,
+		-- 		22828,
+		-- 		22829,
+		-- 		31018, -- End Ferocious Bite
+		-- 	},
+		-- 	'ComboPoints',
+		-- },
 	}
-
-	return rules
 end)

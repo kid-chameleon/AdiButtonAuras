@@ -59,12 +59,29 @@ AdiButtonAuras:RegisterRules(function()
 		}
 	end
 
-	local poisons = { -- { apply spell, enchant id }
-		{ 2823, 7 }, -- Deadly Poison
-		{ 8679, 323 }, -- Instant Poison
-		{ 13219, 703 }, -- Wound Poison
-		{ 3408, 22 }, -- Crippling Poison
-		{ 5761, 35 }, -- Mind-numbing Poison
+	-- The poisons sit on the action bar as items. The debuff, where a poison has one,
+	-- takes over the button while it is on the target.
+	local poisons = { -- { item, enchant id, target debuff }
+		{ 'item:2892', 7, 2818 }, -- Begin Deadly Poison
+		{ 'item:2893', 8, 2819 },
+		{ 'item:8984', 626, 11353 },
+		{ 'item:8985', 627, 11354 },
+		{ 'item:20844', 2630, 25349 }, -- End Deadly Poison
+		{ 'item:6947', 323 }, -- Begin Instant Poison
+		{ 'item:6949', 324 },
+		{ 'item:6950', 325 },
+		{ 'item:8926', 623 },
+		{ 'item:8927', 624 },
+		{ 'item:8928', 625 }, -- End Instant Poison
+		{ 'item:10918', 703, 13218 }, -- Begin Wound Poison
+		{ 'item:10920', 704, 13222 },
+		{ 'item:10921', 705, 13223 },
+		{ 'item:10922', 706, 13224 }, -- End Wound Poison
+		{ 'item:3775', 22, 3409 }, -- Begin Crippling Poison
+		{ 'item:3776', 603, 11201 }, -- End Crippling Poison
+		{ 'item:5237', 35, 5760 }, -- Begin Mind-numbing Poison
+		{ 'item:6951', 23, 8692 },
+		{ 'item:9186', 643, 11398 }, -- End Mind-numbing Poison
 	}
 
 	local rules = {
@@ -101,8 +118,6 @@ AdiButtonAuras:RegisterRules(function()
 				8650,
 				11197,
 				11198, -- End Expose Armor
-				400012, -- Blade Dance (SoD rune)
-				399963, -- Envenom (SoD rune)
 			},
 			'ComboPoints',
 		},
@@ -110,6 +125,9 @@ AdiButtonAuras:RegisterRules(function()
 
 	for _, poison in ipairs(poisons) do
 		tinsert(rules, ShowWeaponPoison(poison[1], poison[2]))
+		if poison[3] then
+			tinsert(rules, DebuffAliases { poison[1], poison[3] })
+		end
 	end
 
 	return rules

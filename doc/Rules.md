@@ -108,9 +108,8 @@ The other constants and functions are useful only if you have to write your own 
 
 - `L` - the localization table, e.g. `L["flash"]`
 - `PLAYER_CLASS` - english class name of the player.
-- `flavor` - the game flavor the client runs (`"vanilla"`, `"tbc"`, ...), see [Game flavors](#game-flavors).
+- `flavor` - the game flavor the client runs (`"vanilla"`, `"tbc"`, `"forever"`, ...), see [Game flavors](#game-flavors).
 - `expansion` - the numeric expansion level (`LE_EXPANSION_LEVEL_CURRENT`).
-- `isSoD` - true when playing Season of Discovery on the era client.
 - `LE_EXPANSION_CLASSIC`, `LE_EXPANSION_BURNING_CRUSADE`, `LE_EXPANSION_WRATH_OF_THE_LICH_KING`, `LE_EXPANSION_CATACLYSM` - expansion levels for ordered comparisons against `expansion`.
 
 ### Functions

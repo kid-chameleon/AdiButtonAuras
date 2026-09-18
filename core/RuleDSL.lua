@@ -26,7 +26,7 @@ local bit = _G.bit
 local error = _G.error
 local floor = _G.floor
 local format = _G.format
-local GetItemInfo = _G.GetItemInfo
+local GetItemInfo = _G.GetItemInfo or _G.C_Item.GetItemInfo
 local GetSpellLink = C_Spell.GetSpellLink
 local GetSpellName = C_Spell.GetSpellName
 local IsSpellUsable = C_Spell.IsSpellUsable
@@ -35,6 +35,7 @@ local ipairs = _G.ipairs
 local math = _G.math
 local next = _G.next
 local pairs = _G.pairs
+local rawget = _G.rawget
 local PowerType = _G.Enum.PowerType
 local select = _G.select
 local setfenv = _G.setfenv
@@ -45,10 +46,10 @@ local tonumber = _G.tonumber
 local tostring = _G.tostring
 local type = _G.type
 local UnitClass = _G.UnitClass
-local UnitHealth = _G.UnitHealth
-local UnitHealthMax = _G.UnitHealthMax
-local UnitPower = _G.UnitPower
-local UnitPowerMax = _G.UnitPowerMax
+local UnitHealth = addon.Unsecret(_G.UnitHealth)
+local UnitHealthMax = addon.Unsecret(_G.UnitHealthMax)
+local UnitPower = addon.Unsecret(_G.UnitPower)
+local UnitPowerMax = addon.Unsecret(_G.UnitPowerMax)
 local unpack = _G.unpack
 local wipe = _G.wipe
 local xpcall = _G.xpcall
@@ -86,6 +87,13 @@ local function Debug(...) return addon.Debug('|cffffff00Rules:|r', ...) end
 
 local rules = addon.rules
 local descriptions = addon.descriptions
+
+-- Static description of every aura handler built below, keyed by the handler function.
+local auraHandlerInfo = setmetatable({}, { __mode = 'k' })
+addon.auraHandlerInfo = auraHandlerInfo
+
+local timerlessHandlers = setmetatable({}, { __mode = 'k' })
+addon.timerlessHandlers = timerlessHandlers
 
 ------------------------------------------------------------------------------
 -- Rule creation
@@ -252,7 +260,7 @@ end
 local function BuildAuraHandler_Single(filter, highlight, token, buff, callLevel)
 	local GetAura = addon.GetAuraGetter(filter)
 	local Show = GetHighlightHandler(highlight)
-	return function(units, model)
+	local handler = function(units, model)
 		local unit = units[token]
 		if not unit or unit == '' then return end
 		local found, count, expiration = GetAura(unit, buff)
@@ -261,6 +269,8 @@ local function BuildAuraHandler_Single(filter, highlight, token, buff, callLevel
 			return true
 		end
 	end
+	auraHandlerInfo[handler] = { filter = filter, highlight = highlight, token = token, buffs = { [buff] = true } }
+	return handler
 end
 
 local function BuildAuraHandler_Longest(filter, highlight, token, buffs, callLevel)
@@ -272,7 +282,7 @@ local function BuildAuraHandler_Longest(filter, highlight, token, buffs, callLev
 	end
 	local IterateAuras = addon.GetAuraIterator(filter)
 	local Show = GetHighlightHandler(highlight)
-	return function(units, model)
+	local handler = function(units, model)
 		local unit = units[token]
 		if not unit or unit == '' then return end
 		local longest = -1
@@ -284,6 +294,8 @@ local function BuildAuraHandler_Longest(filter, highlight, token, buffs, callLev
 		end
 		return longest > -1
 	end
+	auraHandlerInfo[handler] = { filter = filter, highlight = highlight, token = token, buffs = buffs }
+	return handler
 end
 
 local function BuildAuraHandler_FirstOf(filter, highlight, token, buffs, callLevel)
@@ -295,7 +307,7 @@ local function BuildAuraHandler_FirstOf(filter, highlight, token, buffs, callLev
 	end
 	local IterateAuras = addon.GetAuraIterator(filter)
 	local Show = GetHighlightHandler(highlight)
-	return function(units, model)
+	local handler = function(units, model)
 		local unit = units[token]
 		if not unit or unit == '' then return end
 		for _, id, count, expiration in IterateAuras(unit) do
@@ -305,12 +317,14 @@ local function BuildAuraHandler_FirstOf(filter, highlight, token, buffs, callLev
 			end
 		end
 	end
+	auraHandlerInfo[handler] = { filter = filter, highlight = highlight, token = token, buffs = buffs }
+	return handler
 end
 
 local function BuildDispelHandler(filter, highlight, token, dispellable, callLevel)
 	local IterateAuras = addon.GetAuraIterator(filter)
 	local Show = GetHighlightHandler(highlight)
-	return function(units, model)
+	local handler = function(units, model)
 		local unit = units[token]
 		if not unit or unit == '' then return end
 		for _, _, count, expiration, dispel in IterateAuras(unit) do
@@ -320,6 +334,8 @@ local function BuildDispelHandler(filter, highlight, token, dispellable, callLev
 			end
 		end
 	end
+	auraHandlerInfo[handler] = { filter = filter, highlight = highlight, token = token, dispel = dispellable }
+	return handler
 end
 
 local function BuildTemporaryPetHandler(guid, highlight)
@@ -339,31 +355,47 @@ local function BuildTemporaryPetHandler(guid, highlight)
 	end
 end
 
-local function BuildTemporaryWeaponEnchantHandler(enchantId, highlight)
-	return function (_, model)
+-- Find a temporary weapon enchant by id.
+-- Returns the remaining time in milliseconds and the charges, or nothing.
+local FindWeaponEnchant
+if _G.C_Item and _G.C_Item.GetWeaponEnchantInfo then
+	local GetSlotEnchants = _G.C_Item.GetWeaponEnchantInfo
+	local WeaponSlot = _G.Enum.WeaponSlot
+	function FindWeaponEnchant(enchantId)
+		for _, slot in pairs(WeaponSlot) do
+			local enchants = GetSlotEnchants(slot)
+			if enchants then
+				for _, enchant in pairs(enchants) do
+					if enchant.hasEnchant and enchant.enchantID == enchantId then
+						return enchant.timeLeft, enchant.charges
+					end
+				end
+			end
+		end
+	end
+else
+	function FindWeaponEnchant(enchantId)
 		local hasMainHandEnchant, mainHandExpiration, mainHandCharges, mainHandEnchantId,
 			hasOffHandEnchant, offHandExpiration, offHandCharges, offHandEnchantId,
-			hasRangedEnchant, rangedExpiration, rangedCharges, rangedEnchantId = GetWeaponEnchantInfo()
-
-		if (enchantId == mainHandEnchantId) then
-			model.expiration = GetTime() + mainHandExpiration / 1000
-			model.count = mainHandCharges or 0
-			model.highlight = highlight
-
-			return true
+			hasRangedEnchant, rangedExpiration, rangedCharges, rangedEnchantId = _G.GetWeaponEnchantInfo()
+		if hasMainHandEnchant and enchantId == mainHandEnchantId then
+			return mainHandExpiration, mainHandCharges
 		end
-
-		if (enchantId == offHandEnchantId) then
-			model.expiration = GetTime() + offHandExpiration / 1000
-			model.count = offHandCharges or 0
-			model.highlight = highlight
-
-			return true
+		if hasOffHandEnchant and enchantId == offHandEnchantId then
+			return offHandExpiration, offHandCharges
 		end
+		if hasRangedEnchant and enchantId == rangedEnchantId then
+			return rangedExpiration, rangedCharges
+		end
+	end
+end
 
-		if (enchantId == rangedEnchantId) then
-			model.expiration = GetTime() + rangedExpiration / 1000
-			model.count = rangedCharges or 0
+local function BuildTemporaryWeaponEnchantHandler(enchantId, highlight)
+	return function (_, model)
+		local timeLeft, charges = FindWeaponEnchant(enchantId)
+		if timeLeft then
+			model.expiration = GetTime() + timeLeft / 1000
+			model.count = charges or 0
 			model.highlight = highlight
 
 			return true
@@ -371,17 +403,155 @@ local function BuildTemporaryWeaponEnchantHandler(enchantId, highlight)
 	end
 end
 
-local function BuildTotemHandler(totemTexture, highlight)
-	return function (_, model)
-		for slot = 1, 6 do
-			local found, name, start, duration, texture = GetTotemInfo(slot)
+-- Totem slots turn secret in combat on clients with secret values.
+local issecretvalue = addon.issecretvalue
+local GetTotemDuration = _G.GetTotemDuration
+local totemCache = {} -- [texture] = { slot = number, expiration = number or nil when secret }
+local totemSpells = {} -- [spellId] = texture
 
-			if found and texture == totemTexture then
-				model.expiration = start + duration
+-- The icon is the one return of GetTotemInfo that tells an empty slot from a used one.
+local function IsTotemSlotEmpty(slot)
+	local _, _, _, _, icon = GetTotemInfo(slot)
+	return not issecretvalue(icon) and icon == nil
+end
+
+if addon.hasSecrets then
+	local CAST_WINDOW = 0.5
+	local castTexture, castTime
+	local pendingSlot, pendingTime
+
+	local watcher = _G.CreateFrame("Frame")
+	watcher:RegisterEvent("PLAYER_TOTEM_UPDATE")
+	watcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
+	watcher:SetScript("OnEvent", function(_, event, arg1, _, spellId)
+		if event == "UNIT_SPELLCAST_SUCCEEDED" then
+			local texture = not issecretvalue(spellId) and totemSpells[spellId]
+			if texture then
+				if pendingSlot and GetTime() - pendingTime <= CAST_WINDOW then
+					-- the slot update came first
+					totemCache[texture] = { slot = pendingSlot }
+					pendingSlot, pendingTime = nil, nil
+				else
+					castTexture, castTime = texture, GetTime()
+				end
+			end
+			return
+		end
+
+		local slot = arg1
+		if issecretvalue(slot) then
+			-- no telling which slot changed, distrust everything
+			wipe(totemCache)
+			return
+		end
+		if not issecretvalue(GetTotemInfo(slot)) then
+			-- readable, the handlers see the real thing
+			return
+		end
+		for texture, seen in pairs(totemCache) do
+			if seen.slot == slot then
+				totemCache[texture] = nil
+			end
+		end
+		if IsTotemSlotEmpty(slot) then
+			return
+		end
+		if castTexture and GetTime() - castTime <= CAST_WINDOW then
+			totemCache[castTexture] = { slot = slot }
+			castTexture, castTime = nil, nil
+		else
+			pendingSlot, pendingTime = slot, GetTime()
+		end
+	end)
+end
+
+-- Cast or channel of a unit, safe under secret values.
+-- Returns: isCasting, end time in seconds, the engine duration object, and notInterruptible.
+-- A unit that is not casting returns nothing at all.
+local GetUnitCast
+do
+	local UnitCastingInfo, UnitChannelInfo = _G.UnitCastingInfo, _G.UnitChannelInfo
+	local UnitCastingDuration, UnitChannelDuration = _G.UnitCastingDuration, _G.UnitChannelDuration
+
+	local function Read(unit, GetInfo, GetDuration, isChannel)
+		local name, _, _, _, endTime, _, arg7, arg8 = GetInfo(unit)
+		if not issecretvalue(name) and name == nil then
+			return false
+		end
+		local notInterruptible = arg8
+		if isChannel then
+			notInterruptible = arg7
+		end
+		if issecretvalue(endTime) or not endTime then
+			endTime = nil
+		else
+			endTime = endTime / 1000
+		end
+		return true, endTime, GetDuration and GetDuration(unit) or nil, notInterruptible
+	end
+
+	function GetUnitCast(unit)
+		local casting, endTime, duration, notInterruptible = Read(unit, UnitCastingInfo, UnitCastingDuration, false)
+		if casting then
+			return casting, endTime, duration, notInterruptible
+		end
+		return Read(unit, UnitChannelInfo, UnitChannelDuration, true)
+	end
+end
+
+local function BuildTotemHandler(totemTexture, highlight, spells)
+	if addon.hasSecrets and spells then
+		for _, spell in ipairs(AsList(spells)) do
+			local spellId = tonumber(spell)
+			if spellId then
+				totemSpells[spellId] = totemTexture
+			end
+		end
+	end
+
+	return function (_, model)
+		-- The totem's own aura on a unit is the more useful timer.
+		if model.expiration > GetTime() then return end
+
+		local seen = totemCache[totemTexture]
+		for slot = 1, 6 do
+			local found, _, start, duration, texture = GetTotemInfo(slot)
+
+			if not issecretvalue(found) then
+				if found and texture == totemTexture then
+					local expiration = start + duration
+					if seen then
+						seen.slot, seen.expiration = slot, expiration
+					else
+						totemCache[totemTexture] = { slot = slot, expiration = expiration }
+					end
+					model.expiration = expiration
+					model.highlight = highlight
+
+					return true
+				elseif seen and seen.slot == slot then
+					-- readable and not ours anymore
+					totemCache[totemTexture], seen = nil, nil
+				end
+			end
+		end
+
+		if seen and seen.expiration then
+			-- dropped while readable, the numbers are still good
+			if seen.expiration > GetTime() then
+				model.expiration = seen.expiration
 				model.highlight = highlight
 
 				return true
 			end
+		elseif seen and IsTotemSlotEmpty(seen.slot) then
+			totemCache[totemTexture] = nil
+		elseif seen then
+			-- cast under restrictions, only the engine knows the remaining time
+			model.duration = GetTotemDuration and GetTotemDuration(seen.slot) or nil
+			model.highlight = highlight
+
+			return true
 		end
 	end
 end
@@ -423,9 +593,12 @@ local function ShowCountAndHighlight(key, spells, unit, events, handler, highlig
 			local actualUnit = units[unit]
 			if not actualUnit then return end
 			local maxi = getMax(actualUnit)
+			if not maxi then return end
 			model.maxCount = maxi
 			if maxi == 0 then return end
-			return handler(getValue(actualUnit), maxi, model, highlight)
+			local value = getValue(actualUnit)
+			if value == nil then return end
+			return handler(value, maxi, model, highlight)
 		end
 		return Configure(key, desc, spells, unit, events, wrappedHandler, providers, 4)
 	end
@@ -436,7 +609,7 @@ local function ShowCountAndHighlight(key, spells, unit, events, handler, highlig
 		local count = getValue(actualUnit)
 		if not count or count == 0 then return end
 		model.count = count
-		model.maxCount = getMax(actualUnit)
+		model.maxCount = getMax(actualUnit) or 0
 		return true
 	end
 	local showRule = Configure(key..'Display', format(L["Show %s."], descWhat), spells, unit, events, showHandler, providers, 4)
@@ -480,8 +653,10 @@ local function ShowCountAndHighlight(key, spells, unit, events, handler, highlig
 		local actualUnit = units[unit]
 		if not actualUnit then return end
 		local maxi = getMax(actualUnit)
+		if not maxi then return end
 		model.maxCount = maxi
-		if maxi == 0 or not test(getValue(actualUnit), maxi) then return end
+		local value = getValue(actualUnit)
+		if maxi == 0 or value == nil or not test(value, maxi) then return end
 		showHighlight(model)
 		return true
 	end
@@ -592,6 +767,7 @@ local function ShowReactive(spells, desc)
 				model.flash = true
 			end
 		end
+		timerlessHandlers[handler] = true
 		tinsert(funcs, Configure(
 			BuildKey("ShowReactive", spell),
 			desc or L["Flash when @NAME becomes usable."],
@@ -628,7 +804,7 @@ local function ShowTotem(spells, totemTexture, highlight, providers, description
 	highlight = highlight or 'good'
 	description = description or L['Show the duration of @NAME']
 	local key = BuildKey('Totem', totemTexture, highlight)
-	local handler = BuildTotemHandler(totemTexture, highlight)
+	local handler = BuildTotemHandler(totemTexture, highlight, spells)
 
 	return Configure(key, description, spells, 'player', 'PLAYER_TOTEM_UPDATE', handler, providers, 4)
 end
@@ -733,10 +909,12 @@ local baseEnv = {
 	PLAYER_CLASS = PLAYER_CLASS,
 
 	-- Game flavor
-	flavor    = addon.flavor,
-	expansion = addon.expansion,
-	isSoD     = addon.isSoD,
-	isFlavor  = addon.isFlavor,
+	flavor     = addon.flavor,
+	expansion  = addon.expansion,
+	isFlavor   = addon.isFlavor,
+	hasSecrets = addon.hasSecrets,
+	issecretvalue = issecretvalue,
+	GetUnitCast = GetUnitCast,
 
 	LE_EXPANSION_CLASSIC                = _G.LE_EXPANSION_CLASSIC,
 	LE_EXPANSION_BURNING_CRUSADE        = _G.LE_EXPANSION_BURNING_CRUSADE,
@@ -840,6 +1018,19 @@ local RULES_ENV = addon.BuildSafeEnv(
 		"UnitStagger",
 	}
 )
+
+-- Under secret value restrictions these read as nil instead of erroring on the first comparison in a rule.
+if addon.hasSecrets then
+	for _, name in ipairs({
+		"UnitHealth", "UnitHealthMax", "UnitPower", "UnitPowerMax", "UnitGUID", "GetSpellCharges", "GetSpellCount",
+		"UnitCastingInfo", "UnitChannelInfo", "GetTotemInfo",
+	}) do
+		local func = rawget(baseEnv, name)
+		if func then
+			baseEnv[name] = addon.Unsecret(func)
+		end
+	end
+end
 
 function addon.Restricted(func)
 	return setfenv(func, RULES_ENV)

@@ -22,10 +22,10 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('ROGUE') then return end
-if not addon.isFlavor('tbc') then return end
+if not addon.isFlavor('forever') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding tbc rogue rules')
+	Debug('Rules', 'Adding forever rogue rules')
 
 	-- The poisons sit on the action bar as items. The debuff, where a poison has one,
 	-- takes over the button while it is on the target.
@@ -34,27 +34,22 @@ AdiButtonAuras:RegisterRules(function()
 		{ 'item:2893', 8, 2819 },
 		{ 'item:8984', 626, 11353 },
 		{ 'item:8985', 627, 11354 },
-		{ 'item:20844', 2630, 25349 },
-		{ 'item:22053', 2642, 26968 },
-		{ 'item:22054', 2643, 27187 }, -- End Deadly Poison
+		{ 'item:20844', 2630, 25349 }, -- End Deadly Poison
 		{ 'item:6947', 323 }, -- Begin Instant Poison
 		{ 'item:6949', 324 },
 		{ 'item:6950', 325 },
 		{ 'item:8926', 623 },
 		{ 'item:8927', 624 },
-		{ 'item:8928', 625 },
-		{ 'item:21927', 2641 }, -- End Instant Poison
+		{ 'item:8928', 625 }, -- End Instant Poison
 		{ 'item:10918', 703, 13218 }, -- Begin Wound Poison
 		{ 'item:10920', 704, 13222 },
 		{ 'item:10921', 705, 13223 },
-		{ 'item:10922', 706, 13224 },
-		{ 'item:22055', 2644, 27189 }, -- End Wound Poison
+		{ 'item:10922', 706, 13224 }, -- End Wound Poison
 		{ 'item:3775', 22, 3409 }, -- Begin Crippling Poison
 		{ 'item:3776', 603, 11201 }, -- End Crippling Poison
 		{ 'item:5237', 35, 5760 }, -- Begin Mind-numbing Poison
 		{ 'item:6951', 23, 8692 },
 		{ 'item:9186', 643, 11398 }, -- End Mind-numbing Poison
-		{ 'item:21835', 2640 }, -- Anesthetic Poison
 	}
 
 	local rules = {
@@ -65,39 +60,37 @@ AdiButtonAuras:RegisterRules(function()
 			L['Flash when @NAME is usable after you parry.'],
 		},
 
-		ShowPower {
-			{
-				408, -- Begin Kidney Shot
-				8643, -- End Kidney Shot
-				1943, -- Begin Rupture
-				8639,
-				8640,
-				11273,
-				11274,
-				11275,
-				26867, -- End Rupture
-				5171, -- Begin Slice and Dice
-				6774, -- End Slice and Dice
-				2098, -- Begin Eviscerate
-				6760,
-				6761,
-				6762,
-				8623,
-				8624,
-				11299,
-				11300,
-				31016,
-				26865, -- End Eviscerate
-				8647, -- Begin Expose Armor
-				8649,
-				8650,
-				11197,
-				11198,
-				26866, -- End Expose Armor
-				32645, -- Envenom
-			},
-			'ComboPoints',
-		},
+		-- combo points are secret currently and can't be read. might be changed later.
+		-- ShowPower {
+		-- 	{
+		-- 		408, -- Begin Kidney Shot
+		-- 		8643, -- End Kidney Shot
+		-- 		1943, -- Begin Rupture
+		-- 		8639,
+		-- 		8640,
+		-- 		11273,
+		-- 		11274,
+		-- 		11275, -- End Rupture
+		-- 		5171, -- Begin Slice and Dice
+		-- 		6774, -- End Slice and Dice
+		-- 		2098, -- Begin Eviscerate
+		-- 		6760,
+		-- 		6761,
+		-- 		6762,
+		-- 		8623,
+		-- 		8624,
+		-- 		11299,
+		-- 		11300,
+		-- 		31016, -- End Eviscerate
+		-- 		8647, -- Begin Expose Armor
+		-- 		8649,
+		-- 		8650,
+		-- 		11197,
+		-- 		11198, -- End Expose Armor
+		-- 		1310703, -- Venom
+		-- 	},
+		-- 	'ComboPoints',
+		-- },
 	}
 
 	for _, poison in ipairs(poisons) do

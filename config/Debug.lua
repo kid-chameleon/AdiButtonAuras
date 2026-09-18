@@ -29,8 +29,8 @@ function private.GetDebugOptions(addon, addonName)
 	local format = _G.format
 	local GetAddOnMetadata = C_AddOns.GetAddOnMetadata
 	local GetCVarBool = _G.GetCVarBool
-	local GetItemIcon = _G.GetItemIcon
-	local GetItemInfo = _G.GetItemInfo
+	local GetItemIcon = _G.GetItemIcon or _G.C_Item.GetItemIconByID
+	local GetItemInfo = _G.GetItemInfo or _G.C_Item.GetItemInfo
 	local GetSpellInfo = C_Spell.GetSpellInfo
 	local IsAddOnLoaded = C_AddOns.IsAddOnLoaded
 	local pairs = _G.pairs

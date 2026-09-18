@@ -62,6 +62,10 @@ local wipe = _G.wipe
 
 local LibSpellbook = addon.GetLib('LibSpellbook-1.0')
 
+local hasSecrets = addon.hasSecrets
+local issecretvalue = addon.issecretvalue
+local GetSpellCooldown = _G.C_Spell and _G.C_Spell.GetSpellCooldown
+
 local MOUSEOVER_CHANGED = addon.MOUSEOVER_CHANGED
 local MOUSEOVER_TICK = addon.MOUSEOVER_TICK
 local GROUP_CHANGED = addon.GROUP_CHANGED
@@ -392,15 +396,22 @@ function overlayPrototype:PLAYER_FOCUS_CHANGED(event)
 end
 
 function overlayPrototype:UpdateCooldown(event)
-	local start, duration = self:GetActionCooldown()
-	local inCooldown = start and duration and start > 0 and duration > 2
+	local start, duration, cooldownInfo = self:GetActionCooldown()
+	local inCooldown
+	if hasSecrets and (issecretvalue(start) or issecretvalue(duration)) then
+		-- Only the flags are readable.
+		inCooldown = cooldownInfo and cooldownInfo.isActive and not cooldownInfo.isOnGCD or false
+		start, duration = nil, nil
+	else
+		inCooldown = start and duration and start > 0 and duration > 2
+	end
 	if not inCooldown then
 		start, duration = nil, nil
 	end
 	if self.cooldownStart ~= start or self.cooldownDuration ~= duration then
 		self:Debug('cooldownStart=', start, 'cooldownDuration=', duration)
 		self.cooldownStart, self.cooldownDuration = start, duration
-		if inCooldown then
+		if inCooldown and start then
 			-- BUG: sometimes the API returns cooldowns beyond 50 days
 			local delay = math.min(start + duration + 0.1 - GetTime(), 24 * 3600)
 			C_Timer.After(delay, function() return self:UpdateCooldown() end)
@@ -459,6 +470,11 @@ end
 function overlayPrototype:UpdateGUID(event, unit)
 	if not unit then return end
 	local guid = UnitGUID(unit)
+	if hasSecrets and issecretvalue(guid) then
+		-- unreadable identity: assume it changed
+		self.guids[unit] = nil
+		return self:ScheduleUpdate(event)
+	end
 	if self.guids[unit] ~= guid then
 		self.guids[unit] = guid
 		return self:ScheduleUpdate(event)
@@ -478,6 +494,16 @@ local modelProxy = setmetatable({}, {
 		if key == "count" or key == "maxCount" or key == "expiration" then
 			if type(value) ~= "number" then
 				return error(format("Invalid %s, should be a number, not %s", key, type(value)), 2)
+			end
+		elseif key == "flashSuppressed" then
+			-- hides the flash when true
+			if not issecretvalue(value) and value ~= nil and type(value) ~= "boolean" then
+				return error(format("Invalid %s, should be a boolean or nil, not %s", key, type(value)), 2)
+			end
+		elseif key == "duration" then
+			-- an engine duration object, for timers whose values are secret
+			if value ~= nil and type(value) ~= "userdata" then
+				return error(format("Invalid %s, should be a duration object or nil, not %s", key, type(value)), 2)
 			end
 		elseif key == "highlight" then
 			if value == "flash" then
@@ -513,7 +539,7 @@ local modelProxy = setmetatable({}, {
 		else
 			return error(
 				format(
-					'Unknown model property: %s, must be one of: count, maxCount, expiration, highlight or hint',
+					'Unknown model property: %s, must be one of: count, maxCount, expiration, duration, highlight, flash, flashSuppressed or hint',
 					tostring(key)
 				),
 				2
@@ -527,6 +553,7 @@ function overlayPrototype:UpdateState(event)
 	self:SetScript('OnUpdate', nil)
 
 	model.count, model.maxCount, model.expiration = 0, 0, 0
+	model.duration, model.flashSuppressed = nil, nil
 	model.highlight, model.hint, model.flash, model.dispel = nil, false, false, nil
 
 	if self.handlers then
@@ -563,7 +590,9 @@ function overlayPrototype:UpdateState(event)
 
 	self:SetCount(model.count, model.maxCount)
 	self:SetExpiration(model.expiration)
+	self:SetDuration(model.duration)
 	self:SetHighlight(model.highlight, model.dispel)
+	self:SetFlashSuppressed(model.flashSuppressed)
 	self:SetFlash(model.flash)
 	self:SetHint(model.hint)
 
@@ -598,7 +627,9 @@ end
 function blizzardSupportPrototype:GetActionCooldown()
 	if self.button.action then
 		local cooldownInfo = GetActionCooldown(self.button.action)
-		return cooldownInfo.startTime, cooldownInfo.duration
+		-- nil for slots the client does not consider valid
+		if not cooldownInfo then return end
+		return cooldownInfo.startTime, cooldownInfo.duration, cooldownInfo
 	end
 end
 
@@ -625,7 +656,18 @@ function labSupportPrototype:GetActionId()
 end
 
 function labSupportPrototype:GetActionCooldown()
-	return self.button:GetCooldown()
+	local start, duration = self.button:GetCooldown()
+	if hasSecrets and (issecretvalue(start) or issecretvalue(duration)) then
+		local actionType, actionId = self.button:GetAction()
+		local cooldownInfo
+		if actionType == "action" then
+			cooldownInfo = GetActionCooldown(actionId)
+		elseif actionType == "spell" and GetSpellCooldown then
+			cooldownInfo = GetSpellCooldown(actionId)
+		end
+		return start, duration, cooldownInfo
+	end
+	return start, duration
 end
 
 ------------------------------------------------------------------------------

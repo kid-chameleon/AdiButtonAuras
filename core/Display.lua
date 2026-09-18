@@ -44,6 +44,8 @@ local InCombatLockdown = _G.InCombatLockdown
 local LSM = addon.GetLib('LibSharedMedia-3.0')
 local LBG = addon.GetLib('LibButtonGlow-1.0')
 
+local issecretvalue = addon.issecretvalue
+
 local fontFile, fontSize, fontFlag = [[Fonts\ARIALN.TTF]], 13, "OUTLINE"
 
 local overlayPrototype = addon.overlayPrototype
@@ -51,8 +53,6 @@ local ColorGradient = addon.ColorGradient
 
 local Timer_Update
 
--- Stale callbacks bail out when the generation has moved on, so only one
--- update chain per fontstring stays alive.
 local function Timer_Schedule(self, delay)
 	local gen = self.generation
 	C_Timer.After(max(0.1, delay), function()
@@ -185,8 +185,10 @@ function overlayPrototype:LayoutTexts()
 		return count:Hide()
 	end
 	local countIsShown = count:IsShown() or parentCountIsShown
-	timer.compactTimeLeft = countIsShown
-	timer:SetJustifyH(countIsShown and "LEFT" or "CENTER")
+	-- splitTimers: an engine-side aura timer takes the right half
+	local shareSpace = countIsShown or self.splitTimers
+	timer.compactTimeLeft = shareSpace
+	timer:SetJustifyH(shareSpace and "LEFT" or "CENTER")
 	count:SetJustifyH(timer:IsShown() and "RIGHT" or "CENTER")
 end
 
@@ -220,6 +222,9 @@ function overlayPrototype:ApplySkin()
 	self:ApplyHighlightSkin()
 	self:ApplyFont(self.Timer)
 	self:ApplyFont(self.Count)
+	if self.EngineTimer then
+		self:ApplyFont(self.EngineTimer)
+	end
 end
 
 ------------------------------------------------------------------------------
@@ -280,6 +285,14 @@ function overlayPrototype:SetExpiration(expiration)
 	self:ApplyExpiration()
 end
 
+-- Engine-driven countdown, for timers whose values are secret.
+function overlayPrototype:SetDuration(duration)
+	if not duration and not self.duration then return end
+	-- duration objects are fresh userdata on every query, always rebind
+	self.duration = duration
+	self:ApplyDuration()
+end
+
 function overlayPrototype:SetCount(count, maxCount)
 	count = tonumber(count)
 	maxCount = tonumber(maxCount)
@@ -304,6 +317,15 @@ function overlayPrototype:SetFlash(flash)
 	self:ApplyFlash()
 end
 
+function overlayPrototype:SetFlashSuppressed(suppressed)
+	local previous = self.flashSuppressed
+	if not (issecretvalue(suppressed) or suppressed ~= nil) and not (issecretvalue(previous) or previous ~= nil) then
+		return
+	end
+	self.flashSuppressed = suppressed
+	self:ApplyFlashSuppressed()
+end
+
 function overlayPrototype:SetHint(hint)
 	hint = not not hint
 	if self.hint == hint then return end
@@ -322,6 +344,127 @@ function overlayPrototype:ApplyExpiration()
 	-- invalidate render caches, as preferences may have changed
 	timer.displayedStyle, timer.displayedValue, timer.displayedColorBucket = nil, nil, nil
 	timer:Update()
+end
+
+-- On clients with secret values the remaining time of some timers cannot be read.
+local GetDurationStyle
+do
+	local formatter, compactFormatter, colorCurve
+
+	-- Same thresholds and formats as Timer_Update, as engine-side rules.
+	local function CreateRuleFormatter(prefs, compact)
+		local down = _G.Enum.NumericRuleFormatRounding.Down
+		local rules = {
+			{ threshold = 0, format = "%.1f", step = 0.1, rounding = down },
+			{ threshold = prefs.maxTenth, format = "%d", step = 1, rounding = down },
+			{
+				threshold = prefs.minMinuteSecs, format = "%d:%02d",
+				components = {
+					{ div = 60, step = 1, rounding = down },
+					{ mod = 60, step = 1, rounding = down },
+				},
+			},
+			{
+				threshold = compact and prefs.minMinuteSecs or prefs.minMinutes, format = "%dm",
+				components = { { div = 60, step = 1, rounding = down } },
+			},
+			{
+				threshold = 3600, format = "%dh",
+				components = { { div = 3600, step = 1, rounding = down } },
+			},
+		}
+		local breakpoints = {}
+		if compact then
+			tremove(rules, 3)
+		end
+		for _, rule in _G.ipairs(rules) do
+			if rule.threshold < prefs.maxCountdown then
+				tinsert(breakpoints, rule)
+			end
+		end
+		-- no countdown above the configured maximum
+		tinsert(breakpoints, { threshold = prefs.maxCountdown, format = "" })
+		_G.table.sort(breakpoints, function(a, b) return a.threshold < b.threshold end)
+
+		local ruleFormatter = _G.C_StringUtil.CreateNumericRuleFormatter()
+		ruleFormatter:SetBreakpoints(breakpoints)
+		return ruleFormatter
+	end
+
+	local STYLE_PREFS = { "maxTenth", "minMinuteSecs", "minMinutes", "maxCountdown" }
+	local STYLE_COLORS = { "countdownLow", "countdownMedium", "countdownHigh" }
+	local snapshot, version = {}, 0
+
+	local function SettingsChanged(prefs)
+		local changed, n = false, 0
+		for _, name in _G.ipairs(STYLE_PREFS) do
+			n = n + 1
+			if snapshot[n] ~= prefs[name] then
+				snapshot[n], changed = prefs[name], true
+			end
+		end
+		for _, name in _G.ipairs(STYLE_COLORS) do
+			local color = prefs.colors[name]
+			for i = 1, 4 do
+				n = n + 1
+				if snapshot[n] ~= color[i] then
+					snapshot[n], changed = color[i], true
+				end
+			end
+		end
+		return changed
+	end
+
+	function GetDurationStyle(compact)
+		local prefs = addon.db.profile
+		if SettingsChanged(prefs) or not formatter then
+			local colors = prefs.colors
+			formatter = CreateRuleFormatter(prefs)
+			compactFormatter = CreateRuleFormatter(prefs, true)
+			colorCurve = _G.C_CurveUtil.CreateColorCurve()
+			colorCurve:AddPoint(0, _G.CreateColor(unpack(colors.countdownLow)))
+			colorCurve:AddPoint(3, _G.CreateColor(unpack(colors.countdownMedium)))
+			colorCurve:AddPoint(10, _G.CreateColor(unpack(colors.countdownHigh)))
+			version = version + 1
+		end
+		return compact and compactFormatter or formatter, colorCurve, version
+	end
+
+	addon.GetDurationStyle = GetDurationStyle
+end
+
+function overlayPrototype:ApplyDuration()
+	local duration = self.duration
+	local text, binding = self.EngineTimer, self.durationBinding
+	if not duration then
+		if binding then
+			binding:SetEnabled(false)
+			text:Hide()
+		end
+		return
+	end
+
+	if not binding then
+		text = self:CreateFontString(self:GetName().."EngineTimer", "OVERLAY")
+		text:SetJustifyV("BOTTOM")
+		self.EngineTimer = text
+		self:ApplyFont(text)
+
+		binding = _G.C_DurationUtil.CreateDurationTextBinding()
+		binding:SetFontString(text)
+		binding:SetExpiredText("")
+		binding:SetZeroDurationText("")
+		self.durationBinding = binding
+	end
+
+	local shareSpace = self.Count:IsShown() or self.splitTimers
+	local formatter, colorCurve = GetDurationStyle(shareSpace)
+	binding:SetFormatter(formatter)
+	binding:SetTextColorCurve(colorCurve, _G.Enum.DurationTextBindingProperty.RemainingDuration)
+	binding:SetDuration(duration)
+	binding:SetEnabled(true)
+	text:SetJustifyH(shareSpace and "LEFT" or "CENTER")
+	text:Show()
 end
 
 local function ScaleDown(value, unit, ...)
@@ -349,9 +492,22 @@ end
 
 function overlayPrototype:ApplyFlash()
 	if self:ShouldShowFlash() or self:ShouldShowHint("flash") then
-		return self:ShowFlash()
+		self:ShowFlash()
+		return self:ApplyFlashSuppressed()
 	end
 	self:HideFlash()
+end
+
+-- A flash can depend on a secret boolean, so we delegate to the engine.
+function overlayPrototype:ApplyFlashSuppressed()
+	local holder = self.FlashHolder
+	if not holder then return end
+	local suppressed = self.flashSuppressed
+	if issecretvalue(suppressed) or suppressed ~= nil then
+		holder:SetAlphaFromBoolean(suppressed, 0, 1)
+	else
+		holder:SetAlpha(1)
+	end
 end
 
 function overlayPrototype:ShouldShowFlash()
@@ -417,8 +573,31 @@ end
 overlayPrototype.PLAYER_REGEN_DISABLED = overlayPrototype.PLAYER_REGEN_ENABLED
 
 -- Use LibButtonGlow-1.0 for flashing animation
-overlayPrototype.ShowFlash = LBG.ShowOverlayGlow
-overlayPrototype.HideFlash = LBG.HideOverlayGlow
+if addon.hasSecrets then
+	local function GetFlashHolder(self)
+		local holder = self.FlashHolder
+		if not holder then
+			holder = CreateFrame("Frame", nil, self)
+			holder:SetPoint("CENTER")
+			self.FlashHolder = holder
+		end
+		holder:SetSize(self:GetSize())
+		return holder
+	end
+
+	function overlayPrototype:ShowFlash()
+		return LBG.ShowOverlayGlow(GetFlashHolder(self))
+	end
+
+	function overlayPrototype:HideFlash()
+		if self.FlashHolder then
+			return LBG.HideOverlayGlow(self.FlashHolder)
+		end
+	end
+else
+	overlayPrototype.ShowFlash = LBG.ShowOverlayGlow
+	overlayPrototype.HideFlash = LBG.HideOverlayGlow
+end
 
 ------------------------------------------------------------------------------
 -- Animations

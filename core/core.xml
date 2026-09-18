@@ -9,5 +9,7 @@
 	<Script file="Items.lua"/>
 	<Script file="Overlays.lua"/>
 	<Script file="Display.lua"/>
+	<Script file="StackingAuras.lua"/>
+	<Script file="SecretAuras.lua"/>
     <Script file="DebugTooltip.lua"/>
 </Ui>

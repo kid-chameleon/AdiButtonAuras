@@ -396,7 +396,7 @@ function overlayPrototype:ConfigureSecretAuras(force)
 				if threshold > 0 and kind ~= 'stacks' then
 					-- same candidates, drawn only for the last seconds of the aura
 					local expiringKey = tconcat({ info.token, EXPIRING_KIND, alert, threshold, info.filter }, '/')
-					local expiring = desired[expiringKey]s
+					local expiring = desired[expiringKey]
 					if not expiring then
 						expiring = {
 							token = info.token, kind = EXPIRING_KIND, filter = info.filter,

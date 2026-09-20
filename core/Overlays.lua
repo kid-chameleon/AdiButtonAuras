@@ -62,6 +62,11 @@ local wipe = _G.wipe
 
 local LibSpellbook = addon.GetLib('LibSpellbook-1.0')
 
+local hasSecrets = addon.hasSecrets
+local issecretvalue = addon.issecretvalue
+local AurasAreSecret = addon.AuraTools.AurasAreSecret
+local GetSpellCooldown = _G.C_Spell and _G.C_Spell.GetSpellCooldown
+
 local MOUSEOVER_CHANGED = addon.MOUSEOVER_CHANGED
 local MOUSEOVER_TICK = addon.MOUSEOVER_TICK
 local GROUP_CHANGED = addon.GROUP_CHANGED
@@ -391,16 +396,44 @@ function overlayPrototype:PLAYER_FOCUS_CHANGED(event)
 	return self:GenericEvent(event, "focus")
 end
 
+-- The end of a cooldown cannot be computed from secret values.
+function overlayPrototype:PollSecretCooldown()
+	if self.cooldownPoll then return end
+	self.cooldownPoll = true
+	C_Timer.After(0.5, function()
+		self.cooldownPoll = nil
+		if self.inCooldown then
+			return self:UpdateCooldown('poll')
+		end
+	end)
+end
+
 function overlayPrototype:UpdateCooldown(event)
-	local start, duration = self:GetActionCooldown()
-	local inCooldown = start and duration and start > 0 and duration > 2
+	local start, duration, cooldownInfo = self:GetActionCooldown()
+	local inCooldown
+	if hasSecrets and (issecretvalue(start) or issecretvalue(duration)) then
+		-- Only the flags are readable.
+		local isActive = cooldownInfo and cooldownInfo.isActive
+		if event == 'poll' then
+			-- isOnGCD is only reliable in response to an event
+			inCooldown = isActive and self.inCooldown or false
+		else
+			inCooldown = isActive and not cooldownInfo.isOnGCD or false
+		end
+		start, duration = nil, nil
+		if inCooldown then
+			self:PollSecretCooldown()
+		end
+	else
+		inCooldown = start and duration and start > 0 and duration > 2
+	end
 	if not inCooldown then
 		start, duration = nil, nil
 	end
 	if self.cooldownStart ~= start or self.cooldownDuration ~= duration then
 		self:Debug('cooldownStart=', start, 'cooldownDuration=', duration)
 		self.cooldownStart, self.cooldownDuration = start, duration
-		if inCooldown then
+		if inCooldown and start then
 			-- BUG: sometimes the API returns cooldowns beyond 50 days
 			local delay = math.min(start + duration + 0.1 - GetTime(), 24 * 3600)
 			C_Timer.After(delay, function() return self:UpdateCooldown() end)
@@ -459,6 +492,11 @@ end
 function overlayPrototype:UpdateGUID(event, unit)
 	if not unit then return end
 	local guid = UnitGUID(unit)
+	if hasSecrets and issecretvalue(guid) then
+		-- unreadable identity: assume it changed
+		self.guids[unit] = nil
+		return self:ScheduleUpdate(event)
+	end
 	if self.guids[unit] ~= guid then
 		self.guids[unit] = guid
 		return self:ScheduleUpdate(event)
@@ -478,6 +516,16 @@ local modelProxy = setmetatable({}, {
 		if key == "count" or key == "maxCount" or key == "expiration" then
 			if type(value) ~= "number" then
 				return error(format("Invalid %s, should be a number, not %s", key, type(value)), 2)
+			end
+		elseif key == "flashSuppressed" then
+			-- hides the flash when true
+			if not issecretvalue(value) and value ~= nil and type(value) ~= "boolean" then
+				return error(format("Invalid %s, should be a boolean or nil, not %s", key, type(value)), 2)
+			end
+		elseif key == "duration" then
+			-- an engine duration object, for timers whose values are secret
+			if value ~= nil and type(value) ~= "userdata" then
+				return error(format("Invalid %s, should be a duration object or nil, not %s", key, type(value)), 2)
 			end
 		elseif key == "highlight" then
 			if value == "flash" then
@@ -513,7 +561,7 @@ local modelProxy = setmetatable({}, {
 		else
 			return error(
 				format(
-					'Unknown model property: %s, must be one of: count, maxCount, expiration, highlight or hint',
+					'Unknown model property: %s, must be one of: count, maxCount, expiration, duration, highlight, flash, flashSuppressed or hint',
 					tostring(key)
 				),
 				2
@@ -523,29 +571,67 @@ local modelProxy = setmetatable({}, {
 	end,
 })
 
+local MODEL_FIELDS = { "count", "maxCount", "expiration", "duration", "flashSuppressed", "highlight", "hint", "flash", "dispel" }
+local savedModel = {}
+
+local function ProbeEngineHandlers(handlers, unitMap)
+	for _, field in ipairs(MODEL_FIELDS) do
+		savedModel[field] = model[field]
+	end
+	for _, handler in ipairs(handlers) do
+		handler(unitMap, modelProxy)
+	end
+	local expiration, present = model.expiration or 0, model.highlight or model.hint or model.flash
+	for _, field in ipairs(MODEL_FIELDS) do
+		model[field] = savedModel[field]
+	end
+	return expiration, present
+end
+
 function overlayPrototype:UpdateState(event)
 	self:SetScript('OnUpdate', nil)
 
 	model.count, model.maxCount, model.expiration = 0, 0, 0
+	model.duration, model.flashSuppressed = nil, nil
 	model.highlight, model.hint, model.flash, model.dispel = nil, false, false, nil
 
-	if self.handlers then
+	local handlers, engineHandlers = self.handlers, self.engineHandlers
+	if handlers or engineHandlers then
 		model.spellId, model.actionType, model.actionId = self.spellId, self.actionType, self.actionId
 
 		local unitMap = self.unitMap
-		for _, handler in ipairs(self.handlers) do
-			handler(unitMap, modelProxy)
+		if handlers then
+			for _, handler in ipairs(handlers) do
+				handler(unitMap, modelProxy)
+			end
 		end
 
 		local prefs = addon.db.profile
 		local missing = prefs.missing[self.spellId]
 		local expiration = model.expiration or 0
+		local present = model.highlight or model.hint or model.flash
+		local engineExpiration = false
+		if hasSecrets and missing == "hint" then
+			missing = "none"
+		end
+		if engineHandlers and missing ~= "none" then
+			if AurasAreSecret() then
+				missing = "none"
+			else
+				expiration, present = ProbeEngineHandlers(engineHandlers, unitMap)
+				engineExpiration = expiration ~= (model.expiration or 0)
+			end
+		end
 		if missing ~= "none" then
 			local missingThreshold = prefs.missingThreshold[self.spellId]
+			if engineExpiration and self.engineExpiring then
+				-- the engine shows that one of its auras runs out, only its absence is left to us
+				missingThreshold = 0
+			end
 			local timeLeft = expiration - GetTime()
 			if
 				timeLeft <= missingThreshold
-				and (expiration > 0 and missingThreshold > 0 or not (model.highlight or model.hint or model.flash))
+				and (expiration > 0 and missingThreshold > 0 or not present)
 			then
 				model[missing] = missing == 'highlight' and (self.units.enemy and "bad" or "good") or true
 			else
@@ -563,7 +649,9 @@ function overlayPrototype:UpdateState(event)
 
 	self:SetCount(model.count, model.maxCount)
 	self:SetExpiration(model.expiration)
+	self:SetDuration(model.duration)
 	self:SetHighlight(model.highlight, model.dispel)
+	self:SetFlashSuppressed(model.flashSuppressed)
 	self:SetFlash(model.flash)
 	self:SetHint(model.hint)
 
@@ -598,7 +686,9 @@ end
 function blizzardSupportPrototype:GetActionCooldown()
 	if self.button.action then
 		local cooldownInfo = GetActionCooldown(self.button.action)
-		return cooldownInfo.startTime, cooldownInfo.duration
+		-- nil for slots the client does not consider valid
+		if not cooldownInfo then return end
+		return cooldownInfo.startTime, cooldownInfo.duration, cooldownInfo
 	end
 end
 
@@ -625,7 +715,18 @@ function labSupportPrototype:GetActionId()
 end
 
 function labSupportPrototype:GetActionCooldown()
-	return self.button:GetCooldown()
+	local start, duration = self.button:GetCooldown()
+	if hasSecrets and (issecretvalue(start) or issecretvalue(duration)) then
+		local actionType, actionId = self.button:GetAction()
+		local cooldownInfo
+		if actionType == "action" then
+			cooldownInfo = GetActionCooldown(actionId)
+		elseif actionType == "spell" and GetSpellCooldown then
+			cooldownInfo = GetSpellCooldown(actionId)
+		end
+		return start, duration, cooldownInfo
+	end
+	return start, duration
 end
 
 ------------------------------------------------------------------------------

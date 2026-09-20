@@ -23,10 +23,11 @@ local addonName, addon = ...
 
 local _G = _G
 local format = _G.format
-local GetItemInfo = _G.GetItemInfo
-local GetItemSpell = _G.GetItemSpell
-local IsHarmfulItem = _G.IsHarmfulItem
-local IsHelpfulItem = _G.IsHelpfulItem
+local C_Item = _G.C_Item or {}
+local GetItemInfo = _G.GetItemInfo or C_Item.GetItemInfo
+local GetItemSpell = _G.GetItemSpell or C_Item.GetItemSpell
+local IsHarmfulItem = _G.IsHarmfulItem or C_Item.IsHarmfulItem
+local IsHelpfulItem = _G.IsHelpfulItem or C_Item.IsHelpfulItem
 local select = _G.select
 local setmetatable = _G.setmetatable
 local tonumber = _G.tonumber

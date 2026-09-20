@@ -22,13 +22,13 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('WARRIOR') then return end
-if not addon.isFlavor('vanilla') then return end
+if not addon.isFlavor('forever') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding vanilla warrior rules')
+	Debug('Rules', 'Adding forever warrior rules')
 
-	-- the shouts are flagged RAIDBUFF and thus not imported; show the
-	-- duration of any rank found on the player, whoever cast it
+	-- the shouts are flagged RAIDBUFF and thus not imported.
+	-- show the duration of any rank found on the player, whoever cast it.
 	local battleShout = {
 		6673, -- Begin Battle Shout
 		5242,

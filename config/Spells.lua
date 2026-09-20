@@ -29,7 +29,7 @@ function private.GetSpellOptions(addon, addonName)
 	local format = _G.format
 	local GameTooltip = _G.GameTooltip
 	local GameTooltip_SetDefaultAnchor = _G.GameTooltip_SetDefaultAnchor
-	local GetItemInfo = _G.GetItemInfo
+	local GetItemInfo = _G.GetItemInfo or _G.C_Item.GetItemInfo
 	local GetSpellName = C_Spell.GetSpellName
 	local hooksecurefunc = _G.hooksecurefunc
 	local ipairs = _G.ipairs
@@ -311,7 +311,9 @@ function private.GetSpellOptions(addon, addonName)
 			},
 			flashPromotion = {
 				name = L['Show flash instead'],
-				desc = L['Check to show a flash instead of a colored border.'],
+				desc = addon.hasSecrets
+					and L['Check to show a pulsing border instead of a steady one.']
+					or L['Check to show a flash instead of a colored border.'],
 				order = 25,
 				type = 'toggle',
 				disabled = function()
@@ -325,15 +327,25 @@ function private.GetSpellOptions(addon, addonName)
 			},
 			missing = {
 				name = L['Show missing'],
-				desc = L['Select the method for showing missing (de)buffs.'],
+				desc = addon.hasSecrets
+					and format("%s\n|cffff0000%s|r",
+						L['Select the method for showing missing (de)buffs.'],
+						L['A missing (de)buff can only be detected out of combat. As a workaround, set a threshold to be alerted in combat before it runs out.']
+					)
+					or L['Select the method for showing missing (de)buffs.'],
 				order = 40,
 				type = 'select',
 				values = {
 					none = L['Disabled'],
 					highlight = L['Show border'],
 					flash = L['Show flash'],
-					hint = L['Show hint'],
+					-- hints only show in combat, where a missing aura cannot be told under secret values
+					hint = not addon.hasSecrets and L['Show hint'] or nil,
 				},
+				get = function(info)
+					local value = handler:Get(info)
+					return addon.hasSecrets and value == 'hint' and 'none' or value
+				end,
 				set = function(info, value)
 					handler:Set(info, value)
 					if value ~= 'none' then
@@ -343,7 +355,9 @@ function private.GetSpellOptions(addon, addonName)
 			},
 			missingThreshold = {
 				name = L['Show missing threshold'],
-				desc = L['Show the missing highlight when the remaining duration is below this value.'],
+				desc = addon.hasSecrets
+					and L['Show an alert, in the "Expiring" color of the theme, when the remaining duration is below this value.']
+					or L['Show the missing highlight when the remaining duration is below this value.'],
 				order = 45,
 				type = 'range',
 				min = 0,

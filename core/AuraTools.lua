@@ -33,8 +33,24 @@ local type = _G.type
 local GetAuraSlots = _G.C_UnitAuras.GetAuraSlots
 local UnitExists = _G.UnitExists
 local UnitGUID = _G.UnitGUID
+local C_Secrets = _G.C_Secrets
 
 local Debug = function(...) addon.Debug('AuraTools', ...) end
+
+local hasSecrets = addon.hasSecrets
+local issecretvalue = addon.issecretvalue
+local function AurasAreSecret()
+	return hasSecrets and C_Secrets.ShouldAurasBeSecret()
+end
+
+-- A hostile unit's GUID is secret under restrictions.
+local function SafeUnitGUID(unit)
+	local guid = UnitGUID(unit)
+	if hasSecrets and issecretvalue(guid) then
+		return nil
+	end
+	return guid
+end
 
 ------------------------------------------------------------------------------
 -- Table recycling
@@ -75,16 +91,17 @@ local empty = {}
 local aurasMetatable = {
 	__index = {
 		CheckGUID = function (self)
-			if self.__guid ~= UnitGUID(self.__unit) then
+			if self.__guid ~= SafeUnitGUID(self.__unit) then
 				self:Update()
 			end
 
 			return self
 		end,
 		Update = function (self, info)
-			self.__guid = UnitGUID(self.__unit)
+			self.__guid = SafeUnitGUID(self.__unit)
 
-			if not self.__guid then
+			if not self.__guid or AurasAreSecret() then
+				self.__guid = nil
 				for k, v in next, self do
 					if type(k) == 'number' then
 						self[k] = del(v)
@@ -214,15 +231,21 @@ local cache = setmetatable({}, {
 local eventFrame = _G.CreateFrame('Frame')
 eventFrame:SetScript('OnEvent', function(self, event, unit, info)
 	if event == 'UNIT_AURA' then
+		if AurasAreSecret() then
+			return
+		end
 		if rawget(cache, unit) then
 			cache[unit]:Update(info)
 		end
-	elseif event == 'PLAYER_REGEN_ENABLED' then
+	elseif event == 'PLAYER_REGEN_ENABLED' or event == 'ADDON_RESTRICTION_STATE_CHANGED' then
 		wipe(cache) -- TODO: why?
 	end
 end)
 eventFrame:RegisterEvent('UNIT_AURA')
 eventFrame:RegisterEvent('PLAYER_REGEN_ENABLED')
+if hasSecrets then
+	eventFrame:RegisterEvent('ADDON_RESTRICTION_STATE_CHANGED')
+end
 
 ------------------------------------------------------------------------------
 -- Accessors
@@ -244,7 +267,7 @@ local iterators = {}
 
 for key in next, mts do
 	getters[key] = function(unit, id)
-		if unit and UnitExists(unit) then
+		if unit and UnitExists(unit) and not AurasAreSecret() then
 			local aura = cache[unit][key]:CheckGUID():GetById(id)
 			if aura then
 				return id, aura.count, aura.expiration, aura.dispel
@@ -252,7 +275,7 @@ for key in next, mts do
 		end
 	end
 	iterators[key] = function(unit)
-		if not unit or not UnitExists(unit) then return NOP end
+		if not unit or not UnitExists(unit) or AurasAreSecret() then return NOP end
 		return auraIterator, cache[unit][key]:CheckGUID()
 	end
 end
@@ -276,7 +299,8 @@ addon.AuraTools = {
 	end,
 	IterateAuras = function(unit, filter)
 		return iterators[parsedFilter[filter]](unit)
-	end
+	end,
+	AurasAreSecret = AurasAreSecret,
 }
 for suffix, getter in next, getters do
 	addon.AuraTools["Get"..suffix] = getter

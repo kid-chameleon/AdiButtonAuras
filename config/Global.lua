@@ -41,6 +41,19 @@ function private.GetGlobalOptions(addon)
 			addon:SendMessage(addon.CONFIG_CHANGED)
 		end,
 		args = {
+			secretsNotice = {
+				name = format("|cffffd200%s|r\n%s\n%s\n%s\n%s\n",
+					L['Limitations:'],
+					L['- Missing (de)buffs are only detected out of combat. As a workaround, set a "Show missing threshold" on a spell to be alerted in combat before it runs out.'],
+					L['- Group buff counters, stack thresholds and other rules that compare aura values are blank in combat.'],
+					L['- Custom rules based on your health or power do nothing.'],
+					L['- Debuffs on friendly units, like Weakened Soul, cannot be tracked in combat.']
+				),
+				type = 'description',
+				fontSize = 'medium',
+				order = 1,
+				hidden = not addon.hasSecrets,
+			},
 			noFlashOnCooldown = {
 				name = L['No flash on cooldown'],
 				desc = format("%s\n|cffff0000%s|r",

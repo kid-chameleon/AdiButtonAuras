@@ -27,8 +27,8 @@ local Enum = _G.Enum
 local BreakUpLargeNumbers = _G.BreakUpLargeNumbers
 local GetActionInfo = _G.GetActionInfo
 local GetActionText = _G.C_ActionBar.GetActionText
-local GetItemInfo = C_Item.GetItemInfo
-local GetItemSpell = C_Item.GetItemSpell
+local GetItemInfo = _G.C_Item.GetItemInfo
+local GetItemSpell = _G.C_Item.GetItemSpell
 local GetMacroInfo = _G.GetMacroInfo
 local GetMacroItem = _G.GetMacroItem
 local GetMacroSpell = _G.GetMacroSpell
@@ -94,6 +94,11 @@ local function AddPetActionInfo(tooltip, slot)
 	return AddSpellInfo(tooltip, "spell", id, true)
 end
 
+local function GetSpellIdByAuraInstanceID(...)
+	local data = C_UnitAuras.GetAuraDataByAuraInstanceID(unpack(...))
+	return data and data.spellId
+end
+
 local spellIdGetters = {
 	GetUnitAura = function(...)
 		local data = C_UnitAuras.GetAuraDataByIndex(unpack(...))
@@ -107,15 +112,11 @@ local spellIdGetters = {
 		local data = C_UnitAuras.GetDebuffDataByIndex(unpack(...))
 		return data and data.spellId
 	end,
-	GetUnitBuffByAuraInstanceID = function(...)
-		local data = C_UnitAuras.GetAuraDataByAuraInstanceID(unpack(...))
-		return data and data.spellId
-	end,
-	GetUnitDebuffByAuraInstanceID = function(...)
-		local data = C_UnitAuras.GetAuraDataByAuraInstanceID(unpack(...))
-		return data and data.spellId
-	end,
+	GetUnitAuraByAuraInstanceID = GetSpellIdByAuraInstanceID,
+	GetUnitBuffByAuraInstanceID = GetSpellIdByAuraInstanceID,
+	GetUnitDebuffByAuraInstanceID = GetSpellIdByAuraInstanceID,
 }
+local issecretvalue = addon.issecretvalue
 
 local sources = {
 	GetAction = 'action',
@@ -127,9 +128,6 @@ local sources = {
 	GetTraitEntry = 'talent',
 }
 
--- the vanilla game type ships without the data-driven tooltip system
--- (Blizzard_SharedXMLGame_Vanilla.toc omits TooltipDataHandler.lua);
--- the anniversary client has it
 if not TooltipDataProcessor then return end
 
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, function(tooltip, data)
@@ -152,8 +150,14 @@ TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, function(too
 end)
 
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, function(tooltip, data)
-	local info = tooltip.processingInfo
-	local id = spellIdGetters[info.getterName](info.getterArgs)
+	local id = data and data.id
+	if issecretvalue(id) then return end
+	if not id then
+		local info = tooltip.processingInfo
+		local getter = info and spellIdGetters[info.getterName]
+		id = getter and getter(info.getterArgs)
+	end
+	if not id or issecretvalue(id) then return end
 
 	AddSpellInfo(tooltip, 'aura', id, true)
 end)

@@ -112,6 +112,16 @@ L["The color used for dispels of type \"Disease\"."] = true
 L["The color used for dispels of type \"Magic\"."] = true
 L["The color used for dispels of type \"Poison\"."] = true
 L["The color user for dispels of type \"Enrage\"."] = true
+L["\"Expiring\" alert"] = true
+L["A missing (de)buff can only be detected out of combat. As a workaround, set a threshold to be alerted in combat before it runs out."] = true
+L["Check to show a pulsing border instead of a steady one."] = true
+L["Limitations:"] = true
+L["Show an alert, in the \"Expiring\" color of the theme, when the remaining duration is below this value."] = true
+L["- Custom rules based on your health or power do nothing."] = true
+L["- Debuffs on friendly units, like Weakened Soul, cannot be tracked in combat."] = true
+L["- Group buff counters, stack thresholds and other rules that compare aura values are blank in combat."] = true
+L["- Missing (de)buffs are only detected out of combat. As a workaround, set a \"Show missing threshold\" on a spell to be alerted in combat before it runs out."] = true
+L["The color used when an aura has less than its \"Show missing threshold\" left."] = true
 
 -- RuleDSL.lua
 L["%s when %s %s is found on %s."] = true

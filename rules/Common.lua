@@ -123,6 +123,7 @@ AdiButtonAuras:RegisterRules(function()
 	local MAGIC     = LibPlayerSpells.constants.MAGIC
 	local POISON    = LibPlayerSpells.constants.POISON
 	local ENRAGE    = LibPlayerSpells.constants.ENRAGE
+	local AURA      = LibPlayerSpells.constants.AURA
 	local inclusionMask = bor(LibPlayerSpells.constants[PLAYER_CLASS], LibPlayerSpells.constants.RACIAL)
 
 	for spell, flags, _, _, _, category, dispelFlags in LibPlayerSpells:IterateSpells('DISPEL') do
@@ -151,6 +152,18 @@ AdiButtonAuras:RegisterRules(function()
 					token,
 					'UNIT_AURA',
 					BuildDispelHandler(filter, highlight, token, dispellable),
+				}
+			end
+
+			-- Some dispels also leave an aura of their own.
+			if band(flags, AURA) > 0 and targeting ~= HARMFUL then
+				rules[#rules + 1] = Configure {
+					'DispelAura:' .. spell,
+					BuildDesc('HELPFUL PLAYER', 'good', token, spell) .. format(' [%s]', DescribeLPSSource(category)),
+					spell,
+					token,
+					'UNIT_AURA',
+					BuildAuraHandler_Single('HELPFUL PLAYER', 'good', token, spell),
 				}
 			end
 		end
@@ -192,13 +205,21 @@ AdiButtonAuras:RegisterRules(function()
 			function(units, model)
 				local unit = units.enemy
 				if unit and UnitCanAttack("player", unit) then
-					local name, _, _, _, endTime, _, _, notInterruptible = UnitCastingInfo(unit)
-					if name and not notInterruptible then
-						model.flash, model.expiration = true, endTime / 1000
-					end
-					name, _, _, _, endTime, _, notInterruptible = UnitChannelInfo(unit)
-					if name and not notInterruptible then
-						model.flash, model.expiration = true, endTime / 1000
+					local casting, endTime, duration, notInterruptible = GetUnitCast(unit)
+					if casting then
+						if issecretvalue(notInterruptible) then
+							-- cannot be tested here, the display hides the flash engine-side
+							model.flash, model.flashSuppressed = true, notInterruptible
+						elseif not notInterruptible then
+							model.flash = true
+						end
+						if model.flash then
+							if endTime then
+								model.expiration = endTime
+							else
+								model.duration = duration
+							end
+						end
 					end
 				end
 			end

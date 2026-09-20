@@ -21,34 +21,13 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 
 local _, addon = ...
 
-if not addon.isClass('HUNTER') then return end
-if not addon.isFlavor('vanilla') then return end
+if not addon.isClass('WARLOCK') then return end
+if not addon.isFlavor('forever') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding vanilla hunter rules')
+	Debug('Rules', 'Adding forever warlock rules')
 
-	local rules = {
-		ImportPlayerSpells { 'HUNTER' },
-
-		ShowReactive {
-			{
-				1495, -- Begin Mongoose Bite
-				14269,
-				14270,
-				14271, -- End Mongoose Bite
-			},
-			L['Flash when @NAME is usable after you dodge.'],
-		},
-
-		ShowReactive {
-			{
-				19306, -- Begin Counterattack
-				20909,
-				20910, -- End Counterattack
-			},
-			L['Flash when @NAME is usable after you parry.'],
-		},
+	return {
+		ImportPlayerSpells { 'WARLOCK' },
 	}
-
-	return rules
 end)

@@ -145,6 +145,14 @@ function private.GetThemeOptions(addon, addonName)
 						hasAlpha = true,
 						order = 15,
 					},
+					expiring = {
+						name = L['"Expiring" alert'],
+						desc = L['The color used when an aura has less than its "Show missing threshold" left.'],
+						type = 'color',
+						hasAlpha = true,
+						order = 17,
+						hidden = not addon.hasSecrets,
+					},
 					_empty1 = {
 						name = '',
 						order = 20,

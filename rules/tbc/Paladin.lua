@@ -22,8 +22,7 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('PALADIN') then return end
-
--- the spell ids below are identical on vanilla and tbc
+if not addon.isFlavor('tbc') then return end
 
 AdiButtonAuras:RegisterRules(function()
 	Debug('Rules', 'Adding paladin rules')
@@ -34,11 +33,9 @@ AdiButtonAuras:RegisterRules(function()
 	local hammerOfWrath = {
 		24275, -- Begin Hammer of Wrath
 		24274,
-		24239, -- End Hammer of Wrath
+		24239,
+		27180, -- End Hammer of Wrath
 	}
-	if isFlavor('tbc') then
-		tinsert(hammerOfWrath, 27180) -- Rank 4, id unknown to the vanilla client
-	end
 
 	return {
 		ImportPlayerSpells {

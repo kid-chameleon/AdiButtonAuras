@@ -22,10 +22,10 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('PRIEST') then return end
-if not addon.isFlavor('vanilla') then return end
+if not addon.isFlavor('forever') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding vanilla priest rules')
+	Debug('Rules', 'Adding forever priest rules')
 
 	local powerWordShield = {
 		17, -- Begin Power Word: Shield
@@ -108,6 +108,8 @@ AdiButtonAuras:RegisterRules(function()
 			'group',
 			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
 			function(units, model)
+				if AurasAreSecret() then return end
+
 				local missing = 0
 				local shortest
 				for unit in next, units.group do
@@ -138,7 +140,7 @@ AdiButtonAuras:RegisterRules(function()
 			end,
 		},
 
-		-- the crowd control rule from Common.lua tracks the enemy token;
+		-- the crowd control rule from Common.lua tracks the enemy token
 		-- while Mind Control runs the victim is the pet unit instead
 		Configure {
 			'MindControl',

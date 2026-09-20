@@ -22,43 +22,10 @@ along with AdiButtonAuras. If not, see <http://www.gnu.org/licenses/>.
 local _, addon = ...
 
 if not addon.isClass('SHAMAN') then return end
-if not addon.isFlavor('vanilla') then return end
+if not addon.isFlavor('forever') then return end
 
 AdiButtonAuras:RegisterRules(function()
-	Debug('Rules', 'Adding vanilla shaman rules')
-
-	-- ShowTempWeaponEnchant listens for WEAPON_ENCHANT_CHANGED, which does
-	-- not exist on the vanilla client; use UNIT_INVENTORY_CHANGED instead.
-	-- Every imbue rank has its own enchant id, hence one rule per rank.
-	local function ShowWeaponImbue(spellId, enchantId)
-		return Configure {
-			BuildKey('WeaponEnchant', enchantId, 'good'),
-			L['Show the duration of @NAME'],
-			spellId,
-			'player',
-			'UNIT_INVENTORY_CHANGED',
-			function(_, model)
-				local hasMainHandEnchant, mainHandExpiration, mainHandCharges, mainHandEnchantId,
-					hasOffHandEnchant, offHandExpiration, offHandCharges, offHandEnchantId = GetWeaponEnchantInfo()
-
-				if hasMainHandEnchant and mainHandEnchantId == enchantId then
-					model.expiration = GetTime() + mainHandExpiration / 1000
-					model.count = mainHandCharges or 0
-					model.highlight = 'good'
-
-					return true
-				end
-
-				if hasOffHandEnchant and offHandEnchantId == enchantId then
-					model.expiration = GetTime() + offHandExpiration / 1000
-					model.count = offHandCharges or 0
-					model.highlight = 'good'
-
-					return true
-				end
-			end,
-		}
-	end
+	Debug('Rules', 'Adding forever shaman rules')
 
 	local imbues = { -- { rank spell, enchant id }
 		{  8024,    5 }, -- Begin Flametongue Weapon
@@ -90,7 +57,6 @@ AdiButtonAuras:RegisterRules(function()
 
 		ShowTotem { 8170, 136019 }, -- Disease Cleansing Totem
 		ShowTotem { 2484, 136102 }, -- Earthbind Totem
-		ShowTotem { { 1535, 8498, 8499, 11314, 11315 }, 135824 }, -- Fire Nova Totem
 		ShowTotem { { 8184, 10537, 10538 }, 135832 }, -- Fire Resistance Totem
 		ShowTotem { { 8227, 8249, 10526, 16387 }, 136040 }, -- Flametongue Totem
 		ShowTotem { { 8181, 10478, 10479 }, 135866 }, -- Frost Resistance Totem
@@ -107,14 +73,13 @@ AdiButtonAuras:RegisterRules(function()
 		ShowTotem { { 5730, 6390, 6391, 6392, 10427, 10428 }, 136097 }, -- Stoneclaw Totem
 		ShowTotem { { 8071, 8154, 8155, 10406, 10407, 10408 }, 136098 }, -- Stoneskin Totem
 		ShowTotem { { 8075, 8160, 8161, 10442, 25361 }, 136023 }, -- Strength of Earth Totem
-		ShowTotem { 25908, 136013 }, -- Tranquil Air Totem
 		ShowTotem { 8143, 136108 }, -- Tremor Totem
 		ShowTotem { { 8512, 10613, 10614 }, 136114 }, -- Windfury Totem
 		ShowTotem { { 15107, 15111, 15112 }, 136022 }, -- Windwall Totem
 	}
 
 	for _, imbue in ipairs(imbues) do
-		tinsert(rules, ShowWeaponImbue(imbue[1], imbue[2]))
+		tinsert(rules, ShowTempWeaponEnchant { imbue[1], imbue[2] })
 	end
 
 	return rules

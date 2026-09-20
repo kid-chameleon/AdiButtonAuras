@@ -121,6 +121,7 @@ L["- Custom rules based on your health or power do nothing."] = true
 L["- Debuffs on friendly units, like Weakened Soul, cannot be tracked in combat."] = true
 L["- Group buff counters, stack thresholds and other rules that compare aura values are blank in combat."] = true
 L["- Missing (de)buffs are only detected out of combat. As a workaround, set a \"Show missing threshold\" on a spell to be alerted in combat before it runs out."] = true
+L["With a friendly target, show @NAME on it instead. In combat, only the target or yourself can be shown."] = true
 L["The color used when an aura has less than its \"Show missing threshold\" left."] = true
 
 -- RuleDSL.lua

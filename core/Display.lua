@@ -141,7 +141,13 @@ function overlayPrototype:InitializeDisplay()
 	self:SetFrameLevel(self.button.cooldown:GetFrameLevel()+1)
 	self.parentCount = _G[self.button:GetName().."Count"]
 
-	local highlight = self:CreateTexture(self:GetName().."Highlight", "BACKGROUND")
+	local highlightParent = self
+	if addon.hasSecrets then
+		highlightParent = CreateFrame("Frame", nil, self)
+		highlightParent:SetAllPoints(self)
+		highlightParent:SetFrameLevel(self:GetFrameLevel() + 3)
+	end
+	local highlight = highlightParent:CreateTexture(self:GetName().."Highlight", "BACKGROUND")
 	highlight:SetAllPoints(self)
 	highlight:Hide()
 	self.Highlight = highlight
@@ -185,10 +191,10 @@ function overlayPrototype:LayoutTexts()
 		return count:Hide()
 	end
 	local countIsShown = count:IsShown() or parentCountIsShown
-	-- splitTimers: an engine-side aura timer takes the right half
+	-- splitTimers: an engine-side aura timer takes the right half, or the left one when it is "right"
 	local shareSpace = countIsShown or self.splitTimers
 	timer.compactTimeLeft = shareSpace
-	timer:SetJustifyH(shareSpace and "LEFT" or "CENTER")
+	timer:SetJustifyH(shareSpace and (self.splitTimers == "right" and "RIGHT" or "LEFT") or "CENTER")
 	count:SetJustifyH(timer:IsShown() and "RIGHT" or "CENTER")
 end
 
@@ -463,7 +469,7 @@ function overlayPrototype:ApplyDuration()
 	binding:SetTextColorCurve(colorCurve, _G.Enum.DurationTextBindingProperty.RemainingDuration)
 	binding:SetDuration(duration)
 	binding:SetEnabled(true)
-	text:SetJustifyH(shareSpace and "LEFT" or "CENTER")
+	text:SetJustifyH(shareSpace and (self.splitTimers == "right" and "RIGHT" or "LEFT") or "CENTER")
 	text:Show()
 end
 

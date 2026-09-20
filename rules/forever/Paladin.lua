@@ -61,13 +61,11 @@ AdiButtonAuras:RegisterRules(function()
 			},
 			'player',
 			'UNIT_AURA',
-			(function()
-				local hasForbearanceOnSelf = BuildAuraHandler_Single('HARMFUL', 'bad', 'player', 25771)
-				local hasDivineShield = BuildAuraHandler_FirstOf('HELPFUL PLAYER', 'good', 'player', { 642, 1020 })
-				return function(units, model)
-					return hasDivineShield(units, model) or hasForbearanceOnSelf(units, model)
-				end
-			end)(),
+			{
+				BuildAuraHandler_Single('HARMFUL', 'bad', 'player', 25771),
+				BuildAuraHandler_FirstOf('HELPFUL PLAYER', 'good', 'player', { 642, 1020 }),
+				InCombatOnly(BuildAuraHandler_Single('HARMFUL PLAYER', 'bad', 'player', 25771), 60),
+			},
 		},
 
 		Configure {
@@ -83,12 +81,11 @@ AdiButtonAuras:RegisterRules(function()
 			},
 			'ally',
 			'UNIT_AURA',
-			(function()
-				local hasBlessingOfProtection = BuildAuraHandler_FirstOf('HELPFUL', 'good', 'ally', { 1022, 5599, 10278 })
-				return function(units, model)
-					return hasBlessingOfProtection(units, model) or hasForbearance(units, model)
-				end
-			end)(),
+			{
+				hasForbearance,
+				BuildAuraHandler_FirstOf('HELPFUL', 'good', 'ally', { 1022, 5599, 10278 }),
+				InCombatOnly(BuildAuraHandler_Single('HARMFUL PLAYER', 'bad', 'ally', 25771), 60),
+			},
 		},
 
 		ShowReactive {

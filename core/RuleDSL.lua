@@ -499,6 +499,16 @@ do
 	end
 end
 
+local function InCombatOnly(handler, maxDuration)
+	local info = auraHandlerInfo[handler]
+	if not addon.hasSecrets or not info then
+		return function() end
+	end
+	info.combatOnly = true
+	info.maxDuration = maxDuration
+	return handler
+end
+
 local function BuildTotemHandler(totemTexture, highlight, spells)
 	if addon.hasSecrets and spells then
 		for _, spell in ipairs(AsList(spells)) do
@@ -927,6 +937,7 @@ local baseEnv = {
 	BuildAuraHandler_Longest = BuildAuraHandler_Longest,
 	BuildAuraHandler_FirstOf = BuildAuraHandler_FirstOf,
 	BuildDispelHandler       = BuildDispelHandler,
+	InCombatOnly             = InCombatOnly,
 	BuildTemporaryPetHandler = BuildTemporaryPetHandler,
 	BuildTotemHandler        = BuildTotemHandler,
 
@@ -1020,10 +1031,11 @@ local RULES_ENV = addon.BuildSafeEnv(
 )
 
 -- Under secret value restrictions these read as nil instead of erroring on the first comparison in a rule.
+-- This only suits single values: UnitCastingInfo, UnitChannelInfo, GetTotemInfo and GetSpellCharges are handed
+-- over as they are, and a rule has to check their returns with issecretvalue, or use GetUnitCast.
 if addon.hasSecrets then
 	for _, name in ipairs({
-		"UnitHealth", "UnitHealthMax", "UnitPower", "UnitPowerMax", "UnitGUID", "GetSpellCharges", "GetSpellCount",
-		"UnitCastingInfo", "UnitChannelInfo", "GetTotemInfo",
+		"UnitHealth", "UnitHealthMax", "UnitPower", "UnitPowerMax", "UnitGUID", "GetSpellCount",
 	}) do
 		local func = rawget(baseEnv, name)
 		if func then

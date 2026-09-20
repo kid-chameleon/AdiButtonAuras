@@ -108,6 +108,8 @@ AdiButtonAuras:RegisterRules(function()
 			'group',
 			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
 			function(units, model)
+				if AurasAreSecret() then return end
+
 				local missing = 0
 				local shortest
 				for unit in next, units.group do

@@ -332,8 +332,13 @@ function private.GetSpellOptions(addon, addonName)
 					none = L['Disabled'],
 					highlight = L['Show border'],
 					flash = L['Show flash'],
-					hint = L['Show hint'],
+					-- hints only show in combat, where a missing aura cannot be told under secret values
+					hint = not addon.hasSecrets and L['Show hint'] or nil,
 				},
+				get = function(info)
+					local value = handler:Get(info)
+					return addon.hasSecrets and value == 'hint' and 'none' or value
+				end,
 				set = function(info, value)
 					handler:Set(info, value)
 					if value ~= 'none' then

@@ -299,7 +299,8 @@ addon.AuraTools = {
 	end,
 	IterateAuras = function(unit, filter)
 		return iterators[parsedFilter[filter]](unit)
-	end
+	end,
+	AurasAreSecret = AurasAreSecret,
 }
 for suffix, getter in next, getters do
 	addon.AuraTools["Get"..suffix] = getter

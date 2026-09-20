@@ -151,6 +151,7 @@ end)
 
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, function(tooltip, data)
 	local id = data and data.id
+	if issecretvalue(id) then return end
 	if not id then
 		local info = tooltip.processingInfo
 		local getter = info and spellIdGetters[info.getterName]

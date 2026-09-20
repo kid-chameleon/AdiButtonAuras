@@ -61,6 +61,13 @@ local SUPPORTED_HIGHLIGHTS = {
 	stacks = true,
 }
 
+-- Highlights the "Show flash instead" option turns into a flash, as UpdateState does for the regular display.
+local FLASHABLE_HIGHLIGHTS = {
+	good = true,
+	bad = true,
+	dispel = true,
+}
+
 local DISPEL_TYPES = { "Curse", "Disease", "Magic", "Poison" }
 
 local function BaseFilter(filter)
@@ -80,8 +87,8 @@ local function CopySet(set)
 end
 
 -- Slot frames cannot be changed once created, so every layout is a slot of its own.
-local function SlotKey(info, split, compact)
-	return info.token .. '/' .. info.highlight .. '/' .. info.filter
+local function SlotKey(info, kind, split, compact)
+	return info.token .. '/' .. kind .. '/' .. info.filter
 		.. (split and '/split' or '') .. (compact and '/compact' or '')
 end
 
@@ -235,7 +242,12 @@ function overlayPrototype:GetSecretContainer(token)
 	end
 	local container = containers[token]
 	if not container then
-		container = CreateFrame("AuraContainer", nil, self, "CustomAuraContainerTemplate")
+		local ok, result = pcall(CreateFrame, "AuraContainer", nil, self, "CustomAuraContainerTemplate")
+		if not ok then
+			self:Debug('SecretAuras: container creation failed', token, tostring(result))
+			return nil
+		end
+		container = result
 		container:SetPoint("CENTER", self, "CENTER", 0, 0)
 		container:SetSize(self:GetSize())
 		container:SetFrameLevel(self:GetFrameLevel() + 1)
@@ -247,13 +259,17 @@ function overlayPrototype:GetSecretContainer(token)
 end
 
 -- Rebuild the aura slots from the current rule configuration.
-function overlayPrototype:ConfigureSecretAuras()
+function overlayPrototype:ConfigureSecretAuras(force)
 	local conf = self.conf
 	local handlers = conf and conf.handlers
-	if self.secretConf == conf and self.secretSource == handlers and self.secretHandlers == self.handlers then
+	local promote = conf and addon.db.profile.flashPromotion[self.spellId] or false
+	if
+		not force and self.secretConf == conf and self.secretSource == handlers
+		and self.secretHandlers == self.handlers and self.secretPromote == promote
+	then
 		return
 	end
-	self.secretConf, self.secretSource = conf, handlers
+	self.secretConf, self.secretSource, self.secretPromote, self.secretRetry = conf, handlers, promote, false
 	self.secretStyle = self.secretStyle or SlotStyle(self)
 
 	local desired = self.secretDesired
@@ -278,18 +294,19 @@ function overlayPrototype:ConfigureSecretAuras()
 		end
 	end
 
-	local legacy, hasTimerSlot
+	local slotKeys = {}
 	if conf and handlers then
 		for _, handler in ipairs(handlers) do
 			local info = GetSlotInfo(handler)
 			if info then
+				local kind = promote and FLASHABLE_HIGHLIGHTS[info.highlight] and 'flash' or info.highlight
 				local compact = HasStackingAura(info)
-				local key = SlotKey(info, split, compact)
+				local key = SlotKey(info, kind, split, compact)
 				local entry = desired[key]
-				hasTimerSlot = hasTimerSlot or info.highlight ~= 'stacks'
+				slotKeys[handler] = key
 				if not entry then
 					entry = {
-						token = info.token, kind = info.highlight, filter = info.filter,
+						token = info.token, kind = kind, filter = info.filter,
 						split = split, compact = compact,
 						spells = {}, dispel = {},
 					}
@@ -307,20 +324,38 @@ function overlayPrototype:ConfigureSecretAuras()
 						entry.dispel[dispelType == 'Enrage' and '' or dispelType] = true
 					end
 				end
+			end
+		end
+	end
+
+	for key, entry in pairs(desired) do
+		if not self:ApplySecretSlot(key, entry) then
+			-- tried again once restrictions lift
+			self.secretRetry = true
+		end
+	end
+
+	-- A handler stays with the overlay until the engine has a slot for it.
+	local slots = self.secretSlots
+	local legacy, engine, hasTimerSlot
+	if conf and handlers then
+		for _, handler in ipairs(handlers) do
+			local key = slotKeys[handler]
+			if key and slots and slots[key] then
+				engine = engine or {}
+				tinsert(engine, handler)
+				hasTimerSlot = hasTimerSlot or desired[key].kind ~= 'stacks'
 			else
 				legacy = legacy or {}
 				tinsert(legacy, handler)
 			end
 		end
 	end
-	self.handlers = legacy
+	self.handlers, self.engineHandlers = legacy, engine
 	self.secretHandlers = legacy
 	self.splitTimers = split and hasTimerSlot or false
 	self:LayoutTexts()
 
-	for key, entry in pairs(desired) do
-		self:ApplySecretSlot(key, entry)
-	end
 	self:SyncSecretUnits()
 end
 
@@ -336,7 +371,10 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 		if slots[key] then
 			container:SetAuraSlotEnabled(key, false)
 		end
-		return
+		return true
+	end
+	if not container then
+		return false
 	end
 
 	local candidateFilters = {
@@ -348,7 +386,7 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 	if slots[key] then
 		container:SetAuraSlotCandidateFilters(key, candidateFilters)
 		container:SetAuraSlotEnabled(key, true)
-		return
+		return true
 	end
 
 	local ok, err = pcall(container.AddAuraSlot, container, key, BaseFilter(entry.filter), {
@@ -361,6 +399,7 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 	else
 		self:Debug('SecretAuras: AddAuraSlot failed', key, tostring(err))
 	end
+	return ok
 end
 
 -- Bind each container to the unit its token currently resolves to.
@@ -444,9 +483,10 @@ function overlayPrototype:OnConfigChanged(...)
 	return Orig_OnConfigChanged(self, ...)
 end
 
--- Legacy handlers see aura data again once restrictions lift.
+-- Legacy handlers lose aura data when restrictions start and see it again once they lift.
 function overlayPrototype:ADDON_RESTRICTION_STATE_CHANGED(event, _, state)
-	if state == Enum.AddOnRestrictionState.Inactive then
-		return self:ScheduleUpdate(event)
+	if state == Enum.AddOnRestrictionState.Inactive and self.secretRetry then
+		self:ConfigureSecretAuras(true)
 	end
+	return self:ScheduleUpdate(event)
 end

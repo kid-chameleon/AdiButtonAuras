@@ -64,6 +64,7 @@ local LibSpellbook = addon.GetLib('LibSpellbook-1.0')
 
 local hasSecrets = addon.hasSecrets
 local issecretvalue = addon.issecretvalue
+local AurasAreSecret = addon.AuraTools.AurasAreSecret
 local GetSpellCooldown = _G.C_Spell and _G.C_Spell.GetSpellCooldown
 
 local MOUSEOVER_CHANGED = addon.MOUSEOVER_CHANGED
@@ -395,13 +396,34 @@ function overlayPrototype:PLAYER_FOCUS_CHANGED(event)
 	return self:GenericEvent(event, "focus")
 end
 
+-- The end of a cooldown cannot be computed from secret values.
+function overlayPrototype:PollSecretCooldown()
+	if self.cooldownPoll then return end
+	self.cooldownPoll = true
+	C_Timer.After(0.5, function()
+		self.cooldownPoll = nil
+		if self.inCooldown then
+			return self:UpdateCooldown('poll')
+		end
+	end)
+end
+
 function overlayPrototype:UpdateCooldown(event)
 	local start, duration, cooldownInfo = self:GetActionCooldown()
 	local inCooldown
 	if hasSecrets and (issecretvalue(start) or issecretvalue(duration)) then
 		-- Only the flags are readable.
-		inCooldown = cooldownInfo and cooldownInfo.isActive and not cooldownInfo.isOnGCD or false
+		local isActive = cooldownInfo and cooldownInfo.isActive
+		if event == 'poll' then
+			-- isOnGCD is only reliable in response to an event
+			inCooldown = isActive and self.inCooldown or false
+		else
+			inCooldown = isActive and not cooldownInfo.isOnGCD or false
+		end
 		start, duration = nil, nil
+		if inCooldown then
+			self:PollSecretCooldown()
+		end
 	else
 		inCooldown = start and duration and start > 0 and duration > 2
 	end
@@ -549,6 +571,23 @@ local modelProxy = setmetatable({}, {
 	end,
 })
 
+local MODEL_FIELDS = { "count", "maxCount", "expiration", "duration", "flashSuppressed", "highlight", "hint", "flash", "dispel" }
+local savedModel = {}
+
+local function ProbeEngineHandlers(handlers, unitMap)
+	for _, field in ipairs(MODEL_FIELDS) do
+		savedModel[field] = model[field]
+	end
+	for _, handler in ipairs(handlers) do
+		handler(unitMap, modelProxy)
+	end
+	local expiration, present = model.expiration or 0, model.highlight or model.hint or model.flash
+	for _, field in ipairs(MODEL_FIELDS) do
+		model[field] = savedModel[field]
+	end
+	return expiration, present
+end
+
 function overlayPrototype:UpdateState(event)
 	self:SetScript('OnUpdate', nil)
 
@@ -556,23 +595,37 @@ function overlayPrototype:UpdateState(event)
 	model.duration, model.flashSuppressed = nil, nil
 	model.highlight, model.hint, model.flash, model.dispel = nil, false, false, nil
 
-	if self.handlers then
+	local handlers, engineHandlers = self.handlers, self.engineHandlers
+	if handlers or engineHandlers then
 		model.spellId, model.actionType, model.actionId = self.spellId, self.actionType, self.actionId
 
 		local unitMap = self.unitMap
-		for _, handler in ipairs(self.handlers) do
-			handler(unitMap, modelProxy)
+		if handlers then
+			for _, handler in ipairs(handlers) do
+				handler(unitMap, modelProxy)
+			end
 		end
 
 		local prefs = addon.db.profile
 		local missing = prefs.missing[self.spellId]
 		local expiration = model.expiration or 0
+		local present = model.highlight or model.hint or model.flash
+		if hasSecrets and missing == "hint" then
+			missing = "none"
+		end
+		if engineHandlers and missing ~= "none" then
+			if AurasAreSecret() then
+				missing = "none"
+			else
+				expiration, present = ProbeEngineHandlers(engineHandlers, unitMap)
+			end
+		end
 		if missing ~= "none" then
 			local missingThreshold = prefs.missingThreshold[self.spellId]
 			local timeLeft = expiration - GetTime()
 			if
 				timeLeft <= missingThreshold
-				and (expiration > 0 and missingThreshold > 0 or not (model.highlight or model.hint or model.flash))
+				and (expiration > 0 and missingThreshold > 0 or not present)
 			then
 				model[missing] = missing == 'highlight' and (self.units.enemy and "bad" or "good") or true
 			else

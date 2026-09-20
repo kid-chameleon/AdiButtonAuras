@@ -68,6 +68,17 @@ local FLASHABLE_HIGHLIGHTS = {
 	dispel = true,
 }
 
+-- With "Show missing" set to the border, the border means the aura is missing: UpdateState clears
+-- model.highlight while the aura is there. These slots do the same and keep only the timer and count.
+local BORDERLESS_KIND = 'plain'
+local HIDEABLE_HIGHLIGHTS = {
+	good = true,
+	bad = true,
+	dispel = true,
+	darken = true,
+	lighten = true,
+}
+
 local DISPEL_TYPES = { "Curse", "Disease", "Magic", "Poison" }
 
 local function BaseFilter(filter)
@@ -263,13 +274,16 @@ function overlayPrototype:ConfigureSecretAuras(force)
 	local conf = self.conf
 	local handlers = conf and conf.handlers
 	local promote = conf and addon.db.profile.flashPromotion[self.spellId] or false
+	local borderless = conf and addon.db.profile.missing[self.spellId] == 'highlight' or false
 	if
 		not force and self.secretConf == conf and self.secretSource == handlers
-		and self.secretHandlers == self.handlers and self.secretPromote == promote
+		and self.secretHandlers == self.handlers
+		and self.secretPromote == promote and self.secretBorderless == borderless
 	then
 		return
 	end
-	self.secretConf, self.secretSource, self.secretPromote, self.secretRetry = conf, handlers, promote, false
+	self.secretConf, self.secretSource, self.secretRetry = conf, handlers, false
+	self.secretPromote, self.secretBorderless = promote, borderless
 	self.secretStyle = self.secretStyle or SlotStyle(self)
 
 	local desired = self.secretDesired
@@ -299,7 +313,12 @@ function overlayPrototype:ConfigureSecretAuras(force)
 		for _, handler in ipairs(handlers) do
 			local info = GetSlotInfo(handler)
 			if info then
-				local kind = promote and FLASHABLE_HIGHLIGHTS[info.highlight] and 'flash' or info.highlight
+				local kind = info.highlight
+				if borderless and HIDEABLE_HIGHLIGHTS[kind] then
+					kind = BORDERLESS_KIND
+				elseif promote and FLASHABLE_HIGHLIGHTS[kind] then
+					kind = 'flash'
+				end
 				local compact = HasStackingAura(info)
 				local key = SlotKey(info, kind, split, compact)
 				local entry = desired[key]

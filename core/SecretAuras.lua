@@ -26,6 +26,9 @@ if not addon.hasSecrets then return end
 local _G = _G
 local CreateColor = _G.CreateColor
 local CreateFrame = _G.CreateFrame
+local C_CurveUtil = _G.C_CurveUtil
+local floor = _G.floor
+local format = _G.format
 local Enum = _G.Enum
 local ipairs = _G.ipairs
 local next = _G.next
@@ -79,6 +82,14 @@ local HIDEABLE_HIGHLIGHTS = {
 	lighten = true,
 }
 
+-- "Show missing" with a threshold: the engine cannot tell us the aura runs out, but it can fade a timer
+-- text in below a remaining duration, and that text can be a texture. These slots draw the alert that way.
+local EXPIRING_KIND = 'expiring'
+-- the steady state of LibButtonGlow's flash
+local GLOW_TEXTURE = [[Interface\SpellActivationOverlay\IconAlert]]
+local GLOW_FORMAT = "|T%s:%d:%d:0:0:256:512:2:130:142:270:%d:%d:%d|t"
+local BORDER_FORMAT = "|T%s:%d:%d:0:0:64:64:0:64:0:64:%d:%d:%d|t"
+
 local DISPEL_TYPES = { "Curse", "Disease", "Magic", "Poison" }
 
 local function BaseFilter(filter)
@@ -126,7 +137,7 @@ end
 
 -- Everything a slot frame bakes in when it is created.
 local STYLE_PREFS = { "fontName", "fontSize", "highlightTexture", "textPosition", "textXOffset", "textYOffset" }
-local STYLE_COLORS = { "good", "bad", "Enrage", "countdownHigh", unpack(DISPEL_TYPES) }
+local STYLE_COLORS = { "good", "bad", "expiring", "Enrage", "countdownHigh", unpack(DISPEL_TYPES) }
 
 local function SlotStyle(overlay)
 	local prefs = addon.db.profile
@@ -146,7 +157,8 @@ end
 -- Runs once per slot frame, before the engine locks it down.
 ------------------------------------------------------------------------------
 
-local function MakeSlotInitializer(overlay, kind, split, compact)
+local function MakeSlotInitializer(overlay, entry)
+	local kind, split, compact = entry.kind, entry.split, entry.compact
 	local prefs = addon.db.profile
 	local width, height = overlay:GetSize()
 	local fontFile, fontSize = LSM:Fetch(LSM.MediaType.FONT, prefs.fontName), prefs.fontSize
@@ -168,6 +180,38 @@ local function MakeSlotInitializer(overlay, kind, split, compact)
 		textFormatter = formatter,
 		textColor = { curve = colorCurve, property = Enum.DurationTextBindingProperty.RemainingDuration },
 	}
+
+	if kind == EXPIRING_KIND then
+		-- invisible until the aura has less than the threshold left
+		local r, g, b, a = unpack(colors.expiring, 1, 4)
+		local red, green, blue = floor(r * 255 + 0.5), floor(g * 255 + 0.5), floor(b * 255 + 0.5)
+		local alert
+		if entry.alert == 'flash' then
+			-- the glow keeps its full strength, like the flash it stands for
+			a = 1
+			alert = format(
+				GLOW_FORMAT, GLOW_TEXTURE, floor(height * 1.4 + 0.5), floor(width * 1.4 + 0.5), red, green, blue
+			)
+		else
+			alert = format(BORDER_FORMAT, highlightTexture, floor(height + 0.5), floor(width + 0.5), red, green, blue)
+		end
+		local curve = C_CurveUtil.CreateColorCurve()
+		curve:SetType(Enum.LuaCurveType.Step)
+		curve:AddPoint(0, CreateColor(r, g, b, a or 1))
+		curve:AddPoint(entry.threshold, CreateColor(r, g, b, 0))
+
+		return function(frame)
+			frame:SetSize(width, height)
+			frame:SetPoint("CENTER", frame:GetParent(), "CENTER", 0, 0)
+			local text = frame:CreateFontString(nil, "BACKGROUND")
+			text:SetFont(fontFile, fontSize, FONT_FLAG)
+			text:SetPoint("CENTER")
+			frame:SetDurationText(text, {
+				textFormat = { formatString = alert, components = {} },
+				textColor = { curve = curve, property = Enum.DurationTextBindingProperty.RemainingDuration },
+			})
+		end
+	end
 
 	return function(frame)
 		frame:SetSize(width, height)
@@ -274,16 +318,21 @@ function overlayPrototype:ConfigureSecretAuras(force)
 	local conf = self.conf
 	local handlers = conf and conf.handlers
 	local promote = conf and addon.db.profile.flashPromotion[self.spellId] or false
-	local borderless = conf and addon.db.profile.missing[self.spellId] == 'highlight' or false
+	local missing = conf and addon.db.profile.missing[self.spellId] or 'none'
+	local borderless = missing == 'highlight'
+	local threshold = missing ~= 'none' and missing ~= 'hint' and addon.db.profile.missingThreshold[self.spellId] or 0
+	local alert = missing == 'flash' and 'flash' or 'border'
 	if
 		not force and self.secretConf == conf and self.secretSource == handlers
 		and self.secretHandlers == self.handlers
 		and self.secretPromote == promote and self.secretBorderless == borderless
+		and self.secretThreshold == threshold and self.secretAlert == alert
 	then
 		return
 	end
 	self.secretConf, self.secretSource, self.secretRetry = conf, handlers, false
 	self.secretPromote, self.secretBorderless = promote, borderless
+	self.secretThreshold, self.secretAlert = threshold, alert
 	self.secretStyle = self.secretStyle or SlotStyle(self)
 
 	local desired = self.secretDesired
@@ -308,7 +357,7 @@ function overlayPrototype:ConfigureSecretAuras(force)
 		end
 	end
 
-	local slotKeys = {}
+	local slotKeys, expiringKeys = {}, {}
 	if conf and handlers then
 		for _, handler in ipairs(handlers) do
 			local info = GetSlotInfo(handler)
@@ -343,6 +392,28 @@ function overlayPrototype:ConfigureSecretAuras(force)
 						entry.dispel[dispelType == 'Enrage' and '' or dispelType] = true
 					end
 				end
+
+				if threshold > 0 and kind ~= 'stacks' then
+					-- same candidates, drawn only for the last seconds of the aura
+					local expiringKey = tconcat({ info.token, EXPIRING_KIND, alert, threshold, info.filter }, '/')
+					local expiring = desired[expiringKey]s
+					if not expiring then
+						expiring = {
+							token = info.token, kind = EXPIRING_KIND, filter = info.filter,
+							alert = alert, threshold = threshold,
+							spells = {}, dispel = {},
+						}
+						desired[expiringKey] = expiring
+					end
+					expiring.active = true
+					for id in pairs(entry.spells) do
+						expiring.spells[id] = true
+					end
+					for dispelType in pairs(entry.dispel) do
+						expiring.dispel[dispelType] = true
+					end
+					expiringKeys[expiringKey] = true
+				end
 			end
 		end
 	end
@@ -371,6 +442,13 @@ function overlayPrototype:ConfigureSecretAuras(force)
 		end
 	end
 	self.handlers, self.engineHandlers = legacy, engine
+
+	-- UpdateState leaves the threshold to these slots, in combat or not.
+	local engineExpiring = false
+	for key in pairs(expiringKeys) do
+		engineExpiring = engineExpiring or (slots and slots[key]) or false
+	end
+	self.engineExpiring = engineExpiring
 	self.secretHandlers = legacy
 	self.splitTimers = split and hasTimerSlot or false
 	self:LayoutTexts()
@@ -410,7 +488,7 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 
 	local ok, err = pcall(container.AddAuraSlot, container, key, BaseFilter(entry.filter), {
 		candidateFilters = candidateFilters,
-		initializeFrame = MakeSlotInitializer(self, entry.kind, entry.split, entry.compact),
+		initializeFrame = MakeSlotInitializer(self, entry),
 	})
 	if ok then
 		slots[key] = true

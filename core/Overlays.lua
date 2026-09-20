@@ -610,6 +610,7 @@ function overlayPrototype:UpdateState(event)
 		local missing = prefs.missing[self.spellId]
 		local expiration = model.expiration or 0
 		local present = model.highlight or model.hint or model.flash
+		local engineExpiration = false
 		if hasSecrets and missing == "hint" then
 			missing = "none"
 		end
@@ -618,10 +619,15 @@ function overlayPrototype:UpdateState(event)
 				missing = "none"
 			else
 				expiration, present = ProbeEngineHandlers(engineHandlers, unitMap)
+				engineExpiration = expiration ~= (model.expiration or 0)
 			end
 		end
 		if missing ~= "none" then
 			local missingThreshold = prefs.missingThreshold[self.spellId]
+			if engineExpiration and self.engineExpiring then
+				-- the engine shows that one of its auras runs out, only its absence is left to us
+				missingThreshold = 0
+			end
 			local timeLeft = expiration - GetTime()
 			if
 				timeLeft <= missingThreshold

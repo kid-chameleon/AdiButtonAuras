@@ -27,6 +27,8 @@ local _G = _G
 local CreateColor = _G.CreateColor
 local CreateFrame = _G.CreateFrame
 local C_CurveUtil = _G.C_CurveUtil
+local C_Timer_After = _G.C_Timer.After
+local GetSpellAuraSecrecy = _G.C_Secrets.GetSpellAuraSecrecy
 local floor = _G.floor
 local format = _G.format
 local Enum = _G.Enum
@@ -46,6 +48,7 @@ local overlayPrototype = addon.overlayPrototype
 local auraHandlerInfo = addon.auraHandlerInfo
 local timerlessHandlers = addon.timerlessHandlers
 local stackingAuras = addon.stackingAuras or {}
+local AurasAreSecret = addon.AuraTools.AurasAreSecret
 
 local Debug = function(...) addon.Debug('SecretAuras', ...) end
 
@@ -96,6 +99,10 @@ local function BaseFilter(filter)
 	return filter:match('HARMFUL') and 'HARMFUL' or 'HELPFUL'
 end
 
+local function SlotFilter(filter)
+	return BaseFilter(filter) .. (filter:match('PLAYER') and '|PLAYER' or '')
+end
+
 local function IsPlayerFilter(filter)
 	return filter:match('PLAYER') and true or nil
 end
@@ -112,6 +119,14 @@ end
 local function SlotKey(info, kind, split, compact)
 	return info.token .. '/' .. kind .. '/' .. info.filter
 		.. (split and '/split' or '') .. (compact and '/compact' or '')
+		.. (info.combatOnly and '/combat' or '')
+end
+
+-- Slots that stand in for a handler that goes blind in combat.
+local COMBAT_SUFFIX = '/combat'
+
+local function ContainerKey(info)
+	return info.token .. (info.combatOnly and COMBAT_SUFFIX or '')
 end
 
 -- A timer next to a stack count uses the compact format, like the regular display.
@@ -127,11 +142,36 @@ local function HasStackingAura(info)
 	return false
 end
 
--- The aura info of a handler the engine can render.
+-- The engine only matches spell ids for buffs on units we can assist and debuffs on the others, and rejects
+-- every aura of a slot that asks otherwise. Auras that are never secret are exempt.
+local FRIENDLY_TOKENS = { player = true, pet = true, ally = true }
+
+local function CanMatchSpells(info)
+	local harmful = BaseFilter(info.filter) == 'HARMFUL'
+	local refused = (harmful and FRIENDLY_TOKENS[info.token]) or (not harmful and info.token == 'enemy')
+	if not refused then
+		-- other tokens are plain units, whose side is not known in advance
+		return true
+	end
+	for id in pairs(info.buffs) do
+		if GetSpellAuraSecrecy(id) ~= Enum.SecrecyLevel.NeverSecret then
+			return false
+		end
+	end
+	return true
+end
+
+-- The aura info of a handler the engine can render, and whether its spell ids can be used.
 local function GetSlotInfo(handler)
 	local info = auraHandlerInfo[handler]
-	if info and SUPPORTED_HIGHLIGHTS[info.highlight] and info.token ~= 'group' then
-		return info
+	if not info or not SUPPORTED_HIGHLIGHTS[info.highlight] or info.token == 'group' then
+		return
+	end
+	if not info.buffs or CanMatchSpells(info) then
+		return info, true
+	end
+	if info.combatOnly and IsPlayerFilter(info.filter) then
+		return info, false
 	end
 end
 
@@ -158,7 +198,7 @@ end
 ------------------------------------------------------------------------------
 
 local function MakeSlotInitializer(overlay, entry)
-	local kind, split, compact = entry.kind, entry.split, entry.compact
+	local kind, split, compact, standIn, swapped = entry.kind, entry.split, entry.compact, entry.standIn, entry.swapped
 	local prefs = addon.db.profile
 	local width, height = overlay:GetSize()
 	local fontFile, fontSize = LSM:Fetch(LSM.MediaType.FONT, prefs.fontName), prefs.fontSize
@@ -175,7 +215,7 @@ local function MakeSlotInitializer(overlay, entry)
 	end
 
 	-- Same countdown format and colors as the regular timer, rendered engine-side.
-	local formatter, colorCurve = addon.GetDurationStyle(split or compact)
+	local formatter, colorCurve = addon.GetDurationStyle(split or compact or standIn or swapped)
 	local durationOptions = {
 		textFormatter = formatter,
 		textColor = { curve = colorCurve, property = Enum.DurationTextBindingProperty.RemainingDuration },
@@ -273,7 +313,12 @@ local function MakeSlotInitializer(overlay, entry)
 		local timer = CreateText(frame)
 		timer:SetPoint(textPosition .. "LEFT", xOffset, yOffset)
 		timer:SetPoint(textPosition .. "RIGHT", -xOffset, yOffset)
-		if split then
+		if standIn then
+			-- where the timer of the overlay would be
+			timer:SetJustifyH("RIGHT")
+		elseif swapped then
+			timer:SetJustifyH("LEFT")
+		elseif split then
 			-- overlay timer on the left, then ours, then the count if any
 			timer:SetJustifyH(compact and "CENTER" or "RIGHT")
 		else
@@ -305,7 +350,8 @@ function overlayPrototype:GetSecretContainer(token)
 		container = result
 		container:SetPoint("CENTER", self, "CENTER", 0, 0)
 		container:SetSize(self:GetSize())
-		container:SetFrameLevel(self:GetFrameLevel() + 1)
+		-- a stand-in draws over the regular slots, which takes over in combat.
+		container:SetFrameLevel(self:GetFrameLevel() + (token:find(COMBAT_SUFFIX, 1, true) and 2 or 1))
 		container:Hide()
 		containers[token] = container
 		self:Debug('SecretAuras: container created for', token)
@@ -347,20 +393,25 @@ function overlayPrototype:ConfigureSecretAuras(force)
 	end
 
 	-- A handler that stays with the overlay may show a timer of its own.
-	local split = false
+	local split, hasRegularTimer, hasStandIn = false, false, false
 	if conf and handlers then
 		for _, handler in ipairs(handlers) do
-			if not GetSlotInfo(handler) and not timerlessHandlers[handler] then
-				split = true
-				break
+			local info = GetSlotInfo(handler)
+			if not info then
+				split = split or not timerlessHandlers[handler]
+			elseif info.combatOnly then
+				hasStandIn = true
+			elseif info.highlight ~= 'stacks' then
+				hasRegularTimer = true
 			end
 		end
 	end
+	local swap = hasStandIn and hasRegularTimer
 
 	local slotKeys, expiringKeys = {}, {}
 	if conf and handlers then
 		for _, handler in ipairs(handlers) do
-			local info = GetSlotInfo(handler)
+			local info, byId = GetSlotInfo(handler)
 			if info then
 				local kind = info.highlight
 				if borderless and HIDEABLE_HIGHLIGHTS[kind] then
@@ -369,19 +420,26 @@ function overlayPrototype:ConfigureSecretAuras(force)
 					kind = 'flash'
 				end
 				local compact = HasStackingAura(info)
-				local key = SlotKey(info, kind, split, compact)
+				-- in combat the handler it stands in for shows nothing
+				local slotSplit = split and not info.combatOnly
+				local standIn = info.combatOnly and hasRegularTimer or false
+				local swapped = swap and not info.combatOnly
+				local maxDuration = not byId and info.maxDuration or nil
+				local key = SlotKey(info, kind, slotSplit, compact) .. (standIn and '/right' or '') .. (swapped and '/left' or '')
+					.. (byId and '' or '/anyspell') .. (maxDuration and ('/' .. maxDuration) or '')
 				local entry = desired[key]
 				slotKeys[handler] = key
 				if not entry then
 					entry = {
-						token = info.token, kind = kind, filter = info.filter,
-						split = split, compact = compact,
+						token = info.token, container = ContainerKey(info), kind = kind, filter = info.filter,
+						combatOnly = info.combatOnly, standIn = standIn, swapped = swapped, maxDuration = maxDuration,
+						split = slotSplit, compact = compact,
 						spells = {}, dispel = {},
 					}
 					desired[key] = entry
 				end
 				entry.active = true
-				if info.buffs then
+				if info.buffs and byId then
 					for id in pairs(info.buffs) do
 						entry.spells[id] = true
 					end
@@ -393,13 +451,13 @@ function overlayPrototype:ConfigureSecretAuras(force)
 					end
 				end
 
-				if threshold > 0 and kind ~= 'stacks' then
+				if threshold > 0 and kind ~= 'stacks' and not info.combatOnly then
 					-- same candidates, drawn only for the last seconds of the aura
 					local expiringKey = tconcat({ info.token, EXPIRING_KIND, alert, threshold, info.filter }, '/')
 					local expiring = desired[expiringKey]
 					if not expiring then
 						expiring = {
-							token = info.token, kind = EXPIRING_KIND, filter = info.filter,
+							token = info.token, container = ContainerKey(info), kind = EXPIRING_KIND, filter = info.filter,
 							alert = alert, threshold = threshold,
 							spells = {}, dispel = {},
 						}
@@ -427,11 +485,13 @@ function overlayPrototype:ConfigureSecretAuras(force)
 
 	-- A handler stays with the overlay until the engine has a slot for it.
 	local slots = self.secretSlots
-	local legacy, engine, hasTimerSlot
+	local legacy, engine, hasTimerSlot, hasCombatOnly
 	if conf and handlers then
 		for _, handler in ipairs(handlers) do
 			local key = slotKeys[handler]
-			if key and slots and slots[key] then
+			if key and desired[key].combatOnly then
+				hasCombatOnly = true
+			elseif key and slots and slots[key] then
 				engine = engine or {}
 				tinsert(engine, handler)
 				hasTimerSlot = hasTimerSlot or desired[key].kind ~= 'stacks'
@@ -442,6 +502,7 @@ function overlayPrototype:ConfigureSecretAuras(force)
 		end
 	end
 	self.handlers, self.engineHandlers = legacy, engine
+	self.secretCombatOnly = hasCombatOnly or false
 
 	-- UpdateState leaves the threshold to these slots, in combat or not.
 	local engineExpiring = false
@@ -450,7 +511,7 @@ function overlayPrototype:ConfigureSecretAuras(force)
 	end
 	self.engineExpiring = engineExpiring
 	self.secretHandlers = legacy
-	self.splitTimers = split and hasTimerSlot or false
+	self.splitTimers = split and hasTimerSlot and (swap and "right" or true) or false
 	self:LayoutTexts()
 
 	self:SyncSecretUnits()
@@ -462,7 +523,7 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 		slots = {}
 		self.secretSlots = slots
 	end
-	local container = self:GetSecretContainer(entry.token)
+	local container = self:GetSecretContainer(entry.container)
 
 	if not entry.active then
 		if slots[key] then
@@ -477,7 +538,7 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 	local candidateFilters = {
 		includeSpellIDs = next(entry.spells) and CopySet(entry.spells) or nil,
 		includeDispelTypes = next(entry.dispel) and CopySet(entry.dispel) or nil,
-		isFromPlayerOrPlayerPet = IsPlayerFilter(entry.filter),
+		maxDuration = entry.maxDuration,
 	}
 
 	if slots[key] then
@@ -486,7 +547,7 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 		return true
 	end
 
-	local ok, err = pcall(container.AddAuraSlot, container, key, BaseFilter(entry.filter), {
+	local ok, err = pcall(container.AddAuraSlot, container, key, SlotFilter(entry.filter), {
 		candidateFilters = candidateFilters,
 		initializeFrame = MakeSlotInitializer(self, entry),
 	})
@@ -504,12 +565,13 @@ function overlayPrototype:SyncSecretUnits()
 	local containers, desired = self.secretContainers, self.secretDesired
 	if not containers or not desired then return end
 
-	for token, container in pairs(containers) do
+	for key, container in pairs(containers) do
+		local token, combatOnly = key:match('^([^/]+)(.*)$')
 		local unit = self.conf and self.unitMap[token]
 		local active = false
-		if unit and unit ~= '' then
+		if unit and unit ~= '' and (combatOnly == '' or AurasAreSecret()) then
 			for _, entry in pairs(desired) do
-				if entry.active and entry.token == token then
+				if entry.active and entry.container == key then
 					active = true
 					break
 				end
@@ -584,6 +646,9 @@ end
 function overlayPrototype:ADDON_RESTRICTION_STATE_CHANGED(event, _, state)
 	if state == Enum.AddOnRestrictionState.Inactive and self.secretRetry then
 		self:ConfigureSecretAuras(true)
+	end
+	if self.secretCombatOnly then
+		C_Timer_After(0, function() return self:SyncSecretUnits() end)
 	end
 	return self:ScheduleUpdate(event)
 end

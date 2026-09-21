@@ -96,48 +96,68 @@ AdiButtonAuras:RegisterRules(function()
 			powerWordShield,
 			'ally',
 			'UNIT_AURA',
-			function(units, model)
-				return hasWeakenedSoul(units, model) or isShielded(units, model)
-			end,
+			{
+				isShielded,
+				hasWeakenedSoul,
+				InCombatOnly(BuildAuraHandler_Single('HARMFUL PLAYER', 'bad', 'ally', 6788), 15),
+			},
 		},
 
 		Configure {
 			'PowerWordFortitude',
-			L['Show the number of group members missing @NAME.'],
+			format(L['%s %s'],
+				L['Show the number of group members missing @NAME.'],
+				L['With a friendly target, show @NAME on it instead. In combat, only the target or yourself can be shown.']
+			),
 			fortitude,
-			'group',
+			{ 'group', 'ally' },
 			{ 'GROUP_ROSTER_UPDATE', 'UNIT_AURA' },
-			function(units, model)
-				if AurasAreSecret() then return end
+			{
+				function(units, model)
+					if AurasAreSecret() then return end
 
-				local missing = 0
-				local shortest
-				for unit in next, units.group do
-					if UnitIsPlayer(unit) and not UnitIsDeadOrGhost(unit) then
-						local found, _, expiration
-						for _, id in ipairs(fortitude) do
-							found, _, expiration = GetBuff(unit, id)
-							if found then break end
-						end
-						if found then
-							if not shortest or expiration < shortest then
-								shortest = expiration
+					local missing = 0
+					local shortest
+					for unit in next, units.group do
+						if UnitIsPlayer(unit) and not UnitIsDeadOrGhost(unit) then
+							local found, _, expiration
+							for _, id in ipairs(fortitude) do
+								found, _, expiration = GetBuff(unit, id)
+								if found then break end
 							end
-						else
-							missing = missing + 1
+							if found then
+								if not shortest or expiration < shortest then
+									shortest = expiration
+								end
+							else
+								missing = missing + 1
+							end
 						end
 					end
-				end
 
-				if shortest then
-					model.expiration = shortest
-					model.highlight = 'good'
-				end
-				if missing > 0 then
-					model.count = missing
-					model.hint = true
-				end
-			end,
+					local ally = units.ally
+					if ally and ally ~= 'player' then
+						shortest = nil
+						for _, id in ipairs(fortitude) do
+							local found, _, expiration = GetBuff(ally, id)
+							if found then
+								shortest = expiration
+								break
+							end
+						end
+					end
+
+					if shortest then
+						model.expiration = shortest
+						model.highlight = 'good'
+					end
+					if missing > 0 then
+						model.count = missing
+						model.hint = true
+					end
+				end,
+				InCombatOnly(BuildAuraHandler_FirstOf('HELPFUL', 'good', 'ally', fortitude)),
+			},
 		},
 
 		-- the crowd control rule from Common.lua tracks the enemy token
@@ -148,16 +168,19 @@ AdiButtonAuras:RegisterRules(function()
 			mindControl,
 			'pet',
 			{ 'UNIT_AURA', 'UNIT_PET' },
-			function(_, model)
-				for _, id in ipairs(mindControl) do
-					local found, _, expiration = GetPlayerDebuff('pet', id)
-					if found then
-						model.expiration = expiration
-						model.highlight = 'good'
-						return true
+			{
+				function(_, model)
+					for _, id in ipairs(mindControl) do
+						local found, _, expiration = GetPlayerDebuff('pet', id)
+						if found then
+							model.expiration = expiration
+							model.highlight = 'good'
+							return true
+						end
 					end
-				end
-			end,
+				end,
+				InCombatOnly(BuildAuraHandler_FirstOf('HARMFUL PLAYER', 'good', 'pet', mindControl), 60),
+			},
 		},
 	}
 

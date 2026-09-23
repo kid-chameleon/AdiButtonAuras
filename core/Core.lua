@@ -89,19 +89,12 @@ end
 -- The aura display is then delegated to the engine using AuraContainers. See core/SecretAuras.lua.
 addon.hasSecrets = (_G.C_Secrets and _G.C_Secrets.HasSecretRestrictions and _G.C_Secrets.HasSecretRestrictions()) or false
 
-local issecretvalue = _G.issecretvalue or function() return false end
-addon.issecretvalue = issecretvalue
-
--- Wraps a function that returns a single value, so that a secret reads as nil.
--- Use only for functions with a single return.
-function addon.Unsecret(func)
-	if not addon.hasSecrets then return func end
-	return function(...)
-		local value = func(...)
-		if issecretvalue(value) then return nil end
-		return value
-	end
-end
+-- issecretvalue(v): true when v is a secret.
+-- hasanysecretvalues(...): true when any argument is a secret.
+-- scrubsecretvalues(...): returns its arguments with secrets replaced by nil.
+addon.issecretvalue = _G.issecretvalue or function() return false end
+addon.hasanysecretvalues = _G.hasanysecretvalues or function() return false end
+addon.scrubsecretvalues = _G.scrubsecretvalues or function(...) return ... end
 
 ------------------------------------------------------------------------------
 -- Default config

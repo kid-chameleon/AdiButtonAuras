@@ -38,18 +38,9 @@ local C_Secrets = _G.C_Secrets
 local Debug = function(...) addon.Debug('AuraTools', ...) end
 
 local hasSecrets = addon.hasSecrets
-local issecretvalue = addon.issecretvalue
+local scrubsecretvalues = addon.scrubsecretvalues
 local function AurasAreSecret()
 	return hasSecrets and C_Secrets.ShouldAurasBeSecret()
-end
-
--- A hostile unit's GUID is secret under restrictions.
-local function SafeUnitGUID(unit)
-	local guid = UnitGUID(unit)
-	if hasSecrets and issecretvalue(guid) then
-		return nil
-	end
-	return guid
 end
 
 ------------------------------------------------------------------------------
@@ -91,14 +82,15 @@ local empty = {}
 local aurasMetatable = {
 	__index = {
 		CheckGUID = function (self)
-			if self.__guid ~= SafeUnitGUID(self.__unit) then
+			-- a hostile unit's GUID is secret under restrictions
+			if self.__guid ~= scrubsecretvalues(UnitGUID(self.__unit)) then
 				self:Update()
 			end
 
 			return self
 		end,
 		Update = function (self, info)
-			self.__guid = SafeUnitGUID(self.__unit)
+			self.__guid = scrubsecretvalues(UnitGUID(self.__unit))
 
 			if not self.__guid or AurasAreSecret() then
 				self.__guid = nil

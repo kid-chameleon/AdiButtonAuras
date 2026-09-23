@@ -167,6 +167,6 @@ AdiButtonAuras:RegisterRules(function()
 		},
 
 		-- REVIEW: verify the tbc client reports the Shadowfiend through GetTotemInfo
-		ShowTotem { 34433, 136199 }, -- Shadowfiend
+		ShowTotem { 34433, 136199, 1 }, -- Shadowfiend (uses totem slot 1)
 	}
 end)

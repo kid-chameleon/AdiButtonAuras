@@ -64,6 +64,8 @@ local LibSpellbook = addon.GetLib('LibSpellbook-1.0')
 
 local hasSecrets = addon.hasSecrets
 local issecretvalue = addon.issecretvalue
+local scrubsecretvalues = addon.scrubsecretvalues
+local ShouldUnitIdentityBeSecret = hasSecrets and _G.C_Secrets.ShouldUnitIdentityBeSecret or function() return false end
 local AurasAreSecret = addon.AuraTools.AurasAreSecret
 local GetSpellCooldown = _G.C_Spell and _G.C_Spell.GetSpellCooldown
 
@@ -411,17 +413,20 @@ end
 function overlayPrototype:UpdateCooldown(event)
 	local start, duration, cooldownInfo = self:GetActionCooldown()
 	local inCooldown
-	if hasSecrets and (issecretvalue(start) or issecretvalue(duration)) then
-		-- Only the flags are readable.
-		local isActive = cooldownInfo and cooldownInfo.isActive
+	if hasSecrets then
+		start, duration = scrubsecretvalues(start, duration)
+	end
+	if hasSecrets and cooldownInfo then
+		-- The times may be secret, the flags never are.
+		local isActive = cooldownInfo.isActive
 		if event == 'poll' then
 			-- isOnGCD is only reliable in response to an event
 			inCooldown = isActive and self.inCooldown or false
 		else
 			inCooldown = isActive and not cooldownInfo.isOnGCD or false
 		end
-		start, duration = nil, nil
-		if inCooldown then
+		if inCooldown and not start then
+			-- no end time to wait for
 			self:PollSecretCooldown()
 		end
 	else
@@ -491,12 +496,12 @@ end
 
 function overlayPrototype:UpdateGUID(event, unit)
 	if not unit then return end
-	local guid = UnitGUID(unit)
-	if hasSecrets and issecretvalue(guid) then
+	if ShouldUnitIdentityBeSecret(unit) then
 		-- unreadable identity: assume it changed
 		self.guids[unit] = nil
 		return self:ScheduleUpdate(event)
 	end
+	local guid = UnitGUID(unit)
 	if self.guids[unit] ~= guid then
 		self.guids[unit] = guid
 		return self:ScheduleUpdate(event)
@@ -518,7 +523,7 @@ local modelProxy = setmetatable({}, {
 				return error(format("Invalid %s, should be a number, not %s", key, type(value)), 2)
 			end
 			-- a secret number cannot be displayed by a legacy handler
-			if hasSecrets and issecretvalue(value) then
+			if issecretvalue(value) then
 				value = 0
 			end
 		elseif key == "flashSuppressed" then
@@ -720,17 +725,17 @@ end
 
 function labSupportPrototype:GetActionCooldown()
 	local start, duration = self.button:GetCooldown()
-	if hasSecrets and (issecretvalue(start) or issecretvalue(duration)) then
-		local actionType, actionId = self.button:GetAction()
-		local cooldownInfo
-		if actionType == "action" then
-			cooldownInfo = GetActionCooldown(actionId)
-		elseif actionType == "spell" and GetSpellCooldown then
-			cooldownInfo = GetSpellCooldown(actionId)
-		end
-		return start, duration, cooldownInfo
+	if not hasSecrets then
+		return start, duration
 	end
-	return start, duration
+	local actionType, actionId = self.button:GetAction()
+	local cooldownInfo
+	if actionType == "action" then
+		cooldownInfo = GetActionCooldown(actionId)
+	elseif actionType == "spell" and GetSpellCooldown then
+		cooldownInfo = GetSpellCooldown(actionId)
+	end
+	return start, duration, cooldownInfo
 end
 
 ------------------------------------------------------------------------------
@@ -746,7 +751,9 @@ function stanceButtonPrototype:GetAction()
 end
 
 function stanceButtonPrototype:GetActionCooldown()
-	return GetShapeshiftFormCooldown(self.button:GetID())
+	-- the third return is the enable flag, not a cooldown struct
+	local start, duration = GetShapeshiftFormCooldown(self.button:GetID())
+	return start, duration
 end
 
 ------------------------------------------------------------------------------
@@ -764,7 +771,9 @@ function petActionButtonPrototype:GetAction()
 end
 
 function petActionButtonPrototype:GetActionCooldown()
-	return GetPetActionCooldown(self.button:GetID())
+	-- the third return is the enable flag, not a cooldown struct
+	local start, duration = GetPetActionCooldown(self.button:GetID())
+	return start, duration
 end
 
 ------------------------------------------------------------------------------

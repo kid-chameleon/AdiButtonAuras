@@ -35,7 +35,6 @@ local Enum = _G.Enum
 local ipairs = _G.ipairs
 local next = _G.next
 local pairs = _G.pairs
-local pcall = _G.pcall
 local tconcat = _G.table.concat
 local tinsert = _G.tinsert
 local tostring = _G.tostring
@@ -342,12 +341,7 @@ function overlayPrototype:GetSecretContainer(token)
 	end
 	local container = containers[token]
 	if not container then
-		local ok, result = pcall(CreateFrame, "AuraContainer", nil, self, "CustomAuraContainerTemplate")
-		if not ok then
-			self:Debug('SecretAuras: container creation failed', token, tostring(result))
-			return nil
-		end
-		container = result
+		container = CreateFrame("AuraContainer", nil, self, "CustomAuraContainerTemplate")
 		container:SetPoint("CENTER", self, "CENTER", 0, 0)
 		container:SetSize(self:GetSize())
 		-- a stand-in draws over the regular slots, which takes over in combat.
@@ -360,7 +354,7 @@ function overlayPrototype:GetSecretContainer(token)
 end
 
 -- Rebuild the aura slots from the current rule configuration.
-function overlayPrototype:ConfigureSecretAuras(force)
+function overlayPrototype:ConfigureSecretAuras()
 	local conf = self.conf
 	local handlers = conf and conf.handlers
 	local promote = conf and addon.db.profile.flashPromotion[self.spellId] or false
@@ -369,14 +363,14 @@ function overlayPrototype:ConfigureSecretAuras(force)
 	local threshold = missing ~= 'none' and missing ~= 'hint' and addon.db.profile.missingThreshold[self.spellId] or 0
 	local alert = missing == 'flash' and 'flash' or 'border'
 	if
-		not force and self.secretConf == conf and self.secretSource == handlers
+		self.secretConf == conf and self.secretSource == handlers
 		and self.secretHandlers == self.handlers
 		and self.secretPromote == promote and self.secretBorderless == borderless
 		and self.secretThreshold == threshold and self.secretAlert == alert
 	then
 		return
 	end
-	self.secretConf, self.secretSource, self.secretRetry = conf, handlers, false
+	self.secretConf, self.secretSource = conf, handlers
 	self.secretPromote, self.secretBorderless = promote, borderless
 	self.secretThreshold, self.secretAlert = threshold, alert
 	self.secretStyle = self.secretStyle or SlotStyle(self)
@@ -477,10 +471,7 @@ function overlayPrototype:ConfigureSecretAuras(force)
 	end
 
 	for key, entry in pairs(desired) do
-		if not self:ApplySecretSlot(key, entry) then
-			-- tried again once restrictions lift
-			self.secretRetry = true
-		end
+		self:ApplySecretSlot(key, entry)
 	end
 
 	-- A handler stays with the overlay until the engine has a slot for it.
@@ -529,10 +520,7 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 		if slots[key] then
 			container:SetAuraSlotEnabled(key, false)
 		end
-		return true
-	end
-	if not container then
-		return false
+		return
 	end
 
 	local candidateFilters = {
@@ -544,20 +532,15 @@ function overlayPrototype:ApplySecretSlot(key, entry)
 	if slots[key] then
 		container:SetAuraSlotCandidateFilters(key, candidateFilters)
 		container:SetAuraSlotEnabled(key, true)
-		return true
+		return
 	end
 
-	local ok, err = pcall(container.AddAuraSlot, container, key, SlotFilter(entry.filter), {
+	container:AddAuraSlot(key, SlotFilter(entry.filter), {
 		candidateFilters = candidateFilters,
 		initializeFrame = MakeSlotInitializer(self, entry),
 	})
-	if ok then
-		slots[key] = true
-		self:Debug('SecretAuras: slot added', key)
-	else
-		self:Debug('SecretAuras: AddAuraSlot failed', key, tostring(err))
-	end
-	return ok
+	slots[key] = true
+	self:Debug('SecretAuras: slot added', key)
 end
 
 -- Bind each container to the unit its token currently resolves to.
@@ -643,10 +626,7 @@ function overlayPrototype:OnConfigChanged(...)
 end
 
 -- Legacy handlers lose aura data when restrictions start and see it again once they lift.
-function overlayPrototype:ADDON_RESTRICTION_STATE_CHANGED(event, _, state)
-	if state == Enum.AddOnRestrictionState.Inactive and self.secretRetry then
-		self:ConfigureSecretAuras(true)
-	end
+function overlayPrototype:ADDON_RESTRICTION_STATE_CHANGED(event)
 	if self.secretCombatOnly then
 		C_Timer_After(0, function() return self:SyncSecretUnits() end)
 	end

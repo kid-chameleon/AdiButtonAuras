@@ -46,16 +46,17 @@ local tonumber = _G.tonumber
 local tostring = _G.tostring
 local type = _G.type
 local UnitClass = _G.UnitClass
-local UnitHealth = addon.Unsecret(_G.UnitHealth)
-local UnitHealthMax = addon.Unsecret(_G.UnitHealthMax)
-local UnitPower = addon.Unsecret(_G.UnitPower)
-local UnitPowerMax = addon.Unsecret(_G.UnitPowerMax)
+local UnitHealth = _G.UnitHealth
+local UnitHealthMax = _G.UnitHealthMax
+local UnitPower = _G.UnitPower
+local UnitPowerMax = _G.UnitPowerMax
 local unpack = _G.unpack
 local wipe = _G.wipe
 local xpcall = _G.xpcall
 local geterrorhandler = _G.geterrorhandler
 
 local getkeys      = addon.getkeys
+local scrubsecretvalues = addon.scrubsecretvalues
 local ucfirst      = addon.ucfirst
 local Do           = addon.Do
 local ConcatLists  = addon.ConcatLists
@@ -340,7 +341,7 @@ end
 
 local function BuildTemporaryPetHandler(guid, highlight)
 	return function (_, model)
-		local pet = UnitGUID('pet')
+		local pet = scrubsecretvalues(UnitGUID('pet'))
 
 		if pet and pet:match('%-' .. guid .. '%-') then
 			local remaining = GetPetTimeRemaining()
@@ -406,8 +407,10 @@ end
 -- Totem slots turn secret in combat on clients with secret values.
 local issecretvalue = addon.issecretvalue
 local GetTotemDuration = _G.GetTotemDuration
-local totemCache = {} -- [texture] = { slot = number, expiration = number or nil when secret }
+local totemCache = {} -- [texture] = { expiration = number when read while readable, castTime = number when cast under restrictions }
 local totemSpells = {} -- [spellId] = texture
+local totemSlots = {} -- [texture] = slot
+local TOTEM_SLOTS = { fire = 1, earth = 2, water = 3, air = 4 }
 
 -- The icon is the one return of GetTotemInfo that tells an empty slot from a used one.
 local function IsTotemSlotEmpty(slot)
@@ -416,24 +419,28 @@ local function IsTotemSlotEmpty(slot)
 end
 
 if addon.hasSecrets then
+	local ShouldTotemSlotBeSecret = _G.C_Secrets.ShouldTotemSlotBeSecret
+	-- A slot update right after the cast that filled it.
 	local CAST_WINDOW = 0.5
-	local castTexture, castTime
-	local pendingSlot, pendingTime
+
+	local function ForgetSlot(slot, exceptTexture)
+		for texture in pairs(totemCache) do
+			if totemSlots[texture] == slot and texture ~= exceptTexture then
+				totemCache[texture] = nil
+			end
+		end
+	end
 
 	local watcher = _G.CreateFrame("Frame")
 	watcher:RegisterEvent("PLAYER_TOTEM_UPDATE")
 	watcher:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 	watcher:SetScript("OnEvent", function(_, event, arg1, _, spellId)
 		if event == "UNIT_SPELLCAST_SUCCEEDED" then
+			-- The player's own casts stay readable, so this is how we learn what fills a secret slot.
 			local texture = not issecretvalue(spellId) and totemSpells[spellId]
 			if texture then
-				if pendingSlot and GetTime() - pendingTime <= CAST_WINDOW then
-					-- the slot update came first
-					totemCache[texture] = { slot = pendingSlot }
-					pendingSlot, pendingTime = nil, nil
-				else
-					castTexture, castTime = texture, GetTime()
-				end
+				ForgetSlot(totemSlots[texture], texture)
+				totemCache[texture] = { castTime = GetTime() }
 			end
 			return
 		end
@@ -444,23 +451,16 @@ if addon.hasSecrets then
 			wipe(totemCache)
 			return
 		end
-		if not issecretvalue(GetTotemInfo(slot)) then
+		if not ShouldTotemSlotBeSecret(slot) then
 			-- readable, the handlers see the real thing
 			return
 		end
+		-- The slot changed: only a totem just cast into it is still known.
+		local now = GetTime()
 		for texture, seen in pairs(totemCache) do
-			if seen.slot == slot then
+			if totemSlots[texture] == slot and not (seen.castTime and now - seen.castTime <= CAST_WINDOW) then
 				totemCache[texture] = nil
 			end
-		end
-		if IsTotemSlotEmpty(slot) then
-			return
-		end
-		if castTexture and GetTime() - castTime <= CAST_WINDOW then
-			totemCache[castTexture] = { slot = slot }
-			castTexture, castTime = nil, nil
-		else
-			pendingSlot, pendingTime = slot, GetTime()
 		end
 	end)
 end
@@ -509,8 +509,9 @@ local function InCombatOnly(handler, maxDuration)
 	return handler
 end
 
-local function BuildTotemHandler(totemTexture, highlight, spells)
-	if addon.hasSecrets and spells then
+local function BuildTotemHandler(totemTexture, slot, highlight, spells)
+	if addon.hasSecrets then
+		totemSlots[totemTexture] = slot
 		for _, spell in ipairs(AsList(spells)) do
 			local spellId = tonumber(spell)
 			if spellId then
@@ -523,30 +524,24 @@ local function BuildTotemHandler(totemTexture, highlight, spells)
 		-- The totem's own aura on a unit is the more useful timer.
 		if model.expiration > GetTime() then return end
 
-		local seen = totemCache[totemTexture]
-		for slot = 1, 6 do
-			local found, _, start, duration, texture = GetTotemInfo(slot)
+		local found, _, start, duration, texture = GetTotemInfo(slot)
+		if not issecretvalue(found) then
+			if found and texture == totemTexture then
+				local expiration = start + duration
+				totemCache[totemTexture] = { expiration = expiration }
+				model.expiration = expiration
+				model.highlight = highlight
 
-			if not issecretvalue(found) then
-				if found and texture == totemTexture then
-					local expiration = start + duration
-					if seen then
-						seen.slot, seen.expiration = slot, expiration
-					else
-						totemCache[totemTexture] = { slot = slot, expiration = expiration }
-					end
-					model.expiration = expiration
-					model.highlight = highlight
-
-					return true
-				elseif seen and seen.slot == slot then
-					-- readable and not ours anymore
-					totemCache[totemTexture], seen = nil, nil
-				end
+				return true
 			end
+			-- readable and not ours
+			totemCache[totemTexture] = nil
+			return
 		end
 
-		if seen and seen.expiration then
+		local seen = totemCache[totemTexture]
+		if not seen then return end
+		if seen.expiration then
 			-- dropped while readable, the numbers are still good
 			if seen.expiration > GetTime() then
 				model.expiration = seen.expiration
@@ -554,11 +549,11 @@ local function BuildTotemHandler(totemTexture, highlight, spells)
 
 				return true
 			end
-		elseif seen and IsTotemSlotEmpty(seen.slot) then
+		elseif IsTotemSlotEmpty(slot) then
 			totemCache[totemTexture] = nil
-		elseif seen then
+		else
 			-- cast under restrictions, only the engine knows the remaining time
-			model.duration = GetTotemDuration and GetTotemDuration(seen.slot) or nil
+			model.duration = GetTotemDuration and GetTotemDuration(slot) or nil
 			model.highlight = highlight
 
 			return true
@@ -712,8 +707,8 @@ local function ShowPower(spells, powerType, handler, highlight, providers, desc)
 		highlight or "hint",
 		desc,
 		powerLoc,
-		function() return UnitPower("player", powerIndex) end,
-		function() return UnitPowerMax("player", powerIndex) end,
+		function() return scrubsecretvalues(UnitPower("player", powerIndex)) end,
+		function() return scrubsecretvalues(UnitPowerMax("player", powerIndex)) end,
 		providers
 	)
 end
@@ -728,8 +723,8 @@ local function ShowHealth(spells, unit, handler, highlight, providers, desc)
 		highlight or "hint",
 		desc,
 		_G.HEALTH,
-		UnitHealth,
-		UnitHealthMax,
+		function(actualUnit) return scrubsecretvalues(UnitHealth(actualUnit)) end,
+		function(actualUnit) return scrubsecretvalues(UnitHealthMax(actualUnit)) end,
 		providers
 	)
 end
@@ -810,11 +805,16 @@ local function ShowTempWeaponEnchant(spells, enchant, highlight, providers, desc
 	return Configure(key, description, spells, 'player', { 'WEAPON_ENCHANT_CHANGED', 'WEAPON_SLOT_CHANGED' }, handler, providers, 4)
 end
 
-local function ShowTotem(spells, totemTexture, highlight, providers, description)
+-- slot: the totem slot, as a number or one of "fire", "earth", "water" and "air"
+local function ShowTotem(spells, totemTexture, slot, highlight, providers, description)
+	slot = TOTEM_SLOTS[slot] or slot
+	if type(slot) ~= "number" or slot < 1 or slot > 6 then
+		error("Invalid totem slot, expected an element name or a slot number, got "..tostring(slot), 3)
+	end
 	highlight = highlight or 'good'
 	description = description or L['Show the duration of @NAME']
 	local key = BuildKey('Totem', totemTexture, highlight)
-	local handler = BuildTotemHandler(totemTexture, highlight, spells)
+	local handler = BuildTotemHandler(totemTexture, slot, highlight, spells)
 
 	return Configure(key, description, spells, 'player', 'PLAYER_TOTEM_UPDATE', handler, providers, 4)
 end
@@ -1031,15 +1031,16 @@ local RULES_ENV = addon.BuildSafeEnv(
 )
 
 -- Under secret value restrictions these read as nil instead of erroring on the first comparison in a rule.
--- This only suits single values: UnitCastingInfo, UnitChannelInfo, GetTotemInfo and GetSpellCharges are handed
--- over as they are, and a rule has to check their returns with issecretvalue, or use GetUnitCast.
+-- Only functions whose nil already means "nothing" are scrubbed: UnitCastingInfo, UnitChannelInfo, GetTotemInfo
+-- and GetSpellCharges are handed over as they are, and a rule has to check their returns with issecretvalue, or
+-- use GetUnitCast.
 if addon.hasSecrets then
 	for _, name in ipairs({
 		"UnitHealth", "UnitHealthMax", "UnitPower", "UnitPowerMax", "UnitGUID", "GetSpellCount",
 	}) do
 		local func = rawget(baseEnv, name)
 		if func then
-			baseEnv[name] = addon.Unsecret(func)
+			baseEnv[name] = function(...) return scrubsecretvalues(func(...)) end
 		end
 	end
 end

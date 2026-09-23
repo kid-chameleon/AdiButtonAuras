@@ -517,6 +517,10 @@ local modelProxy = setmetatable({}, {
 			if type(value) ~= "number" then
 				return error(format("Invalid %s, should be a number, not %s", key, type(value)), 2)
 			end
+			-- a secret number cannot be displayed by a legacy handler
+			if hasSecrets and issecretvalue(value) then
+				value = 0
+			end
 		elseif key == "flashSuppressed" then
 			-- hides the flash when true
 			if not issecretvalue(value) and value ~= nil and type(value) ~= "boolean" then

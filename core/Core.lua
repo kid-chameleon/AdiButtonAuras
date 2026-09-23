@@ -625,7 +625,9 @@ local mouseoverUnit, mouseoverGUID = 'mouseover'
 local function ResolveMouseover()
 	if UnitExists('mouseover') then
 		for i, unit in pairs(unitList) do
-			if UnitIsUnit(unit, "mouseover") then
+			local same = UnitIsUnit(unit, "mouseover")
+			if issecretvalue(same) then break end
+			if same then
 				return unit
 			end
 		end

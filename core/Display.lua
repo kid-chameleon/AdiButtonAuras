@@ -186,9 +186,14 @@ end
 function overlayPrototype:LayoutTexts()
 	local count, timer = self.Count, self.Timer
 	local parentCount = self.parentCount
-	local parentCountIsShown = parentCount:IsShown() and strtrim(parentCount:GetText() or "") ~= ""
-	if parentCountIsShown and count:IsShown() and parentCount:GetText() == count:GetText() then
-		return count:Hide()
+	local parentText = parentCount:IsShown() and parentCount:GetText() or ""
+	local parentTextIsSecret = issecretvalue(parentText)
+	local parentCountIsShown = parentTextIsSecret or strtrim(parentText) ~= ""
+	if parentCountIsShown and count:IsShown() and not parentTextIsSecret then
+		local ownText = count:GetText()
+		if not issecretvalue(ownText) and parentText == ownText then
+			return count:Hide()
+		end
 	end
 	local countIsShown = count:IsShown() or parentCountIsShown
 	-- splitTimers: an engine-side aura timer takes the right half, or the left one when it is "right"

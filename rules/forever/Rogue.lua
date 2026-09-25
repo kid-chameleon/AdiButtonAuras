@@ -60,37 +60,36 @@ AdiButtonAuras:RegisterRules(function()
 			L['Flash when @NAME is usable after you parry.'],
 		},
 
-		-- combo points are secret currently and can't be read. might be changed later.
-		-- ShowPower {
-		-- 	{
-		-- 		408, -- Begin Kidney Shot
-		-- 		8643, -- End Kidney Shot
-		-- 		1943, -- Begin Rupture
-		-- 		8639,
-		-- 		8640,
-		-- 		11273,
-		-- 		11274,
-		-- 		11275, -- End Rupture
-		-- 		5171, -- Begin Slice and Dice
-		-- 		6774, -- End Slice and Dice
-		-- 		2098, -- Begin Eviscerate
-		-- 		6760,
-		-- 		6761,
-		-- 		6762,
-		-- 		8623,
-		-- 		8624,
-		-- 		11299,
-		-- 		11300,
-		-- 		31016, -- End Eviscerate
-		-- 		8647, -- Begin Expose Armor
-		-- 		8649,
-		-- 		8650,
-		-- 		11197,
-		-- 		11198, -- End Expose Armor
-		-- 		1310703, -- Venom
-		-- 	},
-		-- 	'ComboPoints',
-		-- },
+		ShowPower {
+			{
+				408, -- Begin Kidney Shot
+				8643, -- End Kidney Shot
+				1943, -- Begin Rupture
+				8639,
+				8640,
+				11273,
+				11274,
+				11275, -- End Rupture
+				5171, -- Begin Slice and Dice
+				6774, -- End Slice and Dice
+				2098, -- Begin Eviscerate
+				6760,
+				6761,
+				6762,
+				8623,
+				8624,
+				11299,
+				11300,
+				31016, -- End Eviscerate
+				8647, -- Begin Expose Armor
+				8649,
+				8650,
+				11197,
+				11198, -- End Expose Armor
+				1310703, -- Venom
+			},
+			'ComboPoints',
+		},
 	}
 
 	for _, poison in ipairs(poisons) do

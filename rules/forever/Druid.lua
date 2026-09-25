@@ -30,22 +30,21 @@ AdiButtonAuras:RegisterRules(function()
 	return {
 		ImportPlayerSpells { 'DRUID' },
 
-		-- combo points are secret currently and can't be read. might be changed later.
-		-- ShowPower {
-		-- 	{
-		-- 		1079, -- Begin Rip
-		-- 		9492,
-		-- 		9493,
-		-- 		9752,
-		-- 		9894,
-		-- 		9896, -- End Rip
-		-- 		22568, -- Begin Ferocious Bite
-		-- 		22827,
-		-- 		22828,
-		-- 		22829,
-		-- 		31018, -- End Ferocious Bite
-		-- 	},
-		-- 	'ComboPoints',
-		-- },
+		ShowPower {
+			{
+				1079, -- Begin Rip
+				9492,
+				9493,
+				9752,
+				9894,
+				9896, -- End Rip
+				22568, -- Begin Ferocious Bite
+				22827,
+				22828,
+				22829,
+				31018, -- End Ferocious Bite
+			},
+			'ComboPoints',
+		},
 	}
 end)

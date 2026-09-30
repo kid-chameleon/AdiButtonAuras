@@ -90,7 +90,9 @@ local EXPIRING_KIND = 'expiring'
 -- the steady state of LibButtonGlow's flash
 local GLOW_TEXTURE = [[Interface\SpellActivationOverlay\IconAlert]]
 local GLOW_FORMAT = "|T%s:%d:%d:0:0:256:512:2:130:142:270:%d:%d:%d|t"
-local BORDER_FORMAT = "|T%s:%d:%d:0:0:64:64:0:64:0:64:%d:%d:%d|t"
+-- the texture escape takes texel coordinates; any scale works as long as the texture size uses the same
+local TEXEL_SCALE = 1024
+local BORDER_FORMAT = "|T%s:%d:%d:0:0:" .. TEXEL_SCALE .. ":" .. TEXEL_SCALE .. ":%d:%d:%d:%d:%d:%d:%d|t"
 
 local DISPEL_TYPES = { "Curse", "Disease", "Magic", "Poison" }
 
@@ -174,14 +176,60 @@ local function GetSlotInfo(handler)
 	end
 end
 
+------------------------------------------------------------------------------
+-- Highlight style
+------------------------------------------------------------------------------
+
+local function HighlightStyleKey(style)
+	return tconcat({
+		tostring(style.texture), style.blendMode or '', tostring(style.allPoints),
+		style.width or '', style.height or '', style.point or '', style.relPoint or '',
+		style.xOffset or '', style.yOffset or '', style.texCoords and tconcat(style.texCoords, ',') or '',
+	}, ':')
+end
+
+local function ApplyHighlightStyle(texture, frame, style)
+	texture:SetTexture(style.texture)
+	if style.texCoords then
+		texture:SetTexCoord(unpack(style.texCoords))
+	end
+	texture:SetBlendMode(style.blendMode or "BLEND")
+	if style.allPoints then
+		texture:SetAllPoints(frame)
+	else
+		texture:SetSize(style.width, style.height)
+		texture:SetPoint(style.point or "CENTER", frame, style.relPoint or "CENTER", style.xOffset or 0, style.yOffset or 0)
+	end
+end
+
+-- The highlight as a texture escape, for the alert the engine fades in as a duration text.
+local function HighlightEscape(style, width, height, red, green, blue)
+	if not style.allPoints and style.width and style.width > 0 then
+		width, height = style.width, style.height
+	end
+	local left, right, top, bottom = 0, 1, 0, 1
+	local coords = style.texCoords
+	if coords then
+		-- GetTexCoord order: ULx, ULy, LLx, LLy, URx, URy, LRx, LRy
+		left, top, bottom, right = coords[1], coords[2], coords[4], coords[5]
+	end
+	return format(
+		BORDER_FORMAT, tostring(style.texture), floor(height + 0.5), floor(width + 0.5),
+		floor(left * TEXEL_SCALE + 0.5), floor(right * TEXEL_SCALE + 0.5),
+		floor(top * TEXEL_SCALE + 0.5), floor(bottom * TEXEL_SCALE + 0.5),
+		red, green, blue
+	)
+end
+
 -- Everything a slot frame bakes in when it is created.
-local STYLE_PREFS = { "fontName", "fontSize", "highlightTexture", "textPosition", "textXOffset", "textYOffset" }
+local STYLE_PREFS = { "fontName", "fontSize", "textPosition", "textXOffset", "textYOffset" }
 local STYLE_COLORS = { "good", "bad", "expiring", "Enrage", "countdownHigh", unpack(DISPEL_TYPES) }
 
 local function SlotStyle(overlay)
 	local prefs = addon.db.profile
 	local _, _, durationVersion = addon.GetDurationStyle()
 	local parts = { durationVersion, overlay:GetSize() }
+	tinsert(parts, HighlightStyleKey(overlay:GetHighlightStyle()))
 	for _, name in ipairs(STYLE_PREFS) do
 		tinsert(parts, tostring(prefs[name]))
 	end
@@ -201,7 +249,7 @@ local function MakeSlotInitializer(overlay, entry)
 	local prefs = addon.db.profile
 	local width, height = overlay:GetSize()
 	local fontFile, fontSize = LSM:Fetch(LSM.MediaType.FONT, prefs.fontName), prefs.fontSize
-	local highlightTexture = LSM:Fetch(addon.HIGHLIGHT_MEDIATYPE, prefs.highlightTexture)
+	local highlightStyle = overlay:GetHighlightStyle()
 	local textPosition, xOffset, yOffset = prefs.textPosition, prefs.textXOffset, prefs.textYOffset
 	local colors = prefs.colors
 
@@ -232,7 +280,7 @@ local function MakeSlotInitializer(overlay, entry)
 				GLOW_FORMAT, GLOW_TEXTURE, floor(height * 1.4 + 0.5), floor(width * 1.4 + 0.5), red, green, blue
 			)
 		else
-			alert = format(BORDER_FORMAT, highlightTexture, floor(height + 0.5), floor(width + 0.5), red, green, blue)
+			alert = HighlightEscape(highlightStyle, width, height, red, green, blue)
 		end
 		local curve = C_CurveUtil.CreateColorCurve()
 		curve:SetType(Enum.LuaCurveType.Step)
@@ -258,8 +306,7 @@ local function MakeSlotInitializer(overlay, entry)
 
 		if kind == "good" or kind == "bad" or kind == "flash" then
 			local highlight = frame:CreateTexture(nil, "BACKGROUND")
-			highlight:SetAllPoints(frame)
-			highlight:SetTexture(highlightTexture)
+			ApplyHighlightStyle(highlight, frame, highlightStyle)
 			highlight:SetVertexColor(unpack(colors[kind == "flash" and "good" or kind], 1, 4))
 			if kind == "flash" then
 				local pulse = highlight:CreateAnimationGroup()
@@ -272,8 +319,7 @@ local function MakeSlotInitializer(overlay, entry)
 			end
 		elseif kind == "dispel" then
 			local highlight = frame:CreateTexture(nil, "BACKGROUND")
-			highlight:SetAllPoints(frame)
-			highlight:SetTexture(highlightTexture)
+			ApplyHighlightStyle(highlight, frame, highlightStyle)
 			local colorMap = {}
 			for _, dispelType in ipairs(DISPEL_TYPES) do
 				local color = colors[dispelType]

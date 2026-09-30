@@ -242,43 +242,80 @@ end
 -- Masque support
 ------------------------------------------------------------------------------
 
+function overlayPrototype:GetHighlightStyle()
+	return {
+		texture = LSM:Fetch(addon.HIGHLIGHT_MEDIATYPE, addon.db.profile.highlightTexture),
+		blendMode = "BLEND",
+		allPoints = true,
+	}
+end
+
 local Masque = addon.GetLib('Masque', true)
 if Masque then
 	local group = Masque:Group(addonName)
 
-	-- Provide a fake background to Masque, to avoid hiding the underlying button
-	local NOOP = function() end
-	local fakeBackground = setmetatable({}, { __index = function() return NOOP end})
+	local function MasqueEnabled()
+		return not group.db.Disabled
+	end
 
 	local DefaultInitializeDisplay = overlayPrototype.InitializeDisplay
-	overlayPrototype.InitializeDisplay = function(button)
-		DefaultInitializeDisplay(button)
-		group:AddButton(button, {
-			Border = button.Highlight,
+	overlayPrototype.InitializeDisplay = function(self)
+		DefaultInitializeDisplay(self)
+		-- Masque creates a backdrop when the region is missing, and it would hide the underlying button.
+		local backdrop = self:CreateTexture(nil, "BACKGROUND")
+		backdrop:SetAlpha(0)
+		group:AddButton(self, {
+			Border = self.Highlight,
 			Normal = false,
-			FloatingBG = fakeBackground,
+			Backdrop = backdrop,
 		})
 	end
 
 	local DefaultApplyHighlightSkin = overlayPrototype.ApplyHighlightSkin
-	overlayPrototype.ApplyHighlightSkin = function(button)
-		if group.db.Disabled then
-			return DefaultApplyHighlightSkin(button)
+	overlayPrototype.ApplyHighlightSkin = function(self)
+		if MasqueEnabled() then
+			-- the skin is sized against the overlay, which ApplySkin may have just resized
+			return group:ReSkin(self)
 		end
+		-- undo what the skin changed besides the texture and the anchors
+		local highlight = self.Highlight
+		highlight:SetTexCoord(0, 1, 0, 1)
+		highlight:SetBlendMode("BLEND")
+		highlight:SetDrawLayer("BACKGROUND")
+		return DefaultApplyHighlightSkin(self)
 	end
 
-	-- Reskin on PLAYER_LOGIN since the author of Masque will not admit its design is flawed
-	-- See https://github.com/StormFX/Masque/issues/41
-	function addon:PLAYER_LOGIN(event)
-		Masque:Register(addonName, function(_, _, _, _, _, _, disabled)
-			if disabled then
-				addon:SendMessage(addon.THEME_CHANGED)
-			end
-		end)
-		group:ReSkin()
+	local DefaultGetHighlightStyle = overlayPrototype.GetHighlightStyle
+	overlayPrototype.GetHighlightStyle = function(self)
+		local highlight = self.Highlight
+		local texture = highlight:GetTexture()
+		if not MasqueEnabled() or not texture then
+			return DefaultGetHighlightStyle(self)
+		end
+		local point, _, relPoint, xOffset, yOffset = highlight:GetPoint(1)
+		local width, height = highlight:GetSize()
+		return {
+			texture = texture,
+			texCoords = { highlight:GetTexCoord() },
+			blendMode = highlight:GetBlendMode(),
+			allPoints = highlight:GetNumPoints() ~= 1,
+			width = width,
+			height = height,
+			point = point,
+			relPoint = relPoint,
+			xOffset = xOffset,
+			yOffset = yOffset,
+		}
+	end
 
+	group:RegisterCallback(function()
+		addon:SendMessage(addon.THEME_CHANGED)
+	end)
+
+	function addon:PLAYER_LOGIN(event)
 		self:UnregisterEvent(event)
 		self[event] = nil
+		C_Timer.After(0, function() addon:SendMessage(addon.THEME_CHANGED) end)
 	end
 	addon:RegisterEvent('PLAYER_LOGIN')
 end

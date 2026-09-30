@@ -32,16 +32,17 @@ function private.GetThemeOptions(addon, addonName)
 	local group, masqueOption
 	if Masque then
 		group = Masque:Group(addonName)
+		local Enable = group.__Enable or group.Enable
+		local Disable = group.__Disable or group.Disable
 		masqueOption = {
 			name = L['Use Masque'],
 			type = 'toggle',
 			order = 25,
 			set = function(_, enabled)
 				if enabled then
-					group:Enable()
+					Enable(group)
 				else
-					group:Disable()
-					addon:SendMessage(addon.THEME_CHANGED)
+					Disable(group)
 				end
 			end,
 			get = function()

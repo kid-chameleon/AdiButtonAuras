@@ -71,14 +71,9 @@ local FLAVORS = { [0] = 'vanilla', [1] = 'tbc', [2] = 'wrath', [3] = 'cata' }
 addon.expansion = _G.LE_EXPANSION_LEVEL_CURRENT
 addon.flavor = FLAVORS[addon.expansion] or 'vanilla'
 
--- The forever beta reports the vanilla expansion level but ships its own spell data and rules.
--- It currently has no project constant, only the 1.60.x interface version.
--- TODO: update this if that changes.
-do
-	local tocVersion = select(4, _G.GetBuildInfo())
-	if tocVersion >= 16000 and tocVersion < 20000 then
-		addon.flavor = 'forever'
-	end
+-- Forever reports the vanilla expansion level but ships its own spell data and rules.
+if _G.WOW_PROJECT_CAMELOT and _G.WOW_PROJECT_ID == _G.WOW_PROJECT_CAMELOT then
+	addon.flavor = 'forever'
 end
 
 function addon.isFlavor(flavor)

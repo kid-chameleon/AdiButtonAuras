@@ -541,6 +541,11 @@ local function BuildTotemHandler(totemTexture, slot, highlight, spells)
 
 		local seen = totemCache[totemTexture]
 		if not seen then return end
+		if IsTotemSlotEmpty(slot) then
+			-- recalled, killed or expired while secret
+			totemCache[totemTexture] = nil
+			return
+		end
 		if seen.expiration then
 			-- dropped while readable, the numbers are still good
 			if seen.expiration > GetTime() then
@@ -549,8 +554,6 @@ local function BuildTotemHandler(totemTexture, slot, highlight, spells)
 
 				return true
 			end
-		elseif IsTotemSlotEmpty(slot) then
-			totemCache[totemTexture] = nil
 		else
 			-- cast under restrictions, only the engine knows the remaining time
 			model.duration = GetTotemDuration and GetTotemDuration(slot) or nil

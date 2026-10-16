@@ -37,7 +37,6 @@ local ids = {
 	11354, -- Deadly Poison IV
 	25349, -- Deadly Poison V
 	2651, -- Elune's Grace
-	1259812, 1259813, 1259817, 1259821, 1259823, -- Eureka!
 	22959, -- Fire Vulnerability
 	20925, 20927, 20928, -- Holy Shield
 	588, 602, 1006, 7128, 10951, 10952, -- Inner Fire

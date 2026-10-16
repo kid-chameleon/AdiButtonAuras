@@ -65,7 +65,7 @@ AdiButtonAuras:RegisterRules(function()
 		ShowTotem { { 5394, 6375, 6377, 10462, 10463 }, 135127, 'water' }, -- Healing Stream Totem
 		ShowTotem { { 8190, 10585, 10586, 10587 }, 135826, 'fire' }, -- Magma Totem
 		ShowTotem { { 5675, 10495, 10496, 10497 }, 136053, 'water' }, -- Mana Spring Totem
-		ShowTotem { { 16190, 17354, 17359 }, 135861, 'water' }, -- Mana Tide Totem (Restoration)
+		ShowTotem { { 16190, 17354, 17359, 1325256 }, 135861, 'water' }, -- Mana Tide Totem (Restoration)
 		ShowTotem { { 10595, 10600, 10601 }, 136061, 'air' }, -- Nature Resistance Totem
 		ShowTotem { 8166, 136070, 'water' }, -- Poison Cleansing Totem
 		ShowTotem { { 3599, 6363, 6364, 6365, 10437, 10438 }, 135825, 'fire' }, -- Searing Totem

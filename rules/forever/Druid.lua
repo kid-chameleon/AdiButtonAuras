@@ -38,7 +38,8 @@ AdiButtonAuras:RegisterRules(function()
 				9752,
 				9894,
 				9896, -- End Rip
-				22568, -- Begin Ferocious Bite
+				1328618, -- Begin Ferocious Bite
+				22568,
 				22827,
 				22828,
 				22829,

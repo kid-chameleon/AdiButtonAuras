@@ -39,9 +39,9 @@ local lists = {
 		25349, -- Deadly Poison V
 		2651, -- Elune's Grace
 		22959, -- Fire Vulnerability
-		20925, 20927, 20928, -- Holy Shield
+		20925, 20927, 20928, 1239570, -- Holy Shield
 		588, 602, 1006, 7128, 10951, 10952, -- Inner Fire
-		414644, 1235826, 1235827, -- Lacerate
+		414644, 1235826, 1235827, 1328616, 1328617, -- Lacerate
 		324, 325, 905, 945, 8134, 10431, 10432, -- Lightning Shield
 		401877, 1240848, 1240849, -- Prayer of Mending
 		20230, -- Retaliation

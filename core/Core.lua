@@ -40,8 +40,10 @@ local next = _G.next
 local NUM_ACTIONBAR_BUTTONS = _G.NUM_ACTIONBAR_BUTTONS
 local NUM_PET_ACTION_SLOTS = _G.NUM_PET_ACTION_SLOTS
 local pairs = _G.pairs
+local pcall = _G.pcall
 local print = _G.print
 local select = _G.select
+local setmetatable = _G.setmetatable
 local strmatch = _G.strmatch
 local tinsert = _G.tinsert
 local tonumber = _G.tonumber
@@ -291,6 +293,143 @@ function api:RegisterLAB(libName)
 	end
 end
 
+------------------------------------------------------------------------------
+-- Buttons without an action slot: Blizzard's bags, ArkInventory, AutoBar
+------------------------------------------------------------------------------
+
+local GetContainerItemID = _G.C_Container.GetContainerItemID
+local GetSpellInfo = _G.C_Spell.GetSpellInfo
+
+local function RegisterCustomButton(button, resolver)
+	addon:RegisterCustomButton(button, resolver)
+	return UpdateHandler('CustomButton_Update', button)
+end
+
+local function AsItem(itemId)
+	if itemId then
+		return "item", itemId
+	end
+end
+
+-- The classic bag frames reuse their buttons for whichever bag they show.
+local blizzardBagOf = setmetatable({}, { __mode = 'k' })
+
+local function BlizzardBagItemId(button)
+	local bag = blizzardBagOf[button] or (button.GetBagID and button:GetBagID())
+	if bag then
+		return AsItem(GetContainerItemID(bag, button:GetID()))
+	end
+end
+
+local function RegisterBlizzardBags()
+	if _G.ContainerFrameMixin and _G.ContainerFrameMixin.UpdateItems then
+		-- the mixin is copied into each frame at creation, hook the frames
+		local function OnUpdateItems(frame)
+			for _, button in frame:EnumerateValidItems() do
+				RegisterCustomButton(button, BlizzardBagItemId)
+			end
+		end
+		local frames = { _G.ContainerFrameCombinedBags }
+		for i = 1, _G.NUM_CONTAINER_FRAMES or 0 do
+			tinsert(frames, _G['ContainerFrame'..i])
+		end
+		for _, frame in ipairs(frames) do
+			if frame.UpdateItems and frame.EnumerateValidItems then
+				hooksecurefunc(frame, 'UpdateItems', OnUpdateItems)
+			end
+		end
+	elseif _G.ContainerFrame_Update then
+		-- Era and Anniversary
+		hooksecurefunc('ContainerFrame_Update', function(frame)
+			local bag, name = frame:GetID(), frame:GetName()
+			for i = 1, frame.size or 0 do
+				local button = _G[name..'Item'..i]
+				if button then
+					blizzardBagOf[button] = bag
+					RegisterCustomButton(button, BlizzardBagItemId)
+				end
+			end
+		end)
+	end
+end
+
+local function ArkInventoryItemId(button)
+	local API = _G.ArkInventory.API
+	local data = button.ARK_Data
+	if not data or API.LocationIsOffline(data.loc_id) then return end
+	-- the item table lookup walks ArkInventory's storage, which can be mid-rebuild
+	local ok, item = pcall(API.ItemFrameItemTableGet, button)
+	local link = ok and item and item.h
+	return AsItem(link and tonumber(strmatch(link, "item:(%d+)")))
+end
+
+local function RegisterArkInventory()
+	local API = _G.ArkInventory and _G.ArkInventory.API
+	if not (API and API.ItemFrameLoaded and API.ItemFrameUpdated and API.ItemFrameItemTableGet
+		and API.LocationIsOffline) then
+		return
+	end
+	local function OnItemFrame(frame)
+		return RegisterCustomButton(frame, ArkInventoryItemId)
+	end
+	-- documented extension points, see ArkInventoryAPI.lua
+	hooksecurefunc(API, 'ItemFrameLoaded', OnItemFrame)
+	hooksecurefunc(API, 'ItemFrameUpdated', OnItemFrame)
+end
+
+-- AutoBar keeps each button's current action in secure attributes: "type" plus "itemId"
+-- (numeric) for items, or the spell name in "spell". Macro-text buttons are not supported.
+local function AutoBarAction(button)
+	local actionType = button:GetAttribute("type")
+	if actionType == "item" then
+		return AsItem(tonumber(button:GetAttribute("itemId")))
+	elseif actionType == "toy" then
+		return AsItem(tonumber(button:GetAttribute("toy")))
+	elseif actionType == "spell" then
+		local spell = button:GetAttribute("spell")
+		local spellId = tonumber(spell)
+		if not spellId and spell then
+			local info = GetSpellInfo(spell)
+			spellId = info and info.spellID
+		end
+		if spellId then
+			return "spell", spellId
+		end
+	end
+end
+
+local function RegisterAutoBar()
+	-- AutoBar's internals, not an API: bail out quietly if they change
+	local AutoBarButton = _G.AutoBarButton
+	if not (AutoBarButton and type(AutoBarButton.SetupButton) == "function") then
+		return
+	end
+	local function RegisterAutoBarFrame(frame)
+		if frame and frame.GetAttribute then
+			RegisterCustomButton(frame, AutoBarAction)
+		end
+	end
+	local function OnSetupButton(self)
+		-- SetupButton assigns the main button and all of its popups
+		RegisterAutoBarFrame(self.frame)
+		local popupHeader = self.frame and self.frame.popupHeader
+		if popupHeader and popupHeader.popupButtonList then
+			for _, popupButton in pairs(popupHeader.popupButtonList) do
+				RegisterAutoBarFrame(popupButton.frame)
+			end
+		end
+	end
+	hooksecurefunc(AutoBarButton, 'SetupButton', OnSetupButton)
+	-- buttons AutoBar already set up before this hook existed
+	if _G.AutoBar and type(_G.AutoBar.buttonList) == "table" then
+		for _, button in pairs(_G.AutoBar.buttonList) do
+			if type(button) == "table" and button.frame then
+				OnSetupButton(button)
+			end
+		end
+	end
+end
+
 function addon:ADDON_LOADED(event, name)
 	if name ~= addonName then
 		return
@@ -308,6 +447,14 @@ function addon:ADDON_LOADED(event, name)
 		self:ScanButtons("BT4Button", 120)
 		self:ScanButtons("BT4PetButton", NUM_PET_ACTION_SLOTS)
 		self:ScanButtons("BT4StanceButton")
+	end
+
+	RegisterBlizzardBags()
+	if IsAddOnLoaded('ArkInventory') then
+		RegisterArkInventory()
+	end
+	if IsAddOnLoaded('AutoBar') or IsAddOnLoaded('AutoBarClassic') then
+		RegisterAutoBar()
 	end
 
 	-- LibActionButton support

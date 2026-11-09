@@ -81,6 +81,12 @@ These are references to the libraries AdiButtonAuras used to create the rule.
 
 AdiButtonAuras should work with ElvUI. I am not going to support its skin though.
 
+**What else does it show auras on?**
+
+Besides action bars (Blizzard, Dominos, Bartender4, LibActionButton-based bars), item buttons in
+Blizzard's bags and in ArkInventory, and AutoBar's buttons (items and spells; its macro-text
+buttons are not supported).
+
 **Are you going to add a configuration panel to create custom rules?**
 
 Not in the way InlineAura did it. However you can create custom rules in-game using the Lua API.

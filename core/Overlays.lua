@@ -777,6 +777,36 @@ function petActionButtonPrototype:GetActionCooldown()
 end
 
 ------------------------------------------------------------------------------
+-- Buttons without an action slot: bag items (Blizzard, ArkInventory), AutoBar
+------------------------------------------------------------------------------
+
+local GetItemCooldown = _G.C_Container.GetItemCooldown
+
+local customButtonPrototype = setmetatable({}, overlayMeta)
+local customButtonMeta = { __index = customButtonPrototype }
+
+-- [button] = function(button) -> "item"|"spell", id; or nothing for an empty button
+local customButtonResolvers = setmetatable({}, { __mode = 'k' })
+
+function customButtonPrototype:GetAction()
+	return customButtonResolvers[self.button](self.button)
+end
+
+function customButtonPrototype:GetActionCooldown()
+	local actionType, id = self:GetAction()
+	if actionType == "item" then
+		-- the third return is the enable flag, not a cooldown struct
+		local start, duration = GetItemCooldown(id)
+		return start, duration
+	elseif actionType == "spell" and GetSpellCooldown then
+		local cooldownInfo = GetSpellCooldown(id)
+		if cooldownInfo then
+			return cooldownInfo.startTime, cooldownInfo.duration, cooldownInfo
+		end
+	end
+end
+
+------------------------------------------------------------------------------
 -- Overlay spawning
 ------------------------------------------------------------------------------
 
@@ -784,7 +814,9 @@ local overlays = addon.Memoize(function(button)
 	if button and button.IsObjectType and button:IsObjectType("Button") then
 		local name = button:GetName()
 		local meta = blizzardSupportMeta
-		if button.__LAB_Version then
+		if customButtonResolvers[button] then
+			meta = customButtonMeta
+		elseif button.__LAB_Version then
 			meta = labSupportMeta
 		elseif name then
 			if strmatch(name, 'StanceButton') then
@@ -803,6 +835,13 @@ end)
 
 function addon:GetOverlay(button)
 	return button and overlays[button]
+end
+
+-- Buttons that hold an item or spell rather than an action slot.
+-- resolver(button) returns "item" or "spell" and the id, or nothing when the button is empty.
+function addon:RegisterCustomButton(button, resolver)
+	customButtonResolvers[button] = resolver
+	return overlays[button]
 end
 
 function addon:IterateOverlays()

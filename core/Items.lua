@@ -82,6 +82,15 @@ local function BuildWeaponEnchantHandler(key, enchantId)
 	end
 end
 
+local function GetItemWeaponEnchants(itemId)
+	if LibItemBuffs.GetItemWeaponEnchants then
+		local first = LibItemBuffs:GetItemWeaponEnchants(itemId)
+		if first then
+			return { LibItemBuffs:GetItemWeaponEnchants(itemId) }
+		end
+	end
+end
+
 local function BuildItemRule(itemId, buffName, enchants, ...)
 	if not buffName and not enchants and not ... then return false end
 

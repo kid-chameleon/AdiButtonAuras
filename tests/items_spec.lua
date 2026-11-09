@@ -117,4 +117,39 @@ describe('Items', function ()
             assert.equals('LeDesc [LIB-1-8]', addon.descriptions['LeKey'])
         end)
     end
+
+    it('GetItemWeaponEnchants', function ()
+        LibItemBuffs.GetItemBuffs = function (_self, _itemId) return nil end
+        LibItemBuffs.GetItemWeaponEnchants = function (_self, _itemId) return 19 end
+        G.GetItemSpell = function (_item) return 'Enhance Blunt Weapon' end
+        G.GetItemInfo = function (_item) return 'Rough Weightstone', nil, nil, nil, nil, 'Trade Goods', nil, nil, nil, nil, nil, 7 end
+        G.IsHarmfulItem = function (_item) return false end
+        G.IsHelpfulItem = function (_item) return false end
+        G.GetTime = function () return 100 end
+        addon.BuildKey = function (...) return table.concat({ ... }, ':') end
+        addon.L = setmetatable({}, { __index = function (_, k) return k end })
+        addon.FindWeaponEnchant = function (enchantId)
+            if enchantId == 19 then return 1800000, 0 end
+        end
+        addon.db = { profile = { rules = setmetatable({}, { __index = function () return true end }) } }
+
+        load()
+
+        local rule = addon.rules['item:3239']
+        local key = 'item:3239:WeaponEnchant:19'
+
+        assert.same({ player = true }, rule.units)
+        assert.same({ WEAPON_ENCHANT_CHANGED = true, WEAPON_SLOT_CHANGED = true }, rule.events)
+        assert.same({ key }, rule.keys)
+        assert.equals('Show the duration of Rough Weightstone [LIB-1-8]', addon.descriptions[key])
+
+        local model = {}
+        assert.is_true(rule.handlers[1]({}, model))
+        assert.same({ highlight = 'good', count = 0, expiration = 1900 }, model)
+
+        addon.FindWeaponEnchant = function () end
+        addon.rules = {}
+        load()
+        assert.is_nil(addon.rules['item:3239'].handlers[1]({}, {}))
+    end)
 end)

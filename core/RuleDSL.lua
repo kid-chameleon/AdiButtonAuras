@@ -152,7 +152,10 @@ local function _AddRuleFor(key, desc, spell, units, events, handlers, providers,
 			"providers:", providers and strjoin(",", unpack(providers)) or "-"
 		)
 	end
-	local rule = rules[id]
+	-- rawget: a plain lookup would run the LibItemBuffs fallback in Items.lua (the __index of
+	-- addon.rules) and append to that generic item rule, duplicating e.g. the rogue poison
+	-- enchant timers. A hand-written rule replaces the generic one instead.
+	local rule = rawget(rules, id)
 	if not rule then
 		rule = { name = name, units = {}, events = {}, handlers = {}, keys = {} }
 		rules[id] = rule
@@ -390,6 +393,8 @@ else
 		end
 	end
 end
+
+addon.FindWeaponEnchant = FindWeaponEnchant -- also used by Items.lua for stones, oils and poisons
 
 local function BuildTemporaryWeaponEnchantHandler(enchantId, highlight)
 	return function (_, model)

@@ -138,8 +138,11 @@ end
 
 function overlayPrototype:InitializeDisplay()
 	local options = addon.db.profile
-	self:SetFrameLevel(self.button.cooldown:GetFrameLevel()+1)
-	self.parentCount = _G[self.button:GetName().."Count"]
+	-- action buttons have .cooldown; bag item buttons .Cooldown or a named child
+	local button, buttonName = self.button, self.button:GetName()
+	local cooldown = button.cooldown or button.Cooldown or _G[buttonName.."Cooldown"]
+	self:SetFrameLevel((cooldown or button):GetFrameLevel()+1)
+	self.parentCount = _G[buttonName.."Count"] or button.Count
 
 	local highlightParent = self
 	if addon.hasSecrets then

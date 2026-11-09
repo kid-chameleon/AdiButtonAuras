@@ -23,6 +23,9 @@ local addonName, addon = ...
 
 local _G = _G
 local format = _G.format
+local GetTime = _G.GetTime
+local gsub = _G.gsub
+local ipairs = _G.ipairs
 local C_Item = _G.C_Item or {}
 local GetItemInfo = _G.GetItemInfo or C_Item.GetItemInfo
 local GetItemSpell = _G.GetItemSpell or C_Item.GetItemSpell
@@ -39,6 +42,8 @@ local LibItemBuffs, LIBVer = addon.GetLib('LibItemBuffs-1.0')
 
 local BuildKey = addon.BuildKey
 local BuildDesc = addon.BuildDesc
+local FindWeaponEnchant = addon.FindWeaponEnchant
+local L = addon.L
 
 local CONSUMABLE = _G.Enum.ItemClass.Consumable or 0
 
@@ -64,8 +69,21 @@ local function BuildBuffIdHandler(key, token, filter, highlight, buffId)
 	end
 end
 
-local function BuildItemRule(itemId, buffName, ...)
-	if not buffName and not ... then return false end
+-- Sharpening stones, weightstones, oils, poisons and lures: the item puts a temporary
+-- enchant on a weapon instead of an aura on a unit.
+local function BuildWeaponEnchantHandler(key, enchantId)
+	return function(_, model)
+		if not addon.db.profile.rules[key] then return end
+		local timeLeft, charges = FindWeaponEnchant(enchantId)
+		if timeLeft then
+			model.highlight, model.count, model.expiration = "good", charges or 0, GetTime() + timeLeft / 1000
+			return true
+		end
+	end
+end
+
+local function BuildItemRule(itemId, buffName, enchants, ...)
+	if not buffName and not enchants and not ... then return false end
 
 	local name, _, _, _, _, _, _, _, _, _, _, itemClassId = GetItemInfo(itemId)
 
@@ -79,7 +97,17 @@ local function BuildItemRule(itemId, buffName, ...)
 		name = name,
 	}
 
-	if ... then
+	if enchants then
+		rule.units = { player = true }
+		rule.events = { WEAPON_ENCHANT_CHANGED = true, WEAPON_SLOT_CHANGED = true }
+		for _, enchantId in ipairs(enchants) do
+			local key = BuildKey('item', itemId, 'WeaponEnchant', enchantId)
+			descriptions[key] = gsub(L['Show the duration of @NAME'], "@NAME", name or ("item:" .. itemId))
+				.. format(" [LIB-%d-%s]", LIBVer, LibItemBuffs:GetDatabaseVersion())
+			tinsert(rule.keys, key)
+			tinsert(rule.handlers, BuildWeaponEnchantHandler(key, enchantId))
+		end
+	elseif ... then
 		for i = 1, select('#', ...) do
 			local buffId = select(i, ...)
 			local key = BuildKey('item', itemId, token, filter, highlight, buffId)
@@ -101,7 +129,7 @@ end
 
 local items = addon.Memoize(function(key)
 	local id = tonumber(key:match('^item:(%d+)$'))
-	return id and BuildItemRule(id, GetItemSpell(id), LibItemBuffs:GetItemBuffs(id)) or false
+	return id and BuildItemRule(id, GetItemSpell(id), GetItemWeaponEnchants(id), LibItemBuffs:GetItemBuffs(id)) or false
 end)
 
 local function DeepCopy(t)

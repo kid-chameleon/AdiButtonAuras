@@ -810,9 +810,19 @@ end
 -- Overlay spawning
 ------------------------------------------------------------------------------
 
+-- Retail's bag item buttons come from frame pools and have no name.
+local anonymousOverlays = 0
+
 local overlays = addon.Memoize(function(button)
 	if button and button.IsObjectType and button:IsObjectType("Button") then
 		local name = button:GetName()
+		local overlayName
+		if name then
+			overlayName = name..'Overlay'
+		else
+			anonymousOverlays = anonymousOverlays + 1
+			overlayName = 'AdiButtonAurasOverlay'..anonymousOverlays
+		end
 		local meta = blizzardSupportMeta
 		if customButtonResolvers[button] then
 			meta = customButtonMeta
@@ -825,7 +835,7 @@ local overlays = addon.Memoize(function(button)
 				meta = petActionButtonMeta
 			end
 		end
-		local overlay = setmetatable(CreateFrame("Frame", name and (name..'Overlay'), button), meta)
+		local overlay = setmetatable(CreateFrame("Frame", overlayName, button), meta)
 		overlay:Initialize(button)
 		return overlay
 	else

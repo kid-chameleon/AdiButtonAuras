@@ -83,6 +83,11 @@ AdiButtonAuras:RegisterRules(function()
 			},
 			L['Flash when @NAME is usable on enemies below 20% health.'],
 		},
+
+		ShowReactive {
+			402927, -- Victory Rush
+			L['Flash when @NAME is usable after you kill an enemy.'],
+		},
 	}
 
 	return rules
